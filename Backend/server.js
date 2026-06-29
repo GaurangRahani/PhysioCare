@@ -13,6 +13,7 @@ import consultationRoutes from './routes/consultation.routes.js';
 import exerciseRoutes from './routes/exercise.routes.js';
 import treatmentPlanRoutes from './routes/treatmentPlan.routes.js';
 import exerciseAssignmentRoutes from './routes/exerciseAssignment.routes.js';
+import exerciseLogRoutes from './routes/exerciseLog.routes.js';
 import { startExpiryJob, startMissedScheduleSweep } from './jobs/expiry.job.js';
 
 const app = express();
@@ -24,7 +25,6 @@ app.use(cors());
 app.use(clerkMiddleware());
 
 
-// Webhooks (Must use raw body for exact signature verification)
 app.use('/api/webhooks/clerk', express.raw({ type: 'application/json' }), webhookRoutes);
 app.use('/api/webhooks/razorpay', express.raw({ type: 'application/json' }), razorpayWebhookRoutes);
 
@@ -40,6 +40,7 @@ app.use('/api/consultations', consultationRoutes);
 app.use('/api/exercises', exerciseRoutes);
 app.use('/api/treatment-plans', treatmentPlanRoutes);
 app.use('/api/treatment-plan-exercises', exerciseAssignmentRoutes);
+app.use('/api/exercise-logs', exerciseLogRoutes);
 
 app.get('/', (req, res) => {
   res.send('PhysioCare API is running!');
