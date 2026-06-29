@@ -1,0 +1,228 @@
+import { db } from '../src/db/index.js';
+import {
+    exerciseLogs,
+    patientSchedule,
+    treatmentPlanExercises,
+    treatmentPlans,
+} from '../src/db/schema/index.js';
+import { eq, and, gte, lte, or, isNotNull } from 'drizzle-orm';
+
+// ─── Helper: get YYYY-MM-DD string for today and yesterday ────────────────────
+function getTodayAndYesterday() {
+    const todayDate = new Date();
+    const yesterdayDate = new Date();
+    yesterdayDate.setDate(yesterdayDate.getDate() - 1);
+
+    const today = todayDate.toISOString().split('T')[0];
+    const yesterday = yesterdayDate.toISOString().split('T')[0];
+    return { today, yesterday };
+}
+
+// ─── 1. POST /api/exercise-logs ───────────────────────────────────────────────
+export const createExerciseLog = async (req, res) => {
+    try {
+        const {
+            treatment_plan_exercise_id,
+            log_date,
+            session_number,
+            sets_completed,
+            pain_level,
+            comments,
+            issue_type,
+            attachment_urls,
+        } = req.body;
+
+        const patient_id = req.user.id;
+        const { today, yesterday } = getTodayAndYesterday();
+
+        //general concern like pain or other issue 
+        if (!treatment_plan_exercise_id) {
+
+            if (!issue_type) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'issue_type is required when logging a concern without an exercise.'
+                });
+            }
+
+            if (sets_completed != null) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'sets_completed must be null for standalone concern logs.'
+                });
+            }
+
+            // Just insert the log — no schedule update, no counter increment
+            const [log] = await db.insert(exerciseLogs).values({
+                treatment_plan_exercise_id: null,
+                patient_id,
+                log_date,
+                session_number: null,
+                sets_completed: null,
+                pain_level,
+                comments,
+                issue_type,
+                attachment_urls,
+            }).returning();
+
+            return res.status(201).json({
+                success: true,
+                message: 'Concern logged successfully.',
+                log,
+            });
+        }
+
+        //exercise log 
+
+        // 1. Verify the exercise assignment exists and is still active
+        const [tpe] = await db.select()
+            .from(treatmentPlanExercises)
+            .where(eq(treatmentPlanExercises.id, treatment_plan_exercise_id));
+
+        if (!tpe) {
+            return res.status(404).json({ success: false, message: 'Exercise assignment not found.' });
+        }
+        if (!tpe.is_active) {
+            return res.status(400).json({
+                success: false,
+                message: 'This exercise is no longer part of your plan. It may have been modified or removed by your doctor.'
+            });
+        }
+
+        // 2. Verify the parent treatment plan is still active
+        const [plan] = await db.select()
+            .from(treatmentPlans)
+            .where(eq(treatmentPlans.id, tpe.treatment_plan_id));
+
+        if (!plan || plan.status !== 'active') {
+            return res.status(400).json({
+                success: false,
+                message: 'This treatment plan is no longer active and cannot accept new logs.'
+            });
+        }
+
+        // 3. Validate log_date — only today or yesterday allowed
+        if (log_date !== today && log_date !== yesterday) {
+            return res.status(400).json({
+                success: false,
+                message: `You can only log for today (${today}) or yesterday (${yesterday}). Older logs are not accepted.`
+            });
+        }
+
+        // 4. Verify the scheduled session actually exists in patient_schedule
+        const [scheduleRow] = await db.select()
+            .from(patientSchedule)
+            .where(and(
+                eq(patientSchedule.patient_id, patient_id),
+                eq(patientSchedule.treatment_plan_exercise_id, treatment_plan_exercise_id),
+                eq(patientSchedule.scheduled_date, log_date),
+                eq(patientSchedule.session_number, session_number)
+            ));
+
+        if (!scheduleRow) {
+            return res.status(404).json({
+                success: false,
+                message: `No scheduled session found for this exercise on ${log_date} (session ${session_number}). Check your schedule.`
+            });
+        }
+
+        // Transaction: insert log + mark schedule completed + increment counter
+        let newLog;
+        await db.transaction(async (tx) => {
+
+
+            const [inserted] = await tx.insert(exerciseLogs).values({
+                treatment_plan_exercise_id,
+                patient_id,
+                log_date,
+                session_number,
+                sets_completed,
+                pain_level,
+                comments,
+                issue_type,
+                attachment_urls,
+            }).returning();
+            newLog = inserted;
+
+
+            await tx.update(patientSchedule)
+                .set({ status: 'completed' })
+                .where(and(
+                    eq(patientSchedule.patient_id, patient_id),
+                    eq(patientSchedule.treatment_plan_exercise_id, treatment_plan_exercise_id),
+                    eq(patientSchedule.scheduled_date, log_date),
+                    eq(patientSchedule.session_number, session_number)
+                ));
+
+
+            await tx.update(treatmentPlanExercises)
+                .set({
+                    completed_sessions_count: tpe.completed_sessions_count + 1,
+                    updated_at: new Date()
+                })
+                .where(eq(treatmentPlanExercises.id, treatment_plan_exercise_id));
+        });
+
+        return res.status(201).json({
+            success: true,
+            message: 'Exercise session logged successfully.',
+            log: newLog,
+        });
+
+    } catch (error) {
+        // Catch duplicate log (patient submitted the form twice)
+        const isDuplicate = error.code === '23505' ||
+            (error.cause && error.cause.code === '23505');
+
+        if (isDuplicate) {
+            return res.status(409).json({
+                success: false,
+                message: 'This session has already been logged. You cannot log the same session twice.'
+            });
+        }
+
+        console.error('Error creating exercise log:', error);
+        return res.status(500).json({ success: false, message: 'Server error' });
+    }
+};
+
+// GET /api/exercise-logs/patient/:patient_id
+export const getExerciseLogs = async (req, res) => {
+    try {
+        const { patient_id } = req.params;
+        const { from, to } = req.query;
+
+        // Build the date range filter dynamically
+        const filters = [eq(exerciseLogs.patient_id, patient_id)];
+
+        if (from) filters.push(gte(exerciseLogs.log_date, from));
+        if (to) filters.push(lte(exerciseLogs.log_date, to));
+
+        const logs = await db.select()
+            .from(exerciseLogs)
+            .where(and(...filters))
+            .orderBy(exerciseLogs.log_date);
+
+
+        const flagged = logs.filter(
+            log => (log.pain_level != null && log.pain_level >= 7) || log.issue_type != null
+        );
+        const normal = logs.filter(
+            log => (log.pain_level == null || log.pain_level < 7) && log.issue_type == null
+        );
+
+        return res.status(200).json({
+            success: true,
+            total: logs.length,
+            flagged_count: flagged.length,
+            data: {
+                flagged, // Doctor sees these first — highlighted in red in the UI
+                normal,
+            }
+        });
+
+    } catch (error) {
+        console.error('Error fetching exercise logs:', error);
+        return res.status(500).json({ success: false, message: 'Server error' });
+    }
+};
