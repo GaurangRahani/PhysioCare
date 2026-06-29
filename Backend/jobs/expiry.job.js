@@ -3,7 +3,7 @@ import { appointments, patientSchedule } from '../src/db/schema/index.js';
 import { eq, and, lt } from 'drizzle-orm';
 import cron from 'node-cron';
 
-// ─── Job 1: Runs every minute ──────────────────────────────────────────────────
+
 // Cancels all pending_payment appointments past their expiry window
 export const startExpiryJob = () => {
     cron.schedule('* * * * *', async () => {
@@ -33,7 +33,7 @@ export const startExpiryJob = () => {
     console.log('✅ Appointment expiry cron job started (runs every minute)');
 };
 
-// ─── Job 2: Runs once daily at midnight ───────────────────────────────────────
+
 // Marks all pending patient_schedule rows with a past date as 'missed'
 // This is the nightly sweep that ensures patients are held accountable
 export const startMissedScheduleSweep = () => {
