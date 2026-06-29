@@ -41,9 +41,6 @@ export const getAvailabilityRules = async (req, res) => {
 };
 
 // ─── 2. PUT /api/availability/weekly ─────────────────────────────────────────
-// Doctor sets working shifts for one specific day of the week
-// Body: { day_of_week: 1, shifts: [{ start: "09:00", end: "12:00" }, { start: "14:00", end: "19:00" }] }
-// Tip: Send shifts: [] to mark that day as "off"
 export const setWeeklyDay = async (req, res) => {
     try {
         const { day_of_week, shifts } = req.body;
@@ -85,9 +82,7 @@ export const setWeeklyDay = async (req, res) => {
 };
 
 // ─── 3. POST /api/availability/specific-date ─────────────────────────────────
-// Doctor sets an override for one exact calendar date
-// Body: { date: "2026-06-25", shifts: [] }           ← Empty = Full day leave
-// Body: { date: "2026-06-30", shifts: [{ start: "14:00", end: "18:00" }] }  ← Custom hours
+
 export const setSpecificDate = async (req, res) => {
     try {
         const { date, shifts } = req.body;
