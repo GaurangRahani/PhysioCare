@@ -1,5 +1,5 @@
 import express from 'express';
-import { getPatientProfile, updatePatientProfile, getAllPatients, getPatientHistory } from '../controllers/patient.controller.js';
+import { getPatientProfile, updatePatientProfile, getAllPatients, getPatientHistory, getTodaySchedule, getPatientProgress, dischargePatient, reactivatePatient } from '../controllers/patient.controller.js';
 import { validate } from '../middlewares/validate.middleware.js';
 import { updatePatientProfileSchema } from '../validators/patient.validator.js';
 import { requireAuth, requireRole } from '../middlewares/auth.middleware.js';
@@ -15,5 +15,17 @@ router.get('/', requireAuth, requireRole(['doctor', 'admin']), getAllPatients);
 
 // Doctor views the patient's full clinical history
 router.get('/:patient_id/history', requireAuth, requireRole(['doctor', 'admin']), getPatientHistory);
+
+// Patient or doctor sees today's exercise schedule for a patient
+router.get('/:patient_id/today', requireAuth, requireRole(['patient', 'doctor', 'admin']), getTodaySchedule);
+
+// Doctor reviews full progress (compliance, pain trend, calendar, flagged logs)
+router.get('/:patient_id/progress', requireAuth, requireRole(['doctor', 'admin']), getPatientProgress);
+
+// Doctor discharges a patient — completes plan and clears future schedule
+router.post('/:patient_id/discharge', requireAuth, requireRole(['doctor']), dischargePatient);
+
+// Reactivate a discharged patient so they can be booked again
+router.patch('/:patient_id/reactivate', requireAuth, requireRole(['doctor', 'admin']), reactivatePatient);
 
 export default router;
