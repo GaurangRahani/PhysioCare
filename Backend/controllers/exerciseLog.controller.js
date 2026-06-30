@@ -8,16 +8,6 @@ import {
 } from '../src/db/schema/index.js';
 import { eq, and, gte, lte, isNotNull } from 'drizzle-orm';
 
-// ─── Helper: get YYYY-MM-DD string for today and yesterday ────────────────────
-function getTodayAndYesterday() {
-    const todayDate = new Date();
-    const yesterdayDate = new Date();
-    yesterdayDate.setDate(yesterdayDate.getDate() - 1);
-
-    const today = todayDate.toISOString().split('T')[0];
-    const yesterday = yesterdayDate.toISOString().split('T')[0];
-    return { today, yesterday };
-}
 
 // Patient opens app → sees their full exercise list for today
 export const getDailySchedule = async (req, res) => {
@@ -100,7 +90,7 @@ export const createExerciseLog = async (req, res) => {
         } = req.body;
 
         const patient_id = req.user.id;
-        const { today, yesterday } = getTodayAndYesterday();
+        const today = new Date().toISOString().split('T')[0];
 
         //general concern like pain or other issue 
         if (!treatment_plan_exercise_id) {
@@ -168,11 +158,11 @@ export const createExerciseLog = async (req, res) => {
             });
         }
 
-        // 3. Validate log_date — only today or yesterday allowed
-        if (log_date !== today && log_date !== yesterday) {
+        // 3. Validate log_date — only today allowed
+        if (log_date !== today) {
             return res.status(400).json({
                 success: false,
-                message: `You can only log for today (${today}) or yesterday (${yesterday}). Older logs are not accepted.`
+                message: `You can only log for today (${today}). Older logs are not accepted.`
             });
         }
 

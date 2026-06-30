@@ -11,7 +11,6 @@ router.get('/today', requireAuth, requireRole(['patient']), getDailySchedule);
 router.post('/', requireAuth, requireRole(['patient']), createExerciseLog);
 
 // Doctor (or admin) fetches all logs for a specific patient
-// Supports ?from=2026-06-01&to=2026-06-30 for date range filtering
 router.get('/patient/:patient_id', requireAuth, requireRole(['doctor', 'admin']), getExerciseLogs);
 
 export default router;
