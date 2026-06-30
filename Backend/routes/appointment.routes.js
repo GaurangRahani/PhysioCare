@@ -5,7 +5,8 @@ import {
     selfBook,
     getAppointments,
     cancelAppointment,
-    updateAppointmentStatus
+    updateAppointmentStatus,
+    payAtDesk
 } from '../controllers/appointment.controller.js';
 import { requireAuth, requireRole } from '../middlewares/auth.middleware.js';
 import { validate } from '../middlewares/validate.middleware.js';
@@ -65,6 +66,14 @@ router.put(
     requireRole(['doctor', 'receptionist']),
     validate(updateStatusSchema),
     updateAppointmentStatus
+);
+
+// ── Receptionist collects payment at desk for a phone-booked appointment ───────
+router.put(
+    '/:id/pay',
+    requireAuth,
+    requireRole(['receptionist']),
+    payAtDesk
 );
 
 export default router;

@@ -1,6 +1,6 @@
 import { db } from '../src/db/index.js';
 import { appointments, invoices, payments, users } from '../src/db/schema/index.js';
-import { eq, and } from 'drizzle-orm';
+import { eq, and, gte, lte } from 'drizzle-orm';
 import Razorpay from 'razorpay';
 import { sendPaymentLinkEmail } from '../utils/email.js';
 
@@ -112,6 +112,8 @@ export const bookAtDesk = async (req, res) => {
 };
 
 // ─── 2. POST /api/appointments/book-by-phone ──────────────────────────────────
+// Receptionist creates appointment for a phone-booking patient.
+// Flow: Book slot (pending_payment) → Create Razorpay Payment Link → Email link to patient
 export const bookByPhone = async (req, res) => {
     const {
         patient_id,
@@ -137,6 +139,8 @@ export const bookByPhone = async (req, res) => {
             return res.status(409).json({ success: false, message: 'This slot is already booked or held. Please choose a different time.' });
         }
 
+        // ── Hold the slot immediately (15-min window) ────────────────────────
+        const expiresAt = new Date(Date.now() + 15 * 60 * 1000);
         const [newAppointment] = await db.insert(appointments).values({
             patient_id,
             doctor_id,
@@ -144,16 +148,45 @@ export const bookByPhone = async (req, res) => {
             start_time,
             visit_reason,
             notes,
-            status: 'scheduled', // TEMPORARY BYPASS
-            payment_status: 'paid_at_desk', // TEMPORARY BYPASS
-            payment_expires_at: null,
+            status: 'pending_payment',
+            payment_status: 'pending',
+            payment_expires_at: expiresAt,
             created_by: req.user.id
         }).returning();
 
+        // ── Create Razorpay Payment Link ─────────────────────────────────────
+        const razorpay = getRazorpayInstance();
+        const paymentLink = await razorpay.paymentLink.create({
+            amount: Math.round(amount * 100), // Razorpay works in paise
+            currency: 'INR',
+            description: visit_reason || 'PhysioCare Consultation',
+            expire_by: Math.floor(expiresAt.getTime() / 1000), // Unix timestamp
+            reminder_enable: false,
+            notes: {
+                appointment_id: newAppointment.id // Webhook uses this to find the appointment
+            },
+            notify: { sms: false, email: false }, // We send our own email
+            callback_url: `${process.env.FRONTEND_URL}/booking/status?appointment_id=${newAppointment.id}`,
+            callback_method: 'get'
+        });
+
+        // ── Email the patient the payment link ───────────────────────────────
+        const [patient] = await db.select().from(users).where(eq(users.id, patient_id));
+        if (patient?.email) {
+            sendPaymentLinkEmail({
+                to: patient.email,
+                first_name: patient.name.split(' ')[0],
+                payment_link: paymentLink.short_url,
+                expires_in_minutes: 15
+            });
+        }
+
         return res.status(201).json({
             success: true,
-            message: 'TEMPORARY BYPASS: Appointment booked successfully without payment.',
-            appointment: newAppointment
+            message: 'Slot held. Payment link sent to patient email.',
+            appointment: newAppointment,
+            payment_link: paymentLink.short_url,
+            expires_at: expiresAt
         });
 
     } catch (error) {
@@ -173,6 +206,9 @@ export const bookByPhone = async (req, res) => {
 };
 
 // ─── 3. POST /api/appointments/self-book ─────────────────────────────────────
+// Patient books their own appointment online.
+// Flow: Book slot (pending_payment) → Create Razorpay Order → Client opens Razorpay checkout
+// On success: Razorpay webhook confirms payment, flips status to 'scheduled'
 export const selfBook = async (req, res) => {
     const {
         doctor_id,
@@ -196,22 +232,44 @@ export const selfBook = async (req, res) => {
             return res.status(409).json({ success: false, message: 'This slot is already booked or held. Please choose a different time.' });
         }
 
+        // ── Hold the slot immediately (15-min window) ────────────────────────
+        const expiresAt = new Date(Date.now() + 15 * 60 * 1000);
         const [newAppointment] = await db.insert(appointments).values({
-            patient_id: req.user.id,    // Patient is the logged-in user
+            patient_id: req.user.id,
             doctor_id,
             appointment_date,
             start_time,
             visit_reason,
-            status: 'scheduled', // TEMPORARY BYPASS
-            payment_status: 'paid_online', // TEMPORARY BYPASS
-            payment_expires_at: null,
+            status: 'pending_payment',
+            payment_status: 'pending',
+            payment_expires_at: expiresAt,
             created_by: req.user.id
         }).returning();
 
+        // ── Create Razorpay Order (client opens this in Razorpay checkout modal) ─
+        const razorpay = getRazorpayInstance();
+        const order = await razorpay.orders.create({
+            amount: Math.round(amount * 100), // paise
+            currency: 'INR',
+            receipt: `appt_${newAppointment.id.slice(0, 8)}`,
+            notes: {
+                appointment_id: newAppointment.id // Webhook uses this to confirm
+            }
+        });
+
+        // ── Return order + appointment to client ─────────────────────────────
+        // Client uses order.id to open Razorpay checkout modal
+        // After payment, Razorpay fires 'order.paid' webhook → confirms appointment
         return res.status(201).json({
             success: true,
-            message: 'TEMPORARY BYPASS: Appointment booked successfully without payment.',
-            appointment: newAppointment
+            message: 'Slot held for 15 minutes. Complete payment to confirm.',
+            appointment: newAppointment,
+            razorpay_order: {
+                id: order.id,
+                amount: order.amount,
+                currency: order.currency
+            },
+            expires_at: expiresAt
         });
 
     } catch (error) {
@@ -231,21 +289,58 @@ export const selfBook = async (req, res) => {
 };
 
 // ─── 4. GET /api/appointments ─────────────────────────────────────────────────
+// Supports ?date=today, ?date=YYYY-MM-DD, ?range=week for dashboard/calendar views
 export const getAppointments = async (req, res) => {
     try {
         const role = req.user.role;
-        let query = db.select().from(appointments);
+        const { date, range } = req.query;
 
+        let conditions = [];
+
+        // Role-based ownership filter
         if (role === 'patient') {
-            query = query.where(eq(appointments.patient_id, req.user.id));
+            conditions.push(eq(appointments.patient_id, req.user.id));
         } else if (role === 'doctor') {
-            query = query.where(eq(appointments.doctor_id, req.user.id));
+            conditions.push(eq(appointments.doctor_id, req.user.id));
         }
-        // Receptionist gets all appointments (no filter)
+        // Receptionist/Admin gets all — no ownership filter
 
-        const result = await query.orderBy(appointments.appointment_date, appointments.start_time);
+        // Date filter — ?date=today or ?date=2026-07-01
+        if (date === 'today' || date === undefined && range === undefined) {
+            // If date=today is explicit, filter to today
+            if (date === 'today') {
+                const today = new Date().toISOString().split('T')[0];
+                conditions.push(eq(appointments.appointment_date, today));
+            }
+        } else if (date && date !== 'today') {
+            // Specific date requested
+            conditions.push(eq(appointments.appointment_date, date));
+        }
 
-        return res.status(200).json({ success: true, appointments: result });
+        // Range filter — ?range=week gives Mon-Sun of current week
+        if (range === 'week') {
+            const now = new Date();
+            const dayOfWeek = now.getDay(); // 0=Sun
+            const monday = new Date(now);
+            monday.setDate(now.getDate() - (dayOfWeek === 0 ? 6 : dayOfWeek - 1));
+            const sunday = new Date(monday);
+            sunday.setDate(monday.getDate() + 6);
+
+            const weekStart = monday.toISOString().split('T')[0];
+            const weekEnd = sunday.toISOString().split('T')[0];
+
+            conditions.push(gte(appointments.appointment_date, weekStart));
+            conditions.push(lte(appointments.appointment_date, weekEnd));
+        }
+
+        const query = db.select().from(appointments);
+        const result = await (
+            conditions.length > 0
+                ? query.where(and(...conditions))
+                : query
+        ).orderBy(appointments.appointment_date, appointments.start_time);
+
+        return res.status(200).json({ success: true, count: result.length, appointments: result });
     } catch (error) {
         console.error('Error fetching appointments:', error);
         return res.status(500).json({ success: false, message: 'Server error' });
@@ -325,6 +420,73 @@ export const updateAppointmentStatus = async (req, res) => {
         return res.status(200).json({ success: true, message: `Appointment marked as ${status}`, appointment: updated });
     } catch (error) {
         console.error('Error updating appointment status:', error);
+        return res.status(500).json({ success: false, message: 'Server error' });
+    }
+};
+
+// ─── 7. PUT /api/appointments/:id/pay ────────────────────────────────────────
+// Receptionist collects cash/card at desk for a phone-booked (pending_payment) appointment
+export const payAtDesk = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { payment_method, amount, transaction_reference } = req.body;
+
+        const [appointment] = await db.select().from(appointments).where(eq(appointments.id, id));
+        if (!appointment) {
+            return res.status(404).json({ success: false, message: 'Appointment not found' });
+        }
+
+        if (appointment.payment_status === 'paid_at_desk' || appointment.payment_status === 'paid_online') {
+            return res.status(400).json({ success: false, message: 'This appointment has already been paid.' });
+        }
+
+        if (appointment.status === 'cancelled' || appointment.status === 'no_show') {
+            return res.status(400).json({ success: false, message: `Cannot collect payment for a ${appointment.status} appointment.` });
+        }
+
+        const result = await db.transaction(async (tx) => {
+            // Mark appointment as paid and confirm it
+            const [updated] = await tx.update(appointments)
+                .set({
+                    status: 'scheduled',
+                    payment_status: 'paid_at_desk',
+                    payment_expires_at: null, // Clear expiry so cron ignores it
+                    updated_at: new Date()
+                })
+                .where(eq(appointments.id, id))
+                .returning();
+
+            // Generate invoice
+            const invoiceNumber = await generateInvoiceNumber();
+            const [newInvoice] = await tx.insert(invoices).values({
+                patient_id: appointment.patient_id,
+                appointment_id: appointment.id,
+                invoice_number: invoiceNumber,
+                description: appointment.visit_reason || 'Physiotherapy consultation',
+                amount,
+                status: 'paid',
+                issued_by: req.user.id
+            }).returning();
+
+            // Generate payment record
+            await tx.insert(payments).values({
+                invoice_id: newInvoice.id,
+                amount,
+                payment_method,
+                transaction_reference: transaction_reference || null,
+                recorded_by: req.user.id
+            });
+
+            return { appointment: updated, invoice: newInvoice };
+        });
+
+        return res.status(200).json({
+            success: true,
+            message: 'Payment collected and appointment confirmed.',
+            ...result
+        });
+    } catch (error) {
+        console.error('Error recording at-desk payment:', error);
         return res.status(500).json({ success: false, message: 'Server error' });
     }
 };
