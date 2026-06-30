@@ -1,7 +1,7 @@
 import { clerkClient } from '@clerk/express';
 import { db } from '../src/db/index.js';
 import { users, patientProfiles } from '../src/db/schema/index.js';
-import { eq, or } from 'drizzle-orm';
+import { eq, or, and, ilike } from 'drizzle-orm';
 import { sendWelcomeEmail } from '../utils/email.js';
 
 // ─── HELPER: Generate a strong temporary password ─────────────────────────────
@@ -12,7 +12,7 @@ const generateTempPassword = () => {
     return `${word}@${number}`;  // e.g. "Physio@7823" — meets Clerk's strength rules
 };
 
-// ─── POST /api/receptionist/patients/create ───────────────────────────────────
+// ─── POST /api/receptionists/patients ────────────────────────────────────────
 // Creates Clerk user → DB user + profile → Sends welcome email with temp password
 export const createPatient = async (req, res) => {
     const { name, email, phone, date_of_birth, gender, address } = req.body;
@@ -34,7 +34,6 @@ export const createPatient = async (req, res) => {
                 existing_patient_id: existingUser[0].id
             });
         }
-
 
         const tempPassword = generateTempPassword();
 
@@ -58,7 +57,7 @@ export const createPatient = async (req, res) => {
             throw clerkError;
         }
 
-        // ── Step 4: Insert into DB — user + patient profile ────────────────
+        // ── Insert into DB — user + patient profile ────────────────────────
         const [newUser] = await db.insert(users).values({
             clerk_id: clerkUser.id,
             name,
@@ -74,7 +73,7 @@ export const createPatient = async (req, res) => {
             address
         });
 
-        // ── Step 5: Send welcome email (fire-and-forget via email utility) ──
+        // ── Send welcome email with temp password (fire-and-forget) ────────
         sendWelcomeEmail({ to: email, first_name: name.split(' ')[0], email, tempPassword });
 
         return res.status(201).json({
@@ -94,21 +93,40 @@ export const createPatient = async (req, res) => {
     }
 };
 
-// Search patients by name or email
+// ─── GET /api/receptionists/patients/search?q= ───────────────────────────────
+// DB-level text search by name, email, or phone using ilike (case-insensitive)
 export const searchPatients = async (req, res) => {
     try {
-        const allPatients = await db.select({
+        const { q } = req.query;
+
+        if (!q || q.trim().length < 2) {
+            return res.status(400).json({ success: false, message: 'Search query must be at least 2 characters.' });
+        }
+
+        const searchTerm = `%${q.trim()}%`;
+
+        const patients = await db.select({
             id: users.id,
             name: users.name,
             email: users.email,
             phone: users.phone,
         })
             .from(users)
-            .where(eq(users.role, 'patient'));
+            .where(
+                and(
+                    eq(users.role, 'patient'),
+                    or(
+                        ilike(users.name, searchTerm),
+                        ilike(users.email, searchTerm),
+                        ilike(users.phone, searchTerm)
+                    )
+                )
+            )
+            .limit(20); // Cap results for performance
 
-        return res.status(200).json({ success: true, patients: allPatients });
+        return res.status(200).json({ success: true, count: patients.length, patients });
     } catch (error) {
-        console.error('Error fetching patients:', error);
+        console.error('Error searching patients:', error);
         return res.status(500).json({ success: false, message: 'Server error' });
     }
 };
