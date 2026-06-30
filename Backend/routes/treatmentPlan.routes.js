@@ -4,6 +4,8 @@ import {
     completeTreatmentPlan,
     cancelTreatmentPlan,
     assignExercise,
+    updateAssignment,
+    deleteAssignment,
 } from '../controllers/treatmentPlan.controller.js';
 import { validate } from '../middlewares/validate.middleware.js';
 import { createTreatmentPlanSchema } from '../validators/treatmentPlan.validator.js';
@@ -17,5 +19,9 @@ router.patch('/:id/cancel', requireAuth, requireRole(['doctor']), cancelTreatmen
 
 // Assign an exercise to a treatment plan
 router.post('/:id/exercises', requireAuth, requireRole(['doctor']), assignExercise);
+
+// Modify or remove an existing exercise assignment
+router.patch('/:id', requireAuth, requireRole(['doctor']), updateAssignment);
+router.delete('/:id', requireAuth, requireRole(['doctor']), deleteAssignment);
 
 export default router;
