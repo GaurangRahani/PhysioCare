@@ -4,8 +4,9 @@ import {
     patientSchedule,
     treatmentPlanExercises,
     treatmentPlans,
+    exercises,
 } from '../src/db/schema/index.js';
-import { eq, and, gte, lte, or, isNotNull } from 'drizzle-orm';
+import { eq, and, gte, lte, isNotNull } from 'drizzle-orm';
 
 // ─── Helper: get YYYY-MM-DD string for today and yesterday ────────────────────
 function getTodayAndYesterday() {
@@ -17,6 +18,72 @@ function getTodayAndYesterday() {
     const yesterday = yesterdayDate.toISOString().split('T')[0];
     return { today, yesterday };
 }
+
+// Patient opens app → sees their full exercise list for today
+export const getDailySchedule = async (req, res) => {
+    try {
+        const patient_id = req.user.id;
+        const today = new Date().toISOString().split('T')[0];
+
+        // Fetch all schedule rows for today for this patient
+        // Join with exercises table to get exercise name, instructions, video
+        const scheduleRows = await db
+            .select({
+                schedule_id: patientSchedule.id,
+                scheduled_date: patientSchedule.scheduled_date,
+                session_number: patientSchedule.session_number,
+                status: patientSchedule.status,
+                treatment_plan_exercise_id: patientSchedule.treatment_plan_exercise_id,
+                // Exercise details
+                exercise_id: exercises.id,
+                exercise_name: exercises.name,
+                target_body_part: exercises.target_body_part,
+                instructions: exercises.instructions,
+                video_url: exercises.video_url,
+                // Assignment details (sets/reps prescribed by doctor)
+                sets: treatmentPlanExercises.sets,
+                reps: treatmentPlanExercises.reps,
+                sessions_per_day: treatmentPlanExercises.sessions_per_day,
+                notes: treatmentPlanExercises.notes,
+            })
+            .from(patientSchedule)
+            .innerJoin(
+                treatmentPlanExercises,
+                eq(patientSchedule.treatment_plan_exercise_id, treatmentPlanExercises.id)
+            )
+            .innerJoin(
+                exercises,
+                eq(treatmentPlanExercises.exercise_id, exercises.id)
+            )
+            .where(and(
+                eq(patientSchedule.patient_id, patient_id),
+                eq(patientSchedule.scheduled_date, today)
+            ));
+
+        // Separate into pending vs completed/missed for easy frontend rendering
+        const pending = scheduleRows.filter(r => r.status === 'pending');
+        const completed = scheduleRows.filter(r => r.status === 'completed');
+        const missed = scheduleRows.filter(r => r.status === 'missed');
+
+        return res.status(200).json({
+            success: true,
+            date: today,
+            total_sessions: scheduleRows.length,
+            pending_count: pending.length,
+            completed_count: completed.length,
+            missed_count: missed.length,
+            schedule: {
+                pending,
+                completed,
+                missed,
+            }
+        });
+
+    } catch (error) {
+        console.error('Error fetching daily schedule:', error);
+        return res.status(500).json({ success: false, message: 'Server error' });
+    }
+};
 
 // ─── 1. POST /api/exercise-logs ───────────────────────────────────────────────
 export const createExerciseLog = async (req, res) => {
