@@ -12,7 +12,7 @@ import appointmentRoutes from './routes/appointment.routes.js';
 import consultationRoutes from './routes/consultation.routes.js';
 import exerciseRoutes from './routes/exercise.routes.js';
 import treatmentPlanRoutes from './routes/treatmentPlan.routes.js';
-import exerciseAssignmentRoutes from './routes/exerciseAssignment.routes.js';
+
 import exerciseLogRoutes from './routes/exerciseLog.routes.js';
 import { startExpiryJob, startMissedScheduleSweep } from './jobs/expiry.job.js';
 
@@ -39,7 +39,9 @@ app.use('/api/appointments', appointmentRoutes);
 app.use('/api/consultations', consultationRoutes);
 app.use('/api/exercises', exerciseRoutes);
 app.use('/api/treatment-plans', treatmentPlanRoutes);
-app.use('/api/treatment-plan-exercises', exerciseAssignmentRoutes);
+// PATCH/DELETE /api/treatment-plan-exercises/:id are also handled by treatmentPlanRoutes
+app.use('/api/treatment-plan-exercises', treatmentPlanRoutes);
+
 app.use('/api/exercise-logs', exerciseLogRoutes);
 
 app.get('/', (req, res) => {
