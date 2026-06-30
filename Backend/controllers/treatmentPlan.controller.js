@@ -49,10 +49,10 @@ async function generateSchedule(tpeId) {
     }
 }
 
-// create plan
+// create plan (with bulk exercises)
 export const createTreatmentPlan = async (req, res) => {
     try {
-        const { consultation_id, patient_id, title, start_date, end_date } = req.body;
+        const { consultation_id, patient_id, title, start_date, end_date, exercises: exercisesArray } = req.body;
 
         // Verify consultation exists and belongs to the patient
         const [consultation] = await db.select().from(consultations).where(eq(consultations.id, consultation_id));
@@ -80,19 +80,100 @@ export const createTreatmentPlan = async (req, res) => {
             });
         }
 
-        const [newPlan] = await db.insert(treatmentPlans).values({
-            patient_id,
-            doctor_id: req.user.id,
-            consultation_id,
-            title,
-            start_date,
-            end_date,
-            status: 'active'
-        }).returning();
+        let newPlanData = null;
+        let insertedTPEs = [];
 
-        return res.status(201).json({ success: true, message: 'Treatment plan created successfully', treatment_plan: newPlan });
+        await db.transaction(async (tx) => {
+            const [newPlan] = await tx.insert(treatmentPlans).values({
+                patient_id,
+                doctor_id: req.user.id,
+                consultation_id,
+                title,
+                start_date,
+                end_date,
+                status: 'active'
+            }).returning();
+
+            newPlanData = newPlan;
+
+            if (exercisesArray && Array.isArray(exercisesArray) && exercisesArray.length > 0) {
+                const exercisesToInsert = [];
+
+                for (let ex of exercisesArray) {
+                    let {
+                        exercise_id,
+                        sets,
+                        reps,
+                        sessions_per_day = 1,
+                        frequency_type,
+                        frequency_days,
+                        start_date: ex_start_date,
+                        end_date: ex_end_date,
+                        notes
+                    } = ex;
+
+                    // Default to plan dates if not provided
+                    const final_start_date = ex_start_date || start_date;
+                    const final_end_date = ex_end_date || end_date;
+
+                    // Encode frequency days
+                    let encodedFrequencyDays = null;
+                    if (frequency_type === 'custom_days') {
+                        if (!frequency_days) throw new Error('frequency_days is required when frequency_type is custom_days.');
+                        encodedFrequencyDays = Array.isArray(frequency_days) ? encodeDays(frequency_days) : parseInt(frequency_days, 10);
+                        if (!encodedFrequencyDays || encodedFrequencyDays <= 0) throw new Error('frequency_days must select at least one valid day.');
+                    } else if (frequency_type === 'mon_wed_fri') {
+                        encodedFrequencyDays = 21;
+                    } else if (frequency_type === 'tue_thu_sat') {
+                        encodedFrequencyDays = 42;
+                    }
+
+                    // Pre-calculate expected sessions
+                    const tempTpe = { frequency_type, frequency_days: encodedFrequencyDays, start_date: final_start_date, end_date: final_end_date, sessions_per_day };
+                    const expected_sessions_count = calculateExpectedSessions(tempTpe);
+
+                    if (expected_sessions_count === 0) {
+                        throw new Error(`Exercise ${exercise_id} has 0 expected sessions with the selected date range and frequency.`);
+                    }
+
+                    exercisesToInsert.push({
+                        treatment_plan_id: newPlan.id,
+                        exercise_id,
+                        sets,
+                        reps,
+                        sessions_per_day,
+                        frequency_type,
+                        frequency_days: encodedFrequencyDays,
+                        start_date: final_start_date,
+                        end_date: final_end_date,
+                        expected_sessions_count,
+                        notes,
+                    });
+                }
+                
+                // Bulk insert all exercises attached to this plan
+                insertedTPEs = await tx.insert(treatmentPlanExercises).values(exercisesToInsert).returning();
+            }
+        });
+
+        // Generate schedule for all inserted exercises in background (Fire-and-forget)
+        if (insertedTPEs.length > 0) {
+            insertedTPEs.forEach(tpe => {
+                generateSchedule(tpe.id);
+            });
+        }
+
+        return res.status(201).json({ 
+            success: true, 
+            message: insertedTPEs.length > 0 ? `Treatment plan created with ${insertedTPEs.length} exercises.` : 'Treatment plan created successfully without exercises.', 
+            treatment_plan: newPlanData,
+            exercises: insertedTPEs
+        });
 
     } catch (error) {
+        if (error.message && (error.message.includes('frequency_days') || error.message.includes('expected sessions'))) {
+             return res.status(400).json({ success: false, message: error.message });
+        }
         const isDuplicate = error.code === '23505' ||
             (error.cause && error.cause.code === '23505') ||
             (error.message && error.message.includes('unique constraint'));
@@ -164,138 +245,7 @@ export const cancelTreatmentPlan = async (req, res) => {
     }
 };
 
-//add exercise to  plan
-export const assignExercise = async (req, res) => {
-    try {
-        const { id: treatment_plan_id } = req.params;
-        let {
-            exercise_id,
-            sets,
-            reps,
-            sessions_per_day = 1,
-            frequency_type,
-            frequency_days,
-            start_date,
-            end_date,
-            notes,
-        } = req.body;
 
-        // Verify treatment plan is active
-        const [plan] = await db.select().from(treatmentPlans).where(eq(treatmentPlans.id, treatment_plan_id));
-        if (!plan) return res.status(404).json({ success: false, message: 'Treatment plan not found' });
-        if (plan.status !== 'active') {
-            return res.status(400).json({
-                success: false,
-                message: `Cannot assign exercises to a plan with status '${plan.status}'. Plan must be active.`
-            });
-        }
-
-        // Verify exercise is active
-        const [exercise] = await db.select().from(exercises).where(eq(exercises.id, exercise_id));
-        if (!exercise) return res.status(404).json({ success: false, message: 'Exercise not found' });
-        if (!exercise.is_active) {
-            return res.status(400).json({ success: false, message: 'This exercise has been deactivated and cannot be assigned.' });
-        }
-
-        // Edge case: mid-plan addition — auto-adjust start_date to today
-        const today = new Date().toISOString().split('T')[0];
-        let midPlanNote = null;
-
-        if (start_date < plan.start_date) {
-            return res.status(400).json({
-                success: false,
-                message: `start_date (${start_date}) cannot be before the plan's start date (${plan.start_date}).`
-            });
-        }
-        if (start_date < today) {
-            midPlanNote = `Plan started ${plan.start_date}. Exercise start_date was adjusted to today (${today}).`;
-            start_date = today;
-        }
-
-        // Validate end_date against plan bounds
-        if (end_date > plan.end_date) {
-            return res.status(400).json({
-                success: false,
-                message: `end_date (${end_date}) cannot be after the plan's end date (${plan.end_date}).`
-            });
-        }
-        if (start_date > end_date) {
-            return res.status(400).json({ success: false, message: 'start_date cannot be after end_date.' });
-        }
-
-        // Encode frequency_days
-        let encodedFrequencyDays = null;
-        if (frequency_type === 'custom_days') {
-            if (!frequency_days) {
-                return res.status(400).json({ success: false, message: 'frequency_days is required when frequency_type is custom_days.' });
-            }
-            encodedFrequencyDays = Array.isArray(frequency_days) ? encodeDays(frequency_days) : parseInt(frequency_days, 10);
-            if (!encodedFrequencyDays || encodedFrequencyDays <= 0) {
-                return res.status(400).json({ success: false, message: 'frequency_days must select at least one valid day.' });
-            }
-        } else if (frequency_type === 'mon_wed_fri') {
-            encodedFrequencyDays = 21;
-        } else if (frequency_type === 'tue_thu_sat') {
-            encodedFrequencyDays = 42;
-        }
-
-        // Duplicate exercise check in this plan
-        const existing = await db.select().from(treatmentPlanExercises)
-            .where(and(
-                eq(treatmentPlanExercises.treatment_plan_id, treatment_plan_id),
-                eq(treatmentPlanExercises.exercise_id, exercise_id),
-                eq(treatmentPlanExercises.is_active, true)
-            ));
-        if (existing.length > 0) {
-            return res.status(409).json({
-                success: false,
-                message: 'This exercise is already assigned to this treatment plan. Please modify the existing assignment or remove it first.',
-                existing_assignment_id: existing[0].id
-            });
-        }
-
-        // Pre-calculate expected sessions
-        const tempTpe = { frequency_type, frequency_days: encodedFrequencyDays, start_date, end_date, sessions_per_day };
-        const expected_sessions_count = calculateExpectedSessions(tempTpe);
-
-        if (expected_sessions_count === 0) {
-            return res.status(400).json({
-                success: false,
-                message: 'No sessions would be scheduled with these settings. Check your frequency type, selected days, and date range.'
-            });
-        }
-
-        // Insert the assignment
-        const [newTPE] = await db.insert(treatmentPlanExercises).values({
-            treatment_plan_id,
-            exercise_id,
-            sets,
-            reps,
-            sessions_per_day,
-            frequency_type,
-            frequency_days: encodedFrequencyDays,
-            start_date,
-            end_date,
-            expected_sessions_count,
-            notes,
-        }).returning();
-
-        // Fire-and-forget: generate patient_schedule rows in background
-        generateSchedule(newTPE.id);
-
-        return res.status(201).json({
-            success: true,
-            message: midPlanNote
-                ? `Exercise assigned. ${midPlanNote} ${expected_sessions_count} sessions scheduled.`
-                : `Exercise assigned. ${expected_sessions_count} sessions will be scheduled.`,
-            assignment: newTPE,
-        });
-
-    } catch (error) {
-        console.error('Error assigning exercise:', error);
-        return res.status(500).json({ success: false, message: 'Server error' });
-    }
-};
 
 //update added exercise
 export const updateAssignment = async (req, res) => {

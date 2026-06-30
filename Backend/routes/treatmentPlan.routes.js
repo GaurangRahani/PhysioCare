@@ -3,7 +3,6 @@ import {
     createTreatmentPlan,
     completeTreatmentPlan,
     cancelTreatmentPlan,
-    assignExercise,
     updateAssignment,
     deleteAssignment,
 } from '../controllers/treatmentPlan.controller.js';
@@ -16,9 +15,6 @@ const router = express.Router();
 router.post('/', requireAuth, requireRole(['doctor']), validate(createTreatmentPlanSchema), createTreatmentPlan);
 router.patch('/:id/complete', requireAuth, requireRole(['doctor']), completeTreatmentPlan);
 router.patch('/:id/cancel', requireAuth, requireRole(['doctor']), cancelTreatmentPlan);
-
-// Assign an exercise to a treatment plan
-router.post('/:id/exercises', requireAuth, requireRole(['doctor']), assignExercise);
 
 // Modify or remove an existing exercise assignment
 router.patch('/:id', requireAuth, requireRole(['doctor']), updateAssignment);
