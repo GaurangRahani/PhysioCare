@@ -13,9 +13,7 @@ const generateInvoiceNumber = async () => {
 };
 
 // ─── 1. POST /api/payments/webhook/razorpay ───────────────────────────────────
-// Razorpay fires this after payment is confirmed. This is the ONLY trusted source
-// of payment truth — never the client callback alone.
-// Handles both: 'order.paid' (self-book) and 'payment_link.paid' (phone-book)
+//this webhook handle order.paid and layment_link.paid events
 export const razorpayWebhook = async (req, res) => {
     // ── Verify Signature ─────────────────────────────────────────────────────
     const secret = process.env.RAZORPAY_WEBHOOK_SECRET;
@@ -120,7 +118,7 @@ export const razorpayWebhook = async (req, res) => {
                 });
             }
 
-            console.log(`[Razorpay Webhook] ✅ Payment confirmed for appointment ${appointmentId}`);
+            console.log(`[Razorpay Webhook]  Payment confirmed for appointment ${appointmentId}`);
         }
 
         res.status(200).send('OK');
