@@ -1,0 +1,188 @@
+PhysioCare
+Product Requirements Document (PRD)
+Version 2.0 (MVP) — Solo-Doctor Model, Clerk Auth
+Physiotherapy & Chiropractic Practice Management Platform
+1. Overview
+1.1 Purpose
+PhysioCare is a centralized web portal designed to digitize physiotherapy and chiropractic patient management, exercise tracking, follow-up monitoring, and billing. The platform's central goal is to make patients exercise consistently at home and to give the Doctor objective, data-driven visibility into that consistency and any issues that arise, reviewed in full at the patient's next visit.
+1.2 Problem Statement
+Physiotherapy clinics currently rely on paper records, verbal recollection of patient compliance, and manual billing. This leads to:
+Inaccurate visibility into whether patients are completing prescribed home exercises.
+No structured record of pain levels or issues a patient experienced between visits.
+Manual, error-prone invoicing and payment tracking, with no safeguard against double-counted or lost partial payments.
+Loss of historical treatment data across visits.
+1.3 Goals (MVP)
+Provide a single portal covering patient registration, appointments, treatment plans, exercise tracking, and billing.
+Give the Doctor objective, data-driven visibility into patient compliance and pain trends, reviewed at the next visit rather than through a separate between-visit triage process.
+Allow patients to access exercise instructions, videos, and log completion independently, every day, with minimal friction.
+Digitize invoicing and payment records for the clinic, with protection against payment-tracking race conditions.
+Keep the system lean enough to run reliably on low-cost, resource-constrained hosting (1-core / 2GB RAM class infrastructure).
+1.4 Explicit Scope Decisions
+Two scope decisions shape this version of the product and are called out deliberately rather than left implicit:
+No Assistant Doctor role. The Doctor personally maintains the exercise library and creates treatment plans — there is no supervisor/draft/approval hierarchy. This was removed to reduce MVP build complexity, not deferred as a partial feature.
+No standalone feedback/triage workflow. Patients record pain levels, comments, and optional issue flags directly alongside their daily exercise logs. There is no separate inbox of open complaints for staff to triage between visits — the Doctor reviews the patient's full log history at the next consultation. A patient with something urgent enough to need attention sooner is expected to call the clinic directly; this is a deliberate simplicity trade-off for MVP.
+1.5 Out of Scope (Future Versions)
+WhatsApp / SMS reminders
+Teleconsultation (video calls)
+Native mobile applications
+AI-based posture analysis
+Multi-clinic / multi-location support
+Re-introducing an Assistant Doctor role or a feedback triage workflow, should clinic operations later require it
+2. User Roles & Permissions
+2.1 Admin
+Manages system-level configuration and user accounts.
+Create, edit, deactivate user accounts (all roles)
+Assign and change user roles
+View system-wide data for oversight
+2.2 Patient
+View assigned exercises (with sets, reps, frequency, sessions per day)
+Watch exercise demonstration videos
+Record completed exercise sets per session, every day the app is opened
+Log pain levels and comments on any session, and optionally flag a concern (increased pain, exercise difficulty, new symptom, general concern) with an attached photo, video, or PDF
+View appointments
+View invoices, amount paid, and payment history
+2.3 Receptionist
+Register new patients (phone-call or walk-in)
+Schedule and manage appointments on behalf of a patient, or confirm appointments a patient booked themselves (calendar view)
+Generate invoices
+Record payments (full or partial, with running balance tracked automatically)
+2.4 Doctor
+In this version, the Doctor is the sole clinical role — there is no Assistant Doctor. The Doctor's responsibilities therefore span both clinical and exercise-library duties:
+Diagnose patients and record clinical notes during consultations
+Create and maintain the exercise library (name, video, instructions, target body part)
+Create treatment plans, always linked to a consultation
+Assign exercises from the library with sets, reps, frequency, sessions/day, and date range
+Review patient progress, compliance history, and any logged concerns directly at the patient's next visit
+Modify or discontinue treatment plan exercises
+3. System Workflow
+3.1 Patient Registration
+Patients can be onboarded in two ways:
+Option A: Patient self-registers through the portal (identity handled by Clerk; phone number is the primary identifier).
+Option B: Receptionist registers the patient during a phone call or clinic visit.
+Patient profile captures: basic information, contact details (phone primary, email optional), medical history, previous consultations, and patient status (active / inactive / discharged).
+3.2 Appointment Booking
+Appointments can be booked by either the Patient or the Receptionist — the system records who actually made the booking separately from who the appointment is for, so a Receptionist can book on a Patient's behalf (e.g. a phone call) without that being confused with self-service booking. Each appointment includes a start and end timestamp, the assigned doctor, and a visit reason. The calendar view supports filtering by doctor and date.
+3.3 Consultation
+The Doctor examines the patient and records diagnosis, clinical notes, and treatment recommendations. Each booked appointment can produce at most one consultation record, preventing accidental duplicate entries for the same visit; ad-hoc consultations not tied to a booked slot are also supported.
+Example diagnosis: Neck Pain, Cervical Spondylosis.
+Every treatment plan must originate from a consultation (enforced at the data level).
+3.4 Exercise Assignment
+The Doctor maintains the exercise library (name, video, instructions, target body part) and selects exercises from it when building a patient's treatment plan, specifying:
+Sets and repetitions
+Frequency type: Daily, Alternate Days, Mon/Wed/Fri, Tue/Thu/Sat, or Custom Days
+Sessions per day (e.g. morning + evening = 2 sessions)
+Start date and end date
+Example: Neck Stretch — 3 sets, 10 reps, Mon/Wed/Fri, sessions per day = 2, for 4 weeks.
+A treatment plan becomes active immediately upon creation — there is no draft or approval step, since there is no second clinical role to approve it.
+3.5 Patient Home Exercise Program
+Patients log into the portal and see exercises scheduled for the current day, pre-generated for them rather than calculated on the fly at login. For each exercise and each session, the patient can:
+Watch the exercise video and read instructions
+Record completed sets per session
+Log pain level (0-10) and comments
+Optionally flag a concern (increased pain, exercise difficulty, new symptom, or general concern) on the same entry, with an optional photo, video, or PDF attached
+There is no separate feedback form — a concern is simply additional information on the same daily log entry the patient is already filling in, which keeps the experience to one simple action per session rather than two.
+3.6 Progress Monitoring & Follow-Up Consultation
+When a patient returns for a follow-up visit, the Doctor reviews the patient's full log history directly: exercise completion counts, compliance percentage, pain trends, and any concerns flagged along the way. There is no separate staff-facing triage queue between visits — review happens at the point of care, where the Doctor has full clinical context. This enables better treatment decisions based on actual patient activity rather than verbal recollection, and the Doctor may modify the treatment plan (e.g., change frequency or discontinue exercises) while preserving the history of what was previously prescribed.
+3.7 Billing
+The Receptionist generates invoices for consultation fees, therapy sessions, and follow-up visits. Each invoice tracks a running amount_paid balance that updates immediately as each payment is recorded, so the system always knows precisely how much remains due without needing to re-tally individual payment records on each check — important when multiple payments might be recorded against the same invoice in quick succession. Invoice status (unpaid, paid, partially paid, cancelled) reflects this balance.
+4. Functional Requirements Summary
+Module
+Key Capabilities
+Primary Roles
+Identity & Access
+Phone-based identity via Clerk, role assignment
+Admin, all roles
+Patient Management
+Registration, profile, medical history, patient status
+Receptionist, Patient, Admin
+Appointment Management
+Booking by patient or receptionist, calendar, start/end timestamps
+Patient, Receptionist, Doctor
+Consultation
+Diagnosis, clinical notes, one-to-one link with appointment
+Doctor
+Exercise Library
+Exercise catalog, videos, instructions, target body part
+Doctor
+Treatment Plans
+Exercise assignment with sets/reps/frequency/sessions per day
+Doctor
+Exercise & Concern Logging
+Daily due-exercise view, session-wise logging, pain levels, optional concern flag with attachments
+Patient
+Progress Review
+Compliance %, pain trend and concern review at next visit
+Doctor
+Billing
+Invoice generation, race-safe payment recording, payment history
+Receptionist, Patient
+5. Exercise Frequency & Session Model
+This is a core MVP design decision that affects exercise tracking, compliance calculation, and the patient's daily view.
+5.1 Frequency Types
+Daily — exercise is due every day in the date range.
+Alternate Days — anchored to the exercise's start date (day 1, 3, 5, ... of the range).
+Mon/Wed/Fri — preset weekday pattern.
+Tue/Thu/Sat — preset weekday pattern.
+Custom Days — doctor selects any combination of weekdays, internally stored as a compact weekday bitmask for fast due-date checks rather than a more expensive structured format.
+5.2 Sessions Per Day
+Each treatment plan exercise also has a sessions_per_day value (default 1). On a due day, the patient sees one loggable entry per session (e.g., Session 1, Session 2), each independently tracked with its own sets-completed, pain level, and comments.
+5.3 Compliance Calculation
+Compliance percentage is precomputed and stored as two running counters — expected sessions (calculated once when the exercise is assigned) and completed sessions (incremented every time the patient logs a session) — rather than recalculated from scratch on every dashboard view. This keeps the Doctor's progress review fast and avoids placing repeated heavy computation on the server, which matters given the platform's lean hosting target (see Section 7).
+Compliance % = (Completed sessions) / (Expected sessions) x 100
+5.4 Daily Schedule
+Rather than calculating “what is due today” for every patient at the moment they log in, the full schedule of expected sessions for a treatment plan is generated once, upfront, when the plan is created. This means the patient's daily view is a simple, instant lookup rather than a calculation performed fresh on every login — important when many patients may open the app around the same time of day.
+6. Example Scenario
+Exercise
+Sets x Reps
+Frequency
+Sessions/Day
+Duration
+Neck Stretch
+3 x 10
+Mon/Wed/Fri
+2
+4 Weeks
+Shoulder Rotation
+2 x 15
+Daily
+1
+4 Weeks
+Routine log example: patient completes 2 of 3 assigned sets of Shoulder Rotation, logs pain level 4/10, and adds the comment “Mild discomfort in shoulder” — all in the same entry, no separate feedback step.
+Flagged concern example: while logging Neck Stretch, the patient notes “Neck pain increases during stretching,” sets pain level to 7/10, and flags issue type “increased pain.” This is visible in the patient's log history, which the Doctor reviews in full at the next consultation.
+7. Technology Stack
+Layer
+Technology
+Frontend
+React
+Backend
+Node.js, Express.js
+Database
+PostgreSQL
+ORM
+Drizzle ORM
+Identity & Authentication
+Clerk (phone-based OTP); Postgres stores no credentials, only a synced profile
+Connection Management
+PgBouncer (connection pooling, sized for low-RAM hosting)
+Deployment
+Linux VPS / Cloud Server (1-core / 2GB RAM class target)
+Authentication is fully delegated to Clerk. A Svix-verified webhook in the Express backend listens for Clerk's user lifecycle events to keep each user's name, phone, and email in sync with Postgres — the application database never sees or stores a password.
+8. MVP Scope Checklist
+Identity & Role Management via Clerk (incl. Admin)
+Patient Management with status (active / inactive / discharged)
+Appointment Management (booking by patient or receptionist, start/end timestamps, calendar)
+Consultation records, one-to-one with appointments, linked to treatment plans
+Exercise Library maintained by the Doctor
+Treatment Plan Assignment (frequency + sessions per day)
+Exercise Logging with integrated pain level, comments, and optional concern flag + attachments
+Progress Review at point of care (no separate triage workflow)
+Billing and Invoice Management with race-safe payment tracking
+Doctor Dashboard
+9. Future Considerations (Post-MVP)
+WhatsApp / SMS appointment and exercise reminders
+Teleconsultation support
+Mobile applications (iOS / Android)
+AI-based posture analysis from uploaded photos/videos
+Multi-clinic support (would require a clinic identifier across most tables)
+Audit/history trail for treatment plan changes
+Re-introduce an Assistant Doctor role and/or a between-visit feedback triage workflow, if clinic volume grows enough that the Doctor can no longer review everything at the point of care

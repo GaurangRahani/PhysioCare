@@ -87,6 +87,7 @@ export const createExerciseLog = async (req, res) => {
             comments,
             issue_type,
             attachment_urls,
+            is_skipped,
         } = req.body;
 
         const patient_id = req.user.id;
@@ -198,6 +199,7 @@ export const createExerciseLog = async (req, res) => {
                 comments,
                 issue_type,
                 attachment_urls,
+                is_skipped: is_skipped || false,
             }).returning();
             newLog = inserted;
 
@@ -262,10 +264,10 @@ export const getExerciseLogs = async (req, res) => {
 
 
         const flagged = logs.filter(
-            log => (log.pain_level != null && log.pain_level >= 7) || log.issue_type != null
+            log => (log.pain_level != null && log.pain_level >= 7) || log.issue_type != null || log.is_skipped
         );
         const normal = logs.filter(
-            log => (log.pain_level == null || log.pain_level < 7) && log.issue_type == null
+            log => (log.pain_level == null || log.pain_level < 7) && log.issue_type == null && !log.is_skipped
         );
 
         return res.status(200).json({

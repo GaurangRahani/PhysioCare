@@ -26,7 +26,7 @@ router.post(
 
 // Search/list all patients
 router.get(
-    '/patients',
+    '/patients/search',
     requireAuth,
     requireRole(['receptionist', 'doctor']),
     searchPatients

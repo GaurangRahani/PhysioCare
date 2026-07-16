@@ -186,6 +186,90 @@ export const createTreatmentPlan = async (req, res) => {
     }
 };
 
+// add exercise to existing plan
+export const addExerciseToPlan = async (req, res) => {
+    try {
+        const { id } = req.params; // treatment_plan_id
+        let {
+            exercise_id,
+            sets,
+            reps,
+            sessions_per_day = 1,
+            frequency_type,
+            frequency_days,
+            start_date,
+            end_date,
+            notes
+        } = req.body;
+
+        const [plan] = await db.select().from(treatmentPlans).where(eq(treatmentPlans.id, id));
+        if (!plan) return res.status(404).json({ success: false, message: 'Treatment plan not found' });
+        if (plan.status !== 'active') return res.status(400).json({ success: false, message: 'Cannot add exercises to a non-active plan.' });
+
+        // Default dates to plan dates if not provided
+        const final_start_date = start_date || plan.start_date;
+        const final_end_date = end_date || plan.end_date;
+
+        if (final_end_date > plan.end_date) {
+            return res.status(400).json({ success: false, message: `end_date cannot be after the plan's end date (${plan.end_date}).` });
+        }
+        if (final_start_date < plan.start_date) {
+            return res.status(400).json({ success: false, message: `start_date cannot be before the plan's start date (${plan.start_date}).` });
+        }
+
+        // Encode frequency days
+        let encodedFrequencyDays = null;
+        if (frequency_type === 'custom_days') {
+            if (!frequency_days) return res.status(400).json({ success: false, message: 'frequency_days is required when frequency_type is custom_days.' });
+            encodedFrequencyDays = Array.isArray(frequency_days) ? encodeDays(frequency_days) : parseInt(frequency_days, 10);
+            if (!encodedFrequencyDays || encodedFrequencyDays <= 0) return res.status(400).json({ success: false, message: 'frequency_days must select at least one valid day.' });
+        } else if (frequency_type === 'mon_wed_fri') {
+            encodedFrequencyDays = 21;
+        } else if (frequency_type === 'tue_thu_sat') {
+            encodedFrequencyDays = 42;
+        } else if (frequency_type && ['daily', 'alternate_days'].includes(frequency_type)) {
+            encodedFrequencyDays = null;
+        } else if (!frequency_type) {
+            return res.status(400).json({ success: false, message: 'frequency_type is required.' });
+        }
+
+        // Pre-calculate expected sessions
+        const tempTpe = { frequency_type, frequency_days: encodedFrequencyDays, start_date: final_start_date, end_date: final_end_date, sessions_per_day };
+        const expected_sessions_count = calculateExpectedSessions(tempTpe);
+
+        if (expected_sessions_count === 0) {
+            return res.status(400).json({ success: false, message: `This configuration results in 0 expected sessions.` });
+        }
+
+        const [insertedTPE] = await db.insert(treatmentPlanExercises).values({
+            treatment_plan_id: plan.id,
+            exercise_id,
+            sets,
+            reps,
+            sessions_per_day,
+            frequency_type,
+            frequency_days: encodedFrequencyDays,
+            start_date: final_start_date,
+            end_date: final_end_date,
+            expected_sessions_count,
+            notes,
+        }).returning();
+
+        // Generate schedule in background
+        generateSchedule(insertedTPE.id);
+
+        return res.status(201).json({ 
+            success: true, 
+            message: `Exercise added successfully. ${expected_sessions_count} sessions scheduled.`, 
+            exercise: insertedTPE
+        });
+
+    } catch (error) {
+        console.error('Error adding exercise to plan:', error);
+        return res.status(500).json({ success: false, message: 'Server error' });
+    }
+};
+
 //mark as complete
 export const completeTreatmentPlan = async (req, res) => {
     try {

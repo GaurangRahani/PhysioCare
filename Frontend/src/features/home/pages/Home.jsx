@@ -17,51 +17,50 @@ const Home = () => {
   return (
     <div className="w-full">
       {/* Hero Section */}
-      <section className="relative bg-primary/5 py-20 lg:py-32 overflow-hidden">
+      <section className="relative bg-cover bg-center overflow-hidden z-10 min-h-[700px] lg:min-h-[800px] xl:min-h-[1085px] flex items-center" style={{ backgroundImage: "url('/images/main-banner/bg1.jpg')" }}>
+        {/* Bottom wave shape */}
+        <div className="absolute bottom-0 left-0 w-full h-full bg-no-repeat bg-left-bottom bg-[length:100%] -z-10" style={{ backgroundImage: "url('/images/main-banner/shape1.png')" }}></div>
+        
         <div className="container mx-auto px-4 md:px-6 relative z-10">
-          <div className="max-w-3xl mx-auto text-center">
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-secondary/10 text-secondary text-sm font-semibold mb-8">
-              <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-secondary opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-secondary"></span>
-              </span>
-              Accepting New Patients
+          <div className="flex flex-col md:flex-row items-center">
+            <div className="md:w-7/12 text-left z-20">
+              <h6 className="text-primary font-bold text-lg md:text-xl mb-5 inline-block py-1 px-4 relative">
+                We Provide All Health Care Solution
+                <span className="absolute inset-0 bg-[url('/images/shap/ext-blue.png')] bg-center bg-repeat opacity-50 -z-10"></span>
+              </h6>
+              <h1 className="text-4xl md:text-5xl lg:text-6xl xl:text-[55px] font-extrabold text-dark mb-[50px] leading-[1.3]">
+                Protect Your Health And Take Care Of Your Health
+              </h1>
+              <div className="flex flex-wrap items-center gap-4">
+                <Link to="/book" className="px-10 py-4 bg-secondary text-light font-semibold rounded hover:bg-dark transition-all duration-300 text-lg shadow-lg">
+                  Read More
+                </Link>
+                <SignedOut>
+                  <Link to="/login" className="px-10 py-4 bg-primary text-light font-semibold rounded hover:shadow-lg transition-all duration-300 text-lg">
+                    Patient Portal
+                  </Link>
+                </SignedOut>
+                <SignedIn>
+                  <Link to="/dashboard" className="px-10 py-4 bg-primary text-light font-semibold rounded hover:shadow-lg transition-all duration-300 text-lg">
+                    Go to Dashboard
+                  </Link>
+                </SignedIn>
+              </div>
             </div>
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-heading mb-6 leading-tight">
-              Your Journey to <span className="text-primary">Recovery</span> Starts Here.
-            </h1>
-            <p className="text-lg md:text-xl text-body mb-10 leading-relaxed max-w-2xl mx-auto">
-              Experience a seamless blend of expert in-clinic physiotherapy and dynamic at-home recovery plans, tailored just for you.
-            </p>
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-              <Link to="/book" className="w-full sm:w-auto px-8 py-4 bg-primary text-light font-semibold rounded hover:bg-dark hover:shadow-lg transition-all duration-300 text-lg">
-                Book an Appointment
-              </Link>
-              <SignedOut>
-                <Link to="/login" className="w-full sm:w-auto px-8 py-4 bg-light text-primary font-semibold rounded border border-primary/20 hover:border-primary hover:bg-primary/5 transition-all duration-300 text-lg">
-                  Patient Portal
-                </Link>
-              </SignedOut>
-              <SignedIn>
-                <Link to="/dashboard" className="w-full sm:w-auto px-8 py-4 bg-light text-primary font-semibold rounded border border-primary/20 hover:border-primary hover:bg-primary/5 transition-all duration-300 text-lg">
-                  Go to Dashboard
-                </Link>
-              </SignedIn>
+            <div className="md:w-5/12 mt-12 md:mt-0 relative z-20 flex justify-center lg:justify-end">
+              <div className="relative animate-[up-down_2.5s_infinite_alternate] lg:-mr-[160px] lg:-ml-[50px]">
+                <img src="/images/main-banner/doctor.png" alt="Doctor" className="w-full max-w-lg lg:max-w-none h-auto object-contain z-20 relative" />
+              </div>
             </div>
           </div>
         </div>
         
-        {/* Decorative elements */}
-        <div className="absolute top-0 right-0 -translate-y-12 translate-x-1/3 opacity-10 pointer-events-none">
-          <svg width="404" height="404" fill="none" viewBox="0 0 404 404" aria-hidden="true">
-            <defs>
-              <pattern id="85737c0e-0916-41d7-917f-596dc7edfa27" x="0" y="0" width="20" height="20" patternUnits="userSpaceOnUse">
-                <rect x="0" y="0" width="4" height="4" fill="currentColor"></rect>
-              </pattern>
-            </defs>
-            <rect width="404" height="404" fill="url(#85737c0e-0916-41d7-917f-596dc7edfa27)"></rect>
-          </svg>
-        </div>
+        {/* Decorative shapes exactly mapped from CSS */}
+        <img className="absolute bottom-[35%] left-[5%] animate-[pulse_3s_ease-in-out_infinite] hidden md:block" src="/images/shap/trangle-orange.png" alt="" />
+        <img className="absolute top-[24%] left-[51%] animate-[bounce_4s_infinite] hidden md:block" src="/images/shap/square-blue.png" alt="" />
+        <img className="absolute top-[23%] left-[17%] animate-[pulse_4s_ease-in-out_infinite] hidden md:block" src="/images/shap/chicle-blue-2.png" alt="" />
+        <img className="absolute bottom-[15%] left-[41%] animate-[spin_10s_linear_infinite] hidden md:block z-10" src="/images/shap/plus-orange.png" alt="" />
+        <img className="absolute bottom-[150px] right-[150px] animate-[pulse_5s_ease-in-out_infinite] hidden xl:block" src="/images/shap/wave-orange.png" alt="" />
       </section>
 
       {/* Features Section */}

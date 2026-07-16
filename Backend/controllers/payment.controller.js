@@ -189,3 +189,78 @@ export const getInvoiceById = async (req, res) => {
         return res.status(500).json({ success: false, message: 'Server error' });
     }
 };
+
+// ─── 4. POST /api/payments/verify ─────────────────────────────────────────────
+// Synchronous verification for client-side Razorpay flow (crucial when webhooks are blocked, e.g. local dev)
+export const verifyPayment = async (req, res) => {
+    try {
+        const { razorpay_order_id, razorpay_payment_id, razorpay_signature, appointment_id } = req.body;
+
+        const secret = process.env.RAZORPAY_KEY_SECRET;
+        const generatedSignature = crypto
+            .createHmac('sha256', secret)
+            .update(razorpay_order_id + "|" + razorpay_payment_id)
+            .digest('hex');
+
+        if (generatedSignature !== razorpay_signature) {
+            return res.status(400).json({ success: false, message: 'Invalid payment signature' });
+        }
+
+        // Signature is valid. Proceed to update DB.
+        const [appointment] = await db.select().from(appointments).where(eq(appointments.id, appointment_id));
+        if (!appointment) return res.status(404).json({ success: false, message: 'Appointment not found' });
+
+        if (appointment.payment_status === 'paid_online' || appointment.status === 'scheduled') {
+            return res.status(200).json({ success: true, message: 'Already processed' });
+        }
+
+        // Transaction
+        await db.transaction(async (tx) => {
+            await tx.update(appointments)
+                .set({
+                    status: 'scheduled',
+                    payment_status: 'paid_online',
+                    payment_expires_at: null
+                })
+                .where(eq(appointments.id, appointment_id));
+
+            const invoiceNumber = await generateInvoiceNumber();
+            const [newInvoice] = await tx.insert(invoices).values({
+                patient_id: appointment.patient_id,
+                appointment_id: appointment.id,
+                invoice_number: invoiceNumber,
+                description: appointment.visit_reason || 'Physiotherapy consultation',
+                amount: 500, // Standard consultation fee
+                status: 'paid',
+                issued_by: appointment.patient_id
+            }).returning();
+
+            await tx.insert(payments).values({
+                invoice_id: newInvoice.id,
+                amount: 500,
+                payment_method: 'online',
+                transaction_reference: razorpay_order_id,
+                recorded_by: appointment.patient_id
+            });
+        });
+
+        // Fire confirmation email
+        const [patient] = await db.select().from(users).where(eq(users.id, appointment.patient_id));
+        const [doctor] = await db.select().from(users).where(eq(users.id, appointment.doctor_id));
+        
+        if (patient && doctor) {
+            sendAppointmentConfirmationEmail({
+                to: patient.email,
+                first_name: patient.name.split(' ')[0],
+                doctor_name: doctor.name,
+                appointment_date: appointment.appointment_date,
+                start_time: appointment.start_time
+            });
+        }
+
+        return res.status(200).json({ success: true, message: 'Payment verified and appointment confirmed' });
+    } catch (error) {
+        console.error('Error verifying payment:', error);
+        return res.status(500).json({ success: false, message: 'Server error' });
+    }
+};

@@ -1,5 +1,5 @@
 import express from 'express';
-import { getPatientProfile, updatePatientProfile, getAllPatients, getPatientHistory, getTodaySchedule, getPatientProgress, dischargePatient, reactivatePatient } from '../controllers/patient.controller.js';
+import { getPatientProfile, updatePatientProfile, getAllPatients, getPatientHistory, getTodaySchedule, getPatientProgress, dischargePatient, reactivatePatient, getPatientOverview } from '../controllers/patient.controller.js';
 import { validate } from '../middlewares/validate.middleware.js';
 import { updatePatientProfileSchema } from '../validators/patient.validator.js';
 import { requireAuth, requireRole } from '../middlewares/auth.middleware.js';
@@ -27,5 +27,8 @@ router.post('/:patient_id/discharge', requireAuth, requireRole(['doctor']), disc
 
 // Reactivate a discharged patient so they can be booked again
 router.patch('/:patient_id/reactivate', requireAuth, requireRole(['doctor', 'admin']), reactivatePatient);
+
+// Doctor views the patient's lightweight overview before consultation
+router.get('/:patient_id/overview', requireAuth, requireRole(['doctor', 'admin']), getPatientOverview);
 
 export default router;

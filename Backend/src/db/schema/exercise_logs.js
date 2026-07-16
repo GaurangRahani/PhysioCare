@@ -1,4 +1,4 @@
-import { pgTable, uuid, integer, date, text, timestamp, pgEnum, unique } from "drizzle-orm/pg-core";
+import { pgTable, uuid, integer, date, text, timestamp, pgEnum, unique, boolean } from "drizzle-orm/pg-core";
 import { users } from "./users.js";
 import { treatmentPlanExercises } from "./treatment_plan_exercises.js";
 
@@ -14,6 +14,7 @@ export const exerciseLogs = pgTable("exercise_logs", {
     pain_level: integer("pain_level"),
     comments: text("comments"),
     issue_type: issueTypeEnum("issue_type"),
+    is_skipped: boolean("is_skipped").default(false).notNull(),
     attachment_urls: text("attachment_urls").array(),
     created_at: timestamp("created_at", { withTimezone: true }).defaultNow(),
 }, (table) => ({

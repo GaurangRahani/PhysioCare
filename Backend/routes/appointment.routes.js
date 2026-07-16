@@ -6,7 +6,8 @@ import {
     getAppointments,
     cancelAppointment,
     updateAppointmentStatus,
-    payAtDesk
+    payAtDesk,
+    getAvailableSlots
 } from '../controllers/appointment.controller.js';
 import { requireAuth, requireRole } from '../middlewares/auth.middleware.js';
 import { validate } from '../middlewares/validate.middleware.js';
@@ -46,6 +47,12 @@ router.post(
 );
 
 // ── View appointments (role-based filtering happens in controller) ─────────────
+router.get(
+    '/slots',
+    requireAuth,
+    getAvailableSlots
+);
+
 router.get(
     '/',
     requireAuth,

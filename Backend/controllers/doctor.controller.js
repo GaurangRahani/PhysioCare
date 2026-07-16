@@ -64,3 +64,28 @@ export const updateDoctorProfile = async (req, res) => {
     return res.status(500).json({ success: false, message: 'Server error' });
   }
 };
+// GET /api/doctors - List all doctors (public/receptionist)
+export const getAllDoctors = async (req, res) => {
+  try {
+    const query = await db.select({
+      id: users.id,
+      name: users.name,
+      email: users.email,
+      phone: users.phone,
+      specialization: doctorProfiles.specialization,
+      qualification: doctorProfiles.qualification
+    })
+    .from(users)
+    .leftJoin(doctorProfiles, eq(users.id, doctorProfiles.user_id))
+    .where(eq(users.role, 'doctor'));
+
+    return res.status(200).json({
+      success: true,
+      doctors: query
+    });
+  } catch (error) {
+    console.error('Error fetching doctors list:', error);
+    return res.status(500).json({ success: false, message: 'Server error' });
+  }
+};
+

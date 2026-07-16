@@ -13,6 +13,7 @@ import consultationRoutes from './routes/consultation.routes.js';
 import exerciseRoutes from './routes/exercise.routes.js';
 import treatmentPlanRoutes from './routes/treatmentPlan.routes.js';
 import exerciseLogRoutes from './routes/exerciseLog.routes.js';
+import authRoutes from './routes/auth.routes.js';
 import { startExpiryJob, startMissedScheduleSweep } from './jobs/expiry.job.js';
 
 const app = express();
@@ -21,14 +22,15 @@ const PORT = process.env.PORT || 5000;
 app.use(cors());
 app.use(clerkMiddleware());
 
-// ── Webhook routes MUST use express.raw() — before express.json() ─────────────
+import { razorpayWebhook } from './controllers/payment.controller.js';
+
 app.use('/api/webhooks/clerk', express.raw({ type: 'application/json' }), webhookRoutes);
-// Razorpay webhook ONLY needs raw body — mount just the webhook path
-app.use('/api/payments/webhook', express.raw({ type: 'application/json' }), paymentRoutes);
+app.post('/api/payments/webhook/razorpay', express.raw({ type: 'application/json' }), razorpayWebhook);
 
 app.use(express.json());
 
 // ── API Routes ─────────────────────────────────────────────────────────
+app.use('/api/auth', authRoutes);
 app.use('/api/payments', paymentRoutes); // invoice GET endpoints use JSON body───────
 app.use('/api/patients', patientRoutes);
 app.use('/api/doctors', doctorRoutes);

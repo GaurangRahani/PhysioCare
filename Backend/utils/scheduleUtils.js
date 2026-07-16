@@ -7,8 +7,13 @@ export const DOW_TO_BIT = [64, 1, 2, 4, 8, 16, 32];
  * Encode an array of day name strings to a bitmask integer.
  * e.g. ['Mon', 'Wed', 'Fri'] → 21
  */
-export function encodeDays(dayNames) {
-    return dayNames.reduce((acc, d) => acc | (DAY_BITS[d] ?? 0), 0);
+export function encodeDays(daysArray) {
+    return daysArray.reduce((acc, d) => {
+        if (typeof d === 'number') {
+            return acc | (DOW_TO_BIT[d] ?? 0);
+        }
+        return acc | (DAY_BITS[d] ?? 0);
+    }, 0);
 }
 
 /**

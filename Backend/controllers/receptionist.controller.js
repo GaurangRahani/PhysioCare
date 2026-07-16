@@ -44,6 +44,10 @@ export const createPatient = async (req, res) => {
                 password: tempPassword,
                 firstName: name.split(' ')[0],
                 lastName: name.split(' ').slice(1).join(' ') || '',
+                publicMetadata: {
+                    role: 'patient',
+                    force_password_change: true
+                },
                 skipPasswordChecks: false,
             });
         } catch (clerkError) {

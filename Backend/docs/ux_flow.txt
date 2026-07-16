@@ -1,0 +1,604 @@
+PhysioCare
+Complete UX Flow Document
+Version 1.0 — Every Screen, Every Role, Every Flow
+0. How to Read This Document
+This document walks through every screen in PhysioCare, organized by role: Authentication (shared), Receptionist, Doctor, Patient, and Admin. Each screen includes a visual mockup, a description of what the user is doing, and the API/backend logic the screen depends on, so the UX and the data model stay traceable to each other.
+Screens are numbered sequentially across the whole document so they can be referenced unambiguously during development and QA.
+0.1 Roles Covered
+Shared — Login, Self-Registration, Password Setup, Password Reset
+Receptionist — Dashboard, Booking (new and existing patient), Payment Collection, Patient Search/Registration, Calendar Management
+Doctor — Dashboard, Patient Clinical View, Consultation, Treatment Plan Builder, Exercise Library, Discharge
+Patient — Dashboard (Today), Exercise Logging, Appointments, Self-Booking & Payment, Invoices, Profile, History
+Admin — User Management, Role Assignment, System Overview
+1. Authentication — Shared by All Roles
+Every role lands on the same login page. After authentication, the frontend reads the user's role from the users table and routes to the correct dashboard.
+Screen 1 — Login
++-----------------------------------------------+
+|              PhysioCare                        |
+|                                                 |
+|   Phone Number                                  |
+|   [+91 _______________________________]         |
+|                                                 |
+|   Password                                      |
+|   [___________________________________]         |
+|                                                 |
+|            [        Log In        ]             |
+|                                                 |
+|   Forgot password?                              |
+|   New patient?  [Create an Account]              |
++-----------------------------------------------+
+Login is handled by Clerk's React SDK embedded on this page. PhysioCare's frontend never touches the password directly.
+API / Logic: Clerk session created client-side. On success, frontend calls GET /api/users/me with the Clerk session token, resolving clerk_id to internal users.id + role, then routes to /receptionist, /doctor, /patient, or /admin.
+Screen 2 — Self-Registration (New Patient, Online)
++-----------------------------------------------+
+|              Create Your Account                |
+|                                                 |
+|   Full Name      [___________________________]  |
+|   Phone Number   [+91 _______________________]  |
+|   Email          [___________________________]  |
+|   Date of Birth  [___________________________]  |
+|                                                 |
+|            [   Create Account   ]               |
+|                                                 |
+|   Already have an account?  [Log In]             |
++-----------------------------------------------+
+The patient's own self-service path -- no urgency, no receptionist involved.
+API / Logic: POST /api/auth/self-register calls clerkClient.users.createUser with skipPasswordChecks:true, then INSERT users + patient_profiles, then generates a Clerk sign-in ticket and emails a Set Password link. Patient does not log in yet -- see Screen 3.
+Screen 3 — Set Password (via Emailed Link)
++-----------------------------------------------+
+|           Welcome to PhysioCare!                 |
+|                                                 |
+|   Set a password to activate your account.      |
+|                                                 |
+|   New Password    [_________________________]   |
+|   Confirm Password[_________________________]   |
+|                                                 |
+|            [    Set Password    ]               |
+|                                                 |
+|   Link expired?  [Request a new link]             |
++-----------------------------------------------+
+Reached only via the one-time ticket link in the welcome email. Clerk verifies the ticket's signature, expiry, and one-time-use, then stores the password on Clerk's own servers -- PhysioCare's backend is not involved in this step.
+API / Logic: Handled entirely by Clerk's SDK and servers. On success, patient is auto-signed-in and redirected to their dashboard (Screen 12). 'Request a new link' calls POST /api/auth/resend-ticket against the existing clerk_id -- never calls createUser again.
+Screen 4 — Forced Password Change (Receptionist-Created Accounts)
++-----------------------------------------------+
+|         Please Set a New Password                 |
+|                                                 |
+|   You logged in with a temporary password.      |
+|   Please choose a new password to continue.      |
+|                                                 |
+|   New Password     [_________________________]  |
+|   Confirm Password [_________________________]  |
+|                                                 |
+|            [    Update Password    ]            |
++-----------------------------------------------+
+Shown automatically, blocking access to the rest of the app, the first time a receptionist-created patient logs in with their emailed temporary password.
+API / Logic: Frontend checks a must_change_password flag immediately after login. If true, this screen is forced before any other route is reachable.
+Screen 5 — Forgot Password
++-----------------------------------------------+
+|              Reset Your Password                  |
+|                                                 |
+|   Enter the phone number or email linked          |
+|   to your account.                                |
+|                                                 |
+|   [_____________________________________]        |
+|                                                 |
+|            [   Send Reset Link   ]                |
+|   [<- Back to Login]                              |
++-----------------------------------------------+
+API / Logic: Delegated entirely to Clerk's built-in password-reset flow.
+2. Receptionist Flow
+The receptionist's job centers on one screen showing today's full picture, with booking, registration, and payment collection all reachable in two clicks or fewer from there.
+Screen 6 — Receptionist Dashboard
++-----------------------------------------------------+
+|  PhysioCare                          [Receptionist] |
++-----------------------------------------------------+
+|  TODAY -- Monday, 29 June 2026                       |
+|                                                       |
+|  Appointments Today: 8   Pending Payment: 2   New: 1  |
+|                                                       |
+|  TODAY'S APPOINTMENTS                                 |
+|  09:00  Rahul Mehta     Scheduled        [View]       |
+|  09:30  Priya Shah      Pending Payment  [Pay]         |
+|  10:00  --- BLOCKED ---                                |
+|  10:30  Gaurang Patel   Scheduled        [View]       |
+|  11:00  Open Slot                        [Book]        |
+|                                                       |
+|  [+ Book New Appointment]   [+ Register Patient]      |
++-----------------------------------------------------+
+The Pending Payment badge is the receptionist's main signal — it surfaces appointments booked by phone where payment has not yet landed, so unpaid holds never go unnoticed.
+API / Logic: GET /api/appointments/today returns appointments WHERE appointment_date = CURRENT_DATE for this doctor, joined with payment_status. Badge counts computed client-side from the same response.
+Screen 7 — Book Appointment, Step 1: Find Patient
++-----------------------------------------------+
+|  Find Patient                       Step 1 of 3 |
+|                                                 |
+|  [ Search name or phone number...          ]    |
+|                                                 |
+|  Results:                                       |
+|  Gaurang Patel    +91 98765 43210    [Select]    |
+|  Gaurang Shah      +91 91234 56789   [Select]    |
+|                                                 |
+|  Patient not found?  [+ Register New Patient]    |
++-----------------------------------------------+
+API / Logic: GET /api/patients/search?q= queries users WHERE name ILIKE or phone ILIKE. Debounced input, results update live.
+Screen 8 — Book Appointment, Step 2: Pick a Slot
++-----------------------------------------------+
+|  Pick a Slot                        Step 2 of 3 |
+|                                                 |
+|       JUNE 2026                                 |
+|  Mo Tu We Th Fr Sa                               |
+|  22 23 24 25 26 27                               |
+|  29 30                                           |
+|  Selected: Monday 29 June                        |
+|                                                 |
+|  Available slots:                                |
+|  09:00   09:30   10:00 TAKEN                     |
+|  10:30   11:00   11:30                           |
+|  12:00 BLOCKED   14:00                           |
+|                                                 |
+|  Visit reason: [___________________________]    |
++-----------------------------------------------+
+API / Logic: GET /api/appointments/slots?date=&doctor_id= reads doctor_profiles.availability_rules (weekly_routine or specific_dates override), generates all possible slots, subtracts already-booked active appointments. Returns only free slots.
+Screen 9 — Book Appointment, Step 3: Payment
++-----------------------------------------------+
+|  Payment                            Step 3 of 3 |
+|                                                 |
+|  Patient: Gaurang Patel                          |
+|  Slot: Mon 29 June, 09:00                        |
+|                                                 |
+|  How is this patient paying?                     |
+|  ( ) Paying now at desk (cash/card/UPI)          |
+|  ( ) Send payment link (patient pays online)     |
+|                                                 |
+|  Payment method: [Cash v]   Amount: Rs [800]     |
+|                                                 |
+|            [   Confirm Booking   ]               |
++-----------------------------------------------+
+At-desk path: single transaction inserting the appointment (status=scheduled, payment_status=paid_at_desk), a payments row, and an invoice row together. Phone-link path: appointment inserted as pending_payment with a 30-minute expiry window, Razorpay payment link generated and sent via SMS/email.
+API / Logic: POST /api/appointments with payment_collected:true (at-desk) or mode=phone (link). At-desk: one transaction inserts appointments + payments + invoices. Phone: appointment row + Razorpay payment link creation + razorpay_link_id stored + payment_expires_at set.
+Screen 10 — Register New Patient (Inline During Booking)
++-----------------------------------------------+
+|  Register New Patient                            |
+|                                                 |
+|  Full Name      [___________________________]   |
+|  Phone *        [+91 _______________________]   |
+|  Email          [___________________________]   |
+|  Date of Birth  [___________________________]   |
+|  Gender         [Male v]                          |
+|  Address        [___________________________]   |
+|                                                 |
+|  Medical History [_________________________]    |
+|                                                 |
+|  Emergency Contact Name   [_________________]   |
+|  Emergency Contact Phone  [_________________]   |
+|                                                 |
+|  An account will be created automatically.       |
+|  Patient receives login credentials via email.    |
+|                                                 |
+|  [Cancel]          [Register & Continue ->]      |
++-----------------------------------------------+
+Registration happens inline, never as a separate detour -- after submit, the receptionist lands directly back on Screen 8 (slot picker) with this patient already selected.
+API / Logic: POST /api/patients/register -> clerkClient.users.createUser({password: generatedPassword}) synchronously returns clerk_id -> INSERT users + patient_profiles immediately -> fire-and-forget email with the temporary password -> returns patient_id to frontend, which proceeds straight to slot selection. Catches Clerk duplicate-identifier errors and falls back to an existing-user lookup by phone/email.
+Screen 11 — Collect Payment at Desk (Resolving a Pending Booking)
++-----------------------------------------------+
+|  Collect Payment                                 |
+|                                                 |
+|  Patient:      Priya Shah                        |
+|  Appointment:  Today, 09:30                      |
+|  Amount Due:   Rs 800                            |
+|                                                 |
+|  Payment Method:                                  |
+|  ( ) Cash   ( ) Card Terminal   ( ) UPI          |
+|                                                 |
+|  Reference / Receipt No: [_________________]    |
+|                                                 |
+|            [   Mark as Paid   ]                  |
++-----------------------------------------------+
+Reached by tapping the Pending Payment badge on Screen 6. This is how the receptionist resolves a phone-booked appointment when the patient arrives without having paid the link.
+API / Logic: PUT /api/appointments/:id/pay -> transaction: update appointments (status=scheduled, payment_status=paid_at_desk), insert payments row, insert invoices row. Badge turns green on the dashboard immediately after.
+Screen 12 — Appointment Calendar (Receptionist View)
++-----------------------------------------------+
+|  Calendar                  [Day][Week][Month]    |
+|                                                 |
+|        Mon 29        Tue 30        Wed 1         |
+|  09:00 Rahul M.       Open          Open          |
+|  09:30 Priya S.       Sunil K.      Open          |
+|  10:00 BLOCKED        Open          Anita R.      |
+|  10:30 Gaurang P.     Open          Open          |
+|                                                 |
+|  [+ Block a Slot]   [+ New Appointment]            |
++-----------------------------------------------+
+Used for the broader week/month view rather than just today. 'Block a Slot' lets the receptionist mark time unavailable (doctor's personal appointment, lunch, holiday) without needing a patient — these become appointments rows with patient_id null and status blocked.
+API / Logic: GET /api/appointments?range=week reads the same availability + booked-slot logic as Screen 8, rendered as a grid. POST /api/appointments/block inserts a row with patient_id:null, status:'blocked'.
+3. Doctor Flow
+The doctor's screens follow the clinical sequence: review history, consult, build or modify a treatment plan. Every screen here is reached in a fixed forward path during a visit, with no need to navigate back and forth.
+Screen 13 — Doctor Dashboard
++-------------------------------------------------+
+|  PhysioCare                            [Doctor] |
++-------------------------------------------------+
+|  TODAY'S PATIENTS                                 |
+|  09:00  Rahul Mehta    First Visit     [Start]    |
+|  09:30  Priya Shah     Follow-up       [Start]    |
+|  10:30  Gaurang Patel  Follow-up       [Start]    |
+|                                                   |
+|  [Exercise Library]    [Active Patients]           |
++-------------------------------------------------+
+Intentionally minimal — the doctor's job is patient-facing, so this screen exists only to get them into a patient's record quickly.
+API / Logic: GET /api/appointments/today?doctor_id= filtered to status='scheduled', joined with consultations to label First Visit vs Follow-up.
+Screen 14 — Patient Clinical View (Overview Tab)
++---------------------------------------------------+
+|  <- Back   Gaurang Patel, 34M     Active           |
++---------------------------------------------------+
+|  [Overview][Current Plan][History][Start Visit ->] |
+|                                                     |
+|  CURRENT TREATMENT PLAN                              |
+|  Neck & Shoulder Recovery   Started: 1 June 2026     |
+|  Week 3 of 4                                         |
+|                                                     |
+|  Overall Compliance:  78%                            |
+|                                                     |
+|  Neck Stretch       95%  Good                        |
+|  Shoulder Rotation  58%  Low                          |
+|  Chin Tuck          80%  Good                         |
+|                                                     |
+|  FLAGGED ENTRIES                                      |
+|  24 Jun  Shoulder Rotation  Pain: 7/10                |
+|    'Sharp pain on the 3rd set, stopped early'         |
+|  21 Jun  General Concern                              |
+|    'Neck feels stiff in the morning'                  |
+|                                                     |
+|  PAIN TREND                                           |
+|  Week 1: avg 3.2   Week 2: avg 4.1   Week 3: avg 5.8  |
++---------------------------------------------------+
+This is what the doctor sees before saying a word to the patient — full compliance, flagged concerns, and pain trend, all derived from data the patient has already logged at home.
+API / Logic: GET /api/patients/:id/progress?treatment_plan_id= returns compliance per exercise (completed_sessions_count / expected_sessions_count), flagged entries (exercise_logs WHERE pain_level>=7 OR issue_type IS NOT NULL), and weekly pain averages.
+Screen 15 — Patient Clinical View (History Tab)
++---------------------------------------------------+
+|  Gaurang Patel — Full History                       |
++---------------------------------------------------+
+|  [Overview][Current Plan][History][Start Visit ->]  |
+|                                                     |
+|  1 June 2026   Initial Consultation                  |
+|    Diagnosis: Cervical Spondylosis                    |
+|    Plan: Neck & Shoulder Recovery (active)            |
+|                                                     |
+|  15 May 2026   Follow-up — Prior Episode               |
+|    Diagnosis: Lower Back Strain                        |
+|    Plan: Lower Back Recovery (completed, 91%)         |
+|                                                     |
+|  INVOICES                                             |
+|  INV-2026-0042   29 Jun   Rs 800   Paid                |
+|  INV-2026-0031   1 Jun    Rs 800   Paid                |
++---------------------------------------------------+
+Gives the doctor the complete clinical timeline for a returning patient — every past consultation, every past plan and its final compliance, and billing history — so nothing about the patient's history is ever lost between visits.
+API / Logic: GET /api/patients/:patient_id/history returns all consultations, all treatment_plans with final compliance, and all invoices for this patient, ordered by date descending.
+Screen 16 — Start Visit / New Consultation
++---------------------------------------------------+
+|  New Consultation — Gaurang Patel                    |
+|  Follow-up Visit | Mon 29 June 2026, 09:30            |
++---------------------------------------------------+
+|  Visit Type:  (*) Follow-up   ( ) Initial             |
+|  Reviewing plan: 'Neck & Shoulder Recovery'           |
+|                                                     |
+|  Diagnosis                                            |
+|  [Cervical Spondylosis -- improving________________] |
+|                                                     |
+|  Clinical Notes                                        |
+|  [Patient reports increased stiffness. ROM            |
+|   improved compared to last visit.________________]  |
+|                                                     |
+|  Treatment Recommendations                             |
+|  [Reduce Shoulder Rotation to alternate days.         |
+|   Add Cervical Retraction exercise._________________] |
+|                                                     |
+|     [Save Consultation & Continue to Plan ->]          |
++---------------------------------------------------+
+Visit Type and 'Reviewing plan' are pre-filled automatically when the doctor arrives here via a returning patient's Start Visit button — this is what makes the follow-up linkage explicit rather than inferred.
+API / Logic: POST /api/consultations validates appointment.status='scheduled', checks no consultation already exists for this appointment_id (unique constraint), then in one transaction inserts consultations (with consultation_type and previous_treatment_plan_id set) and updates appointments.status='completed'.
+Screen 17 — Treatment Plan Builder
++---------------------------------------------------+
+|  Treatment Plan — Gaurang Patel                       |
++---------------------------------------------------+
+|  (*) Modify existing plan 'Neck & Shoulder Recovery'  |
+|  ( ) Create a new plan                                |
+|                                                     |
+|  CURRENT EXERCISES                                     |
+|  Neck Stretch       3x10  Mon/Wed/Fri  2x/day          |
+|    [Edit] [Discontinue]                                |
+|  Shoulder Rotation  2x15  Daily        1x/day          |
+|    [Edit] [Discontinue]                                |
+|  Chin Tuck          2x10  Daily        1x/day          |
+|    [Edit] [Discontinue]                                |
+|                                                     |
+|  [+ Add Exercise]                                       |
+|                                                     |
+|         [   Save Plan & Finish Visit   ]               |
++---------------------------------------------------+
+API / Logic: Reached immediately after Screen 16 via Save & Continue. List reads treatment_plan_exercises WHERE treatment_plan_id= AND is_active=true.
+Screen 18 — Edit Exercise (Mid-Plan Modification)
++---------------------------------------------------+
+|  Edit Exercise — Shoulder Rotation                    |
+|                                                     |
+|  Sets [2]    Reps [15]                                 |
+|                                                     |
+|  Frequency:                                            |
+|  ( ) Daily  (*) Alternate Days  ( ) Mon/Wed/Fri         |
+|  ( ) Tue/Thu/Sat  ( ) Custom Days                       |
+|                                                     |
+|  Sessions per day: [1 v]                                |
+|  End Date: [30 June 2026]  (unchanged)                  |
+|                                                     |
+|  Note: Changing frequency updates the patient's        |
+|  schedule from today onward. Past history preserved.   |
+|                                                     |
+|         [Cancel]      [Save Changes]                    |
++---------------------------------------------------+
+The on-screen note is deliberate — the doctor needs to understand that this is not an in-place edit, it is a versioned change preserving the compliance history of what was actually prescribed during the period now ending.
+API / Logic: PATCH /api/treatment-plan-exercises/:id -> old row is_active=false, pending future patient_schedule rows for it deleted, new row inserted with new params and start_date=today, new expected_sessions_count calculated from today to end_date, background job regenerates schedule for the new row.
+Screen 19 — Add Exercise: Search Library
++---------------------------------------------------+
+|  Add Exercise                                          |
+|                                                     |
+|  Search: [cervical_____________________________]      |
+|                                                     |
+|  Cervical Retraction   Target: Neck    [Select]        |
+|  Cervical Rotation     Target: Neck    [Select]        |
+|  Cervical Side Bend    Target: Neck    [Select]        |
++---------------------------------------------------+
+API / Logic: GET /api/exercises?search=&active_only=true.
+Screen 20 — Add Exercise: Configure
++---------------------------------------------------+
+|  Configure — Cervical Retraction                       |
+|                                                     |
+|  Sets [3]    Reps [10]                                  |
+|                                                     |
+|  Frequency:  (*) Daily                                  |
+|  Sessions per day: [1 v]                                |
+|                                                     |
+|  Start Date: [29 June 2026] (today, auto-filled)        |
+|  End Date:   [30 July 2026]                              |
+|                                                     |
+|  Notes for patient: [Keep chin level, don't tilt head] |
+|                                                     |
+|  Expected sessions: 32  (calculated live)                |
+|                                                     |
+|              [   Add to Plan   ]                        |
++---------------------------------------------------+
+Expected sessions is computed live in the frontend using the same bitmask/date-range logic the backend uses — the doctor sees exactly how many sessions they are prescribing before confirming.
+API / Logic: POST /api/treatment-plans/:id/exercises validates exercise.is_active, validates dates within the plan range, calculates expected_sessions_count, inserts the row, and enqueues the background schedule-generation job (not awaited — returns immediately).
+Screen 21 — Exercise Library Management
++---------------------------------------------------+
+|  Exercise Library                  [+ Add Exercise]    |
++---------------------------------------------------+
+|  Filter: [All body parts v]  Search: [____________]    |
+|                                                     |
+|  Neck Stretch        Neck     [Play] [Edit][Delete]    |
+|  Shoulder Rotation   Shoulder [Play] [Edit][Delete]    |
+|  Chin Tuck           Neck     [Play] [Edit][Delete]    |
+|  Cervical Retraction Neck     [Play] [Edit][Delete]    |
++---------------------------------------------------+
+API / Logic: GET /api/exercises (active only by default). DELETE soft-deletes (is_active=false) — if referenced by an active plan, frontend shows a confirmation warning before proceeding, listing how many active plans use it.
+Screen 22 — Add / Edit Exercise (Library)
++---------------------------------------------------+
+|  Add Exercise                                           |
+|                                                     |
+|  Name              [_____________________________]     |
+|  Target Body Part  [Neck v]                              |
+|  Description       [_____________________________]     |
+|  Instructions       [_____________________________]    |
+|  Video              [Upload Video]                       |
+|                                                     |
+|             [Cancel]     [Save Exercise]                |
++---------------------------------------------------+
+API / Logic: Video uploads directly to S3/CDN from the frontend; only the resulting URL is sent to POST /api/exercises or PUT /api/exercises/:id.
+Screen 23 — Discharge Patient
++---------------------------------------------------+
+|  Discharge Patient — Gaurang Patel                      |
+|                                                     |
+|  Active Plan: 'Neck & Shoulder Recovery'                |
+|  Final Compliance: 81%                                  |
+|                                                     |
+|  Discharge Notes:                                        |
+|  [Recovery complete. Full ROM restored. No further     |
+|   physiotherapy required at this time._______________]  |
+|                                                     |
+|  This will:                                              |
+|  - Mark the treatment plan as completed                  |
+|  - Remove all future pending exercises                   |
+|  - Set patient status to Discharged                       |
+|  - Patient can still view their history                  |
+|                                                     |
+|         [Cancel]        [Confirm Discharge]              |
++---------------------------------------------------+
+API / Logic: POST /api/patients/:id/discharge -> transaction: treatment_plans.status='completed', delete future-dated pending patient_schedule rows, patient_profiles.status='discharged'.
+4. Patient Flow
+The patient's entire daily interaction is designed around one question: what do I need to do today? Everything else — appointments, invoices, history — is one tap away but never the default screen.
+Screen 24 — Patient Dashboard (Today)
++-------------------------------------------------+
+|  Good morning, Gaurang            [PhysioCare]    |
++-------------------------------------------------+
+|  TODAY -- Monday, 29 June                          |
+|  Week 3 of 4  |  Overall: 78%                       |
+|                                                   |
+|  TO DO                                             |
+|  Neck Stretch        3 sets x 10 reps                |
+|    Session 1  Done                                 |
+|    Session 2  [Log Now]                             |
+|                                                   |
+|  Cervical Retraction  NEW TODAY                      |
+|  3 sets x 10 reps                                    |
+|    Session 1  [Log Now]                             |
+|                                                   |
+|  DONE TODAY                                          |
+|  Chin Tuck  3 sets  Pain: 2/10                       |
++-------------------------------------------------+
+One API call, zero computation — patient_schedule is pre-generated, so this screen is a pure indexed lookup with no date math or frequency-bitmask evaluation happening at request time.
+API / Logic: GET /api/patients/:id/today reads patient_schedule WHERE patient_id= AND scheduled_date=CURRENT_DATE, joined with exercises and treatment_plan_exercises for display details. If no rows exist but an active plan does, returns a 'schedule being prepared' state instead of a blank screen.
+Screen 25 — Log a Session
++-------------------------------------------------+
+|  Neck Stretch -- Session 2                          |
+|  3 sets x 10 reps                                    |
+|                                                   |
+|  [Watch Video]   [Instructions]                      |
+|                                                   |
+|  Sets completed:                                     |
+|  ( ) 1   ( ) 2   (*) 3   ( ) More than 3              |
+|                                                   |
+|  How did it feel? (optional)                          |
+|  Pain level: 0 ----o---- 10      [4]                  |
+|                                                   |
+|  Comments:                                            |
+|  [Mild discomfort on last set________________]        |
+|                                                   |
+|  Flag a concern?   ( ) Yes   (*) No                   |
+|                                                   |
+|  Attach photo/video?  [+ Add]                         |
+|                                                   |
+|              [    Done    ]                          |
++-------------------------------------------------+
+If the patient selects 'Flag a concern: Yes', an issue type selector (Increased pain / New symptom / Exercise difficulty / General concern) appears inline — no separate form, no separate screen.
+API / Logic: POST /api/exercise-logs (Shape A — tied to a scheduled session) -> transaction: insert exercise_logs, update matching patient_schedule row to status='completed', increment treatment_plan_exercises.completed_sessions_count by 1. Unique constraint catches accidental double-submission cleanly.
+Screen 26 — Log a Standalone Concern (No Linked Exercise)
++-------------------------------------------------+
+|  Report a Concern                                    |
+|                                                   |
+|  What type of concern?                                |
+|  ( ) Increased pain  (*) New symptom                  |
+|  ( ) Exercise difficulty  ( ) General concern          |
+|                                                   |
+|  Pain level: 0 ------o-- 10      [6]                  |
+|                                                   |
+|  Describe what's happening:                             |
+|  [Dizziness in the mornings, not related to____]       |
+|  [any specific exercise.________________________]      |
+|                                                   |
+|  Attach photo/video?  [+ Add]                         |
+|                                                   |
+|              [   Submit   ]                          |
++-------------------------------------------------+
+Reached via a persistent 'Report a Concern' link on the dashboard, separate from the per-session logging flow — for things unrelated to any specific exercise.
+API / Logic: POST /api/exercise-logs (Shape B — treatment_plan_exercise_id and session_number null). issue_type required. No patient_schedule update, no compliance counter increment.
+Screen 27 — My Appointments
++-------------------------------------------------+
+|  My Appointments                                     |
++-------------------------------------------------+
+|  UPCOMING                                            |
+|  Mon 29 June  09:30                                  |
+|  Dr. Sharma | Follow-up | Confirmed                   |
+|                                                   |
+|  PAST                                                |
+|  Mon 1 June   09:00   Completed                       |
+|  Mon 8 June   09:00   Completed                       |
+|                                                   |
+|         [   Book New Appointment   ]                  |
++-------------------------------------------------+
+API / Logic: GET /api/appointments?patient_id= split client-side into upcoming (appointment_date >= today) and past.
+Screen 28 — Self-Book Appointment: Pick a Slot
++-------------------------------------------------+
+|  Book an Appointment                                  |
+|                                                   |
+|       JUNE 2026                                      |
+|  Mo Tu We Th Fr Sa                                     |
+|  29 30                                                |
+|  Selected: Wednesday 1 July                              |
+|                                                   |
+|  Available slots:                                     |
+|  09:00   09:30   10:30   11:00                          |
+|                                                   |
+|  Visit reason: [___________________________]           |
+|                                                   |
+|              [   Continue to Payment   ]               |
++-------------------------------------------------+
+API / Logic: Same GET /api/appointments/slots endpoint used by the receptionist (Screen 8), patient-facing UI.
+Screen 29 — Self-Book Appointment: Payment (Razorpay Checkout)
++-------------------------------------------------+
+|  Confirm & Pay                                        |
+|                                                   |
+|  Dr. Sharma -- Wed 1 July, 09:00                        |
+|  Consultation Fee: Rs 800                              |
+|                                                   |
+|  [        Pay with Razorpay        ]                  |
+|                                                   |
+|  Your slot is held for 15 minutes while you pay.        |
++-------------------------------------------------+
+From the patient's perspective there is no visible 'pending' state — they book and pay in one continuous flow. Internally the appointment exists as pending_payment with a 15-minute expiry until the webhook confirms.
+API / Logic: POST /api/appointments?mode=self -> insert appointments (status=pending_payment, payment_expires_at=now+15min) -> create Razorpay Order -> open Razorpay checkout modal. On success, Razorpay webhook (never the client callback alone) confirms payment, flips status to 'scheduled', payment_status to 'paid_online', and creates payments + invoices rows.
+Screen 30 — My Bills / Invoices
++-------------------------------------------------+
+|  My Bills                                              |
++-------------------------------------------------+
+|  INV-2026-0042                                         |
+|  29 June 2026 | Consultation                            |
+|  Rs 800 | Paid (Online)        [Download PDF]            |
+|                                                   |
+|  INV-2026-0031                                         |
+|  1 June 2026  | Consultation                             |
+|  Rs 800 | Paid (At Desk)       [Download PDF]            |
++-------------------------------------------------+
+API / Logic: GET /api/invoices?patient_id=. Download PDF generates a formatted receipt server-side from the invoices row, using invoice_number as the document reference.
+Screen 31 — My Treatment History
++-------------------------------------------------+
+|  My Treatment History                                    |
++-------------------------------------------------+
+|  Neck & Shoulder Recovery   Active | Week 3 of 4         |
+|    Compliance: 78%                                         |
+|                                                   |
+|  Lower Back Recovery        Completed | 15 May - 12 June   |
+|    Final Compliance: 91%                                   |
++-------------------------------------------------+
+Patient-facing version of the doctor's history view — same underlying data, simplified presentation, no clinical notes shown (those remain doctor/clinic-internal).
+API / Logic: GET /api/patients/:id/plans returns treatment_plans with computed compliance, excluding clinical_notes and diagnosis fields which stay restricted to doctor-facing endpoints.
+Screen 32 — My Profile
++-------------------------------------------------+
+|  My Profile                                              |
++-------------------------------------------------+
+|  Name             Gaurang Patel                            |
+|  Phone            +91 98765 43210                          |
+|  Email            gaurang@email.com                        |
+|  Date of Birth    [____________]                            |
+|  Address          [____________________________]            |
+|  Emergency Contact[____________________________]            |
+|                                                   |
+|              [   Save Changes   ]                          |
+|  [Change Password]                                          |
++-------------------------------------------------+
+API / Logic: PUT /api/patients/:id/profile updates patient_profiles. Phone/email changes route through Clerk first (since they are identity fields), then sync back via webhook. Change Password links out to Clerk's hosted password-update flow.
+5. Admin Flow
+Admin exists purely for system-level account management in this MVP — no clinical or scheduling responsibilities, kept deliberately minimal given the solo-doctor operating model.
+Screen 33 — Admin Dashboard
++-------------------------------------------------+
+|  PhysioCare                              [Admin]   |
++-------------------------------------------------+
+|  SYSTEM OVERVIEW                                       |
+|  Total Patients: 248   Active: 190   Discharged: 58     |
+|  Total Appointments (30d): 412                           |
+|  Revenue (30d): Rs 3,29,600                               |
+|                                                   |
+|  [Manage Users]   [View All Patients]                    |
++-------------------------------------------------+
+API / Logic: GET /api/admin/overview aggregates counts from patient_profiles, appointments, and invoices for the trailing 30-day window.
+Screen 34 — Manage Users
++-------------------------------------------------+
+|  Manage Users                       [+ Add User]    |
++-------------------------------------------------+
+|  Search: [_______________________]                  |
+|                                                   |
+|  Dr. Sharma         doctor         Active  [Edit]    |
+|  Reception Desk 1   receptionist   Active  [Edit]    |
+|  Gaurang Patel       patient        Active  [Edit]    |
++-------------------------------------------------+
+API / Logic: GET /api/admin/users with role filter. Edit allows role reassignment and account deactivation; deactivation sets a flag rather than deleting, preserving all historical FK references.
+6. Complete Screen Index
+Quick reference mapping every screen number to its role and purpose.
+Screens 1-5 — Authentication (Shared): Login, Self-Registration, Set Password, Forced Password Change, Forgot Password
+Screens 6-12 — Receptionist: Dashboard, Find Patient, Pick Slot, Payment, Register Patient, Collect Payment, Calendar
+Screens 13-23 — Doctor: Dashboard, Clinical Overview, History Tab, Start Visit, Plan Builder, Edit Exercise, Add Exercise (Search + Configure), Library Management, Add/Edit Exercise, Discharge
+Screens 24-32 — Patient: Dashboard (Today), Log Session, Log Concern, Appointments, Self-Book (Slot + Payment), Bills, Treatment History, Profile
+Screens 33-34 — Admin: Dashboard, Manage Users
+7. End-to-End Flow at a Glance
+How the four roles connect across one full patient journey, from first booking to discharge:
+Receptionist or Patient books an appointment (Screens 6-12 or 27-29) -> payment confirmed -> appointment status becomes scheduled
+Patient arrives -> Doctor reviews history (Screen 14-15) -> creates consultation (Screen 16)
+Doctor builds or modifies the treatment plan (Screens 17-20) -> background job generates the patient's daily schedule
+Patient logs exercises daily from home (Screens 24-26) -> compliance counters and pain trends accumulate automatically
+Patient returns for follow-up -> Doctor sees full compliance and pain history instantly (Screen 14) -> modifies plan or discharges (Screen 23)
+Discharged patient retains full read access to history (Screens 31-32) and can be re-activated on a future visit with nothing lost

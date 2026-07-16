@@ -192,10 +192,14 @@ export const setSlotDuration = async (req, res) => {
 // Open to any authenticated user (patients, receptionists, doctors)
 export const getAvailableSlots = async (req, res) => {
     try {
-        const { doctor_id, date } = req.query;
+        let { doctor_id, date } = req.query;
 
         if (!doctor_id || !date) {
             return res.status(400).json({ success: false, message: 'doctor_id and date query params are required' });
+        }
+        
+        if (doctor_id === 'me' && req.user) {
+            doctor_id = req.user.id;
         }
 
         // ── Step 1: 1-Year Security Check (both dates normalized to UTC midnight to prevent timezone glitch) ──

@@ -9,8 +9,8 @@ const Footer = () => {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-12">
           <div className="md:col-span-1">
             <Link to="/" className="flex items-center gap-2 mb-6">
-              <div className="bg-light/10 p-2 rounded-[8px]">
-                <Activity className="h-6 w-6 text-light" />
+              <div className="bg-light p-2 rounded-lg">
+                <Activity className="h-6 w-6 text-primary" />
               </div>
               <span className="text-2xl font-bold text-light tracking-tight">PhysioCare</span>
             </Link>

@@ -1,6 +1,6 @@
 import { db } from '../src/db/index.js';
-import { appointments, invoices, payments, users } from '../src/db/schema/index.js';
-import { eq, and, gte, lte } from 'drizzle-orm';
+import { appointments, invoices, payments, users, doctorProfiles, consultations } from '../src/db/schema/index.js';
+import { eq, and, gte, lte, inArray, aliasedTable } from 'drizzle-orm';
 import Razorpay from 'razorpay';
 import { sendPaymentLinkEmail } from '../utils/email.js';
 
@@ -139,8 +139,8 @@ export const bookByPhone = async (req, res) => {
             return res.status(409).json({ success: false, message: 'This slot is already booked or held. Please choose a different time.' });
         }
 
-        // ── Hold the slot immediately (15-min window) ────────────────────────
-        const expiresAt = new Date(Date.now() + 15 * 60 * 1000);
+        // ── Hold the slot immediately (20-min window for safety) ─────────────
+        const expiresAt = new Date(Date.now() + 20 * 60 * 1000);
         const [newAppointment] = await db.insert(appointments).values({
             patient_id,
             doctor_id,
@@ -166,7 +166,7 @@ export const bookByPhone = async (req, res) => {
                 appointment_id: newAppointment.id // Webhook uses this to find the appointment
             },
             notify: { sms: false, email: false }, // We send our own email
-            callback_url: `${process.env.FRONTEND_URL}/booking/status?appointment_id=${newAppointment.id}`,
+            callback_url: `${process.env.FRONTEND_URL || 'http://localhost:5173'}/booking/status?appointment_id=${newAppointment.id}`,
             callback_method: 'get'
         });
 
@@ -283,8 +283,8 @@ export const selfBook = async (req, res) => {
                 message: 'This slot was just taken. Please choose a different time.'
             });
         }
-        console.error('Error in self-booking:', error);
-        return res.status(500).json({ success: false, message: 'Server error' });
+        console.error('Error in selfBook:', error);
+        return res.status(500).json({ success: false, message: error.message || 'Server error' });
     }
 };
 
@@ -333,12 +333,49 @@ export const getAppointments = async (req, res) => {
             conditions.push(lte(appointments.appointment_date, weekEnd));
         }
 
-        const query = db.select().from(appointments);
-        const result = await (
+        const patientsTable = aliasedTable(users, 'patient');
+        const doctorsTable = aliasedTable(users, 'doctor');
+
+        // Perform left join to get the patient's name and doctor's name
+        const query = db.select({
+            ...appointments, // Select all fields from appointments
+            patient_name: patientsTable.name,
+            doctor_name: doctorsTable.name
+        })
+        .from(appointments)
+        .leftJoin(patientsTable, eq(appointments.patient_id, patientsTable.id))
+        .leftJoin(doctorsTable, eq(appointments.doctor_id, doctorsTable.id));
+
+        let result = await (
             conditions.length > 0
                 ? query.where(and(...conditions))
                 : query
         ).orderBy(appointments.appointment_date, appointments.start_time);
+
+        // Calculate visit type (First Visit vs Follow-up) for each patient
+        if (result.length > 0) {
+            const patientIds = [...new Set(result.filter(a => a.patient_id).map(a => a.patient_id))];
+            if (patientIds.length > 0) {
+                // Count consultations for these patients
+                const pastConsults = await db.select({
+                    patient_id: consultations.patient_id,
+                })
+                .from(consultations)
+                .where(inArray(consultations.patient_id, patientIds));
+
+                // Map patient_id -> count
+                const counts = {};
+                pastConsults.forEach(c => {
+                    counts[c.patient_id] = (counts[c.patient_id] || 0) + 1;
+                });
+
+                // Attach to result
+                result = result.map(appt => ({
+                    ...appt,
+                    past_consultations_count: appt.patient_id ? (counts[appt.patient_id] || 0) : 0
+                }));
+            }
+        }
 
         return res.status(200).json({ success: true, count: result.length, appointments: result });
     } catch (error) {
@@ -488,5 +525,93 @@ export const payAtDesk = async (req, res) => {
     } catch (error) {
         console.error('Error recording at-desk payment:', error);
         return res.status(500).json({ success: false, message: 'Server error' });
+    }
+};
+// ─── 7. GET /api/appointments/slots ──────────────────────────────────────────
+export const getAvailableSlots = async (req, res) => {
+    try {
+        const { date, doctor_id } = req.query;
+        if (!date || !doctor_id) {
+            return res.status(400).json({ success: false, message: 'Date and doctor_id are required' });
+        }
+
+        // 1. Fetch Doctor's Availability Rules
+        const [profile] = await db.select({ availability_rules: doctorProfiles.availability_rules })
+            .from(doctorProfiles)
+            .where(eq(doctorProfiles.user_id, doctor_id));
+
+        if (!profile || !profile.availability_rules) {
+            return res.status(404).json({ success: false, message: 'Doctor availability rules not found' });
+        }
+
+        const rules = profile.availability_rules;
+        const slotMinutes = rules.slot_minutes || 30;
+        
+        // 2. Determine Day of Week (0 = Sunday, 1 = Monday, etc.)
+        const dateObj = new Date(date);
+        const dayOfWeek = dateObj.getDay().toString();
+
+        let dayBlocks = [];
+
+        // Check if there are specific date overrides (like leave or custom hours)
+        if (rules.specific_dates && rules.specific_dates[date]) {
+            dayBlocks = rules.specific_dates[date]; // Empty array means closed
+        } else if (rules.weekly_routine && rules.weekly_routine[dayOfWeek]) {
+            dayBlocks = rules.weekly_routine[dayOfWeek];
+        }
+
+        // 3. Generate all possible time slots for the day based on the blocks
+        const allSlots = [];
+        for (const block of dayBlocks) {
+            let current = new Date(`${date}T${block.start}:00`);
+            const end = new Date(`${date}T${block.end}:00`);
+
+            while (current < end) {
+                const hours = String(current.getHours()).padStart(2, '0');
+                const mins = String(current.getMinutes()).padStart(2, '0');
+                allSlots.push(`${hours}:${mins}`);
+                
+                // Add slot_minutes
+                current.setMinutes(current.getMinutes() + slotMinutes);
+            }
+        }
+
+        if (allSlots.length === 0) {
+            return res.status(200).json({ success: true, slots: [] }); // Doctor is not available
+        }
+
+        // 4. Fetch existing appointments for this doctor on this date
+        const existingAppts = await db.select({
+            start_time: appointments.start_time,
+            status: appointments.status
+        })
+        .from(appointments)
+        .where(
+            and(
+                eq(appointments.doctor_id, doctor_id),
+                eq(appointments.appointment_date, date)
+            )
+        );
+
+        // 5. Subtract taken slots
+        const takenSlots = existingAppts
+            .filter(a => !['cancelled', 'no_show'].includes(a.status))
+            .map(a => a.start_time.substring(0, 5)); // "09:30:00" -> "09:30"
+
+        const blockedSlots = existingAppts
+            .filter(a => a.status === 'blocked')
+            .map(a => a.start_time.substring(0, 5));
+
+        const finalSlots = allSlots.map(time => {
+            let status = 'available';
+            if (takenSlots.includes(time)) status = 'taken';
+            if (blockedSlots.includes(time)) status = 'blocked';
+            return { time, status };
+        });
+
+        return res.status(200).json({ success: true, slots: finalSlots });
+    } catch (error) {
+        console.error('Error fetching available slots:', error);
+        return res.status(500).json({ success: false, message: 'Server error fetching slots' });
     }
 };

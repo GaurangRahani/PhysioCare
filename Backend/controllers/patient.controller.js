@@ -522,3 +522,49 @@ export const reactivatePatient = async (req, res) => {
     return res.status(500).json({ success: false, message: 'Server error' });
   }
 };
+
+// GET /api/patients/:patient_id/overview
+export const getPatientOverview = async (req, res) => {
+  try {
+    const { patient_id } = req.params;
+
+    const [user] = await db.select({
+      id: users.id,
+      name: users.name,
+      email: users.email,
+      phone: users.phone,
+    }).from(users).where(eq(users.id, patient_id));
+
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'Patient not found' });
+    }
+
+    const [profile] = await db.select().from(patientProfiles).where(eq(patientProfiles.user_id, patient_id));
+
+    const [activePlan] = await db.select()
+      .from(treatmentPlans)
+      .where(and(
+        eq(treatmentPlans.patient_id, patient_id),
+        eq(treatmentPlans.status, 'active')
+      ));
+
+    // Get count of consultations to determine if First Visit or Follow-up
+    const consultationRows = await db.select({ id: consultations.id })
+      .from(consultations)
+      .where(eq(consultations.patient_id, patient_id));
+
+    return res.status(200).json({
+      success: true,
+      data: {
+        user,
+        profile: profile || null,
+        active_plan: activePlan || null,
+        visit_count: consultationRows.length
+      }
+    });
+
+  } catch (error) {
+    console.error('Error fetching patient overview:', error);
+    return res.status(500).json({ success: false, message: 'Server error' });
+  }
+};

@@ -178,3 +178,31 @@ export const deleteExercise = async (req, res) => {
         return res.status(500).json({ success: false, message: 'Server error' });
     }
 };
+
+// ─── 5. PATCH /api/exercises/:id/activate ────────────────────────────────────
+export const activateExercise = async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        const [exercise] = await db.select().from(exercises).where(eq(exercises.id, id));
+        if (!exercise) {
+            return res.status(404).json({ success: false, message: 'Exercise not found' });
+        }
+
+        if (exercise.is_active) {
+            return res.status(400).json({ success: false, message: 'Exercise is already active' });
+        }
+
+        await db.update(exercises)
+            .set({ is_active: true, updated_at: new Date() })
+            .where(eq(exercises.id, id));
+
+        return res.status(200).json({
+            success: true,
+            message: 'Exercise successfully reactivated'
+        });
+    } catch (error) {
+        console.error('Error activating exercise:', error);
+        return res.status(500).json({ success: false, message: 'Server error' });
+    }
+};

@@ -1,5 +1,5 @@
 import express from 'express';
-import { createExercise, getExercises, updateExercise, deleteExercise } from '../controllers/exercise.controller.js';
+import { createExercise, getExercises, updateExercise, deleteExercise, activateExercise } from '../controllers/exercise.controller.js';
 import { validate } from '../middlewares/validate.middleware.js';
 import { createExerciseSchema, updateExerciseSchema } from '../validators/exercise.validator.js';
 import { requireAuth, requireRole } from '../middlewares/auth.middleware.js';
@@ -17,8 +17,9 @@ router.post('/', requireAuth, requireRole(['doctor', 'admin']), (req, res, next)
     console.log('[DEBUG] Reached POST /api/exercises. Now starting Multer upload...');
     next();
 }, exerciseUpload, validate(createExerciseSchema), createExercise);
-router.get('/', requireAuth, requireRole(['doctor', 'admin', 'patient']), getExercises); 
+router.get('/', requireAuth, requireRole(['doctor', 'admin', 'patient']), getExercises);
 router.put('/:id', requireAuth, requireRole(['doctor', 'admin']), exerciseUpload, validate(updateExerciseSchema), updateExercise);
+router.patch('/:id/activate', requireAuth, requireRole(['doctor', 'admin']), activateExercise);
 router.delete('/:id', requireAuth, requireRole(['doctor', 'admin']), deleteExercise);
 
 export default router;

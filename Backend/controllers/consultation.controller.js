@@ -33,10 +33,7 @@ export const createConsultation = async (req, res) => {
             });
         }
 
-        // 2. Verify previous treatment plan if follow_up
-        if (consultation_type === 'follow_up' && !previous_treatment_plan_id) {
-            return res.status(400).json({ success: false, message: 'previous_treatment_plan_id is required for follow_up consultations.' });
-        }
+
         if (consultation_type === 'follow_up' && previous_treatment_plan_id) {
             const [prevPlan] = await db.select().from(treatmentPlans).where(eq(treatmentPlans.id, previous_treatment_plan_id));
             if (!prevPlan) {
