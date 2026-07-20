@@ -13,7 +13,10 @@ import consultationRoutes from './routes/consultation.routes.js';
 import exerciseRoutes from './routes/exercise.routes.js';
 import treatmentPlanRoutes from './routes/treatmentPlan.routes.js';
 import exerciseLogRoutes from './routes/exerciseLog.routes.js';
+import alertRoutes from './routes/alert.routes.js';
 import authRoutes from './routes/auth.routes.js';
+import adminRoutes from './routes/admin.routes.js';
+import clinicRoutes from './routes/clinic.routes.js';
 import { startExpiryJob, startMissedScheduleSweep } from './jobs/expiry.job.js';
 
 const app = express();
@@ -43,6 +46,9 @@ app.use('/api/treatment-plans', treatmentPlanRoutes);
 // PATCH/DELETE /api/treatment-plan-exercises/:id are also handled by treatmentPlanRoutes
 app.use('/api/treatment-plan-exercises', treatmentPlanRoutes);
 app.use('/api/exercise-logs', exerciseLogRoutes);
+app.use('/api/alerts', alertRoutes);
+app.use('/api/admin', adminRoutes);
+app.use('/api/clinic', clinicRoutes); // Public — no auth
 
 app.get('/', (req, res) => {
   res.send('PhysioCare API is running!');

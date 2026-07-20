@@ -98,3 +98,34 @@ export const sendPaymentLinkEmail = ({ to, first_name, payment_link, expires_in_
         `
     });
 };
+
+// ─── Send Invoice Receipt Email ────────────────────────────────────────────────
+export const sendInvoiceEmail = ({ to, first_name, invoice_number, amount, description, issued_date }) => {
+    sendEmail({
+        to,
+        subject: `Your PhysioCare Receipt — ${invoice_number}`,
+        html: `
+            <div style="font-family: Arial, sans-serif; max-width: 520px; margin: 0 auto; border: 1px solid #e5e7eb; border-radius: 12px; overflow: hidden;">
+                <div style="background: #6d28d9; padding: 24px;">
+                    <h2 style="color: white; margin: 0;">PhysioCare</h2>
+                    <p style="color: #ddd6fe; margin: 4px 0 0;">Payment Receipt</p>
+                </div>
+                <div style="padding: 24px;">
+                    <p>Hello ${first_name},</p>
+                    <p>Thank you for your payment. Here is your receipt for reference:</p>
+                    <div style="background: #f9fafb; border: 1px solid #e5e7eb; padding: 16px; border-radius: 8px; margin: 16px 0;">
+                        <table style="width: 100%; border-collapse: collapse;">
+                            <tr><td style="padding: 6px 0; color: #6b7280; font-size: 14px;">Invoice No.</td><td style="padding: 6px 0; font-weight: bold; text-align: right;">${invoice_number}</td></tr>
+                            <tr><td style="padding: 6px 0; color: #6b7280; font-size: 14px;">Date</td><td style="padding: 6px 0; text-align: right;">${issued_date}</td></tr>
+                            <tr><td style="padding: 6px 0; color: #6b7280; font-size: 14px;">Description</td><td style="padding: 6px 0; text-align: right;">${description}</td></tr>
+                            <tr style="border-top: 1px solid #e5e7eb;"><td style="padding: 10px 0; font-weight: bold;">Amount Paid</td><td style="padding: 10px 0; font-weight: bold; font-size: 18px; text-align: right; color: #16a34a;">₹${amount}</td></tr>
+                        </table>
+                    </div>
+                    <p style="color: #6b7280; font-size: 13px;">Please keep this email for your records. For any queries, contact the PhysioCare clinic.</p>
+                    <p>The PhysioCare Team</p>
+                </div>
+            </div>
+        `
+    });
+};
+

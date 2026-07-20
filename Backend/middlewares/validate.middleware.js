@@ -3,21 +3,21 @@ export const validate = (schema) => (req, res, next) => {
     req.body = schema.parse(req.body);
     next();
   } catch (error) {
-    if (error.errors) {
+    if (error.issues) {
       return res.status(400).json({
         success: false,
-        message: 'Validation Error',
-        errors: error.errors.map(err => ({
-          path: err.path ? err.path.join('.') : 'unknown',
-          message: err.message
-        }))
+        message: "Validation Error",
+        errors: error.issues.map((err) => ({
+          path: err.path ? err.path.join(".") : "unknown",
+          message: err.message,
+        })),
       });
     }
 
     return res.status(400).json({
       success: false,
-      message: 'Invalid request data',
-      error: error.message
+      message: "Invalid request data",
+      error: error.message,
     });
   }
 };

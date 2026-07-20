@@ -1,6 +1,6 @@
-import { drizzle } from 'drizzle-orm/node-postgres';
-import pkg from 'pg';
-import 'dotenv/config';
+import { drizzle } from "drizzle-orm/node-postgres";
+import pkg from "pg";
+import "dotenv/config";
 
 const { Client } = pkg;
 
