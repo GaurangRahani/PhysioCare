@@ -10,7 +10,7 @@ import {
   exercises,
 } from "../src/db/schema/index.js";
 import { eq, and, desc, gte, lte, isNotNull, sql, gt } from "drizzle-orm";
-import { calculateExpectedSessions } from "../utils/scheduleUtils.js";
+import { calculateExpectedSessions, localToday } from "../utils/scheduleUtils.js";
 
 import { getAuth } from "@clerk/express";
 
@@ -225,7 +225,7 @@ export const getTodaySchedule = async (req, res) => {
     const startDate = new Date(activePlan.start_date);
     const endDate = new Date(activePlan.end_date);
     const today = new Date();
-    const todayStr = today.toISOString().split("T")[0];
+    const todayStr = localToday();
 
     const timeDiff = endDate.getTime() - startDate.getTime();
     const totalWeeks = Math.ceil(timeDiff / (1000 * 3600 * 24 * 7));
@@ -256,9 +256,9 @@ export const getTodaySchedule = async (req, res) => {
           eq(treatmentPlanExercises.treatment_plan_id, activePlan.id),
           gte(
             patientSchedule.scheduled_date,
-            sql`DATE_TRUNC('week', CURRENT_DATE)`,
+            sql`DATE_TRUNC('week', ${todayStr}::date)`,
           ),
-          lte(patientSchedule.scheduled_date, sql`CURRENT_DATE`),
+          lte(patientSchedule.scheduled_date, todayStr),
         ),
       );
 
@@ -288,7 +288,7 @@ export const getTodaySchedule = async (req, res) => {
         and(
           eq(patientSchedule.patient_id, patient_id),
           eq(treatmentPlanExercises.treatment_plan_id, activePlan.id),
-          gt(patientSchedule.scheduled_date, sql`CURRENT_DATE`),
+          gt(patientSchedule.scheduled_date, todayStr),
           eq(patientSchedule.status, "pending"),
         ),
       );
@@ -468,6 +468,8 @@ export const getPatientProgress = async (req, res) => {
 
     planId = plan.id;
 
+      const todayStr = localToday();
+
     const [planOverview] = await db
       .select({
         id: treatmentPlans.id,
@@ -475,9 +477,9 @@ export const getPatientProgress = async (req, res) => {
         start_date: treatmentPlans.start_date,
         end_date: treatmentPlans.end_date,
         status: treatmentPlans.status,
-        week_number: sql`CEIL((CURRENT_DATE - ${treatmentPlans.start_date} + 1) / 7.0)::int`,
+        week_number: sql`CEIL((${todayStr}::date - ${treatmentPlans.start_date} + 1) / 7.0)::int`,
         total_weeks: sql`CEIL((${treatmentPlans.end_date} - ${treatmentPlans.start_date} + 1) / 7.0)::int`,
-        duration_progress_percent: sql`LEAST(ROUND((CURRENT_DATE - ${treatmentPlans.start_date})::numeric / NULLIF((${treatmentPlans.end_date} - ${treatmentPlans.start_date}), 0) * 100), 100)::int`,
+        duration_progress_percent: sql`LEAST(ROUND((${todayStr}::date - ${treatmentPlans.start_date})::numeric / NULLIF((${treatmentPlans.end_date} - ${treatmentPlans.start_date}), 0) * 100), 100)::int`,
       })
       .from(treatmentPlans)
       .where(eq(treatmentPlans.id, planId));
@@ -683,7 +685,7 @@ export const getPatientProgress = async (req, res) => {
 export const dischargePatient = async (req, res) => {
   try {
     const { patient_id } = req.params;
-    const today = new Date().toISOString().split("T")[0];
+    const today = localToday();
 
     const [activePlan] = await db
       .select()
@@ -851,7 +853,7 @@ export const getPatientActivePlanCompliance = async (req, res) => {
       });
     }
 
-    const today = new Date().toISOString().split("T")[0];
+    const today = localToday();
 
     const tpeRows = await db
       .select({
@@ -1038,7 +1040,7 @@ export const getComplianceLogs = async (req, res) => {
       .where(eq(exerciseLogs.patient_id, patient_id))
       .orderBy(desc(exerciseLogs.log_date));
 
-    const today = new Date().toISOString().split("T")[0];
+    const today = localToday();
 
     // Group tpeRows by exercise_id
     const exercisesMap = {};

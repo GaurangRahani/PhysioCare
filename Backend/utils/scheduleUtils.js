@@ -1,3 +1,8 @@
+// ─── Local Date Helper ────────────────────────────────────────────────────────
+export function localToday() {
+    return new Date().toLocaleDateString('en-CA');
+}
+
 // ─── Bitmask Day Encoding ─────────────────────────────────────────────────────
 export const DAY_BITS = { Mon: 1, Tue: 2, Wed: 4, Thu: 8, Fri: 16, Sat: 32, Sun: 64 };
 // Index = getDay() (0=Sun, 1=Mon, ..., 6=Sat)

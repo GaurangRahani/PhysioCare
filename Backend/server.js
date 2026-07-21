@@ -17,7 +17,7 @@ import alertRoutes from './routes/alert.routes.js';
 import authRoutes from './routes/auth.routes.js';
 import adminRoutes from './routes/admin.routes.js';
 import clinicRoutes from './routes/clinic.routes.js';
-import { startExpiryJob, startMissedScheduleSweep } from './jobs/expiry.job.js';
+import { startExpiryJob, startMissedScheduleSweep, startNoShowSweep } from './jobs/expiry.job.js';
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -65,4 +65,5 @@ app.listen(PORT, () => {
   console.log(`🚀 Server is running on http://localhost:${PORT}`);
   startExpiryJob();          // Every minute: cancel unpaid expired appointments
   startMissedScheduleSweep(); // Every midnight: mark missed exercises
+  startNoShowSweep();         // Every midnight: mark passed scheduled appointments as no_show
 });

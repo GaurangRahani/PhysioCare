@@ -11,6 +11,7 @@ import { eq, and, gte, lte, inArray, aliasedTable } from "drizzle-orm";
 import Razorpay from "razorpay";
 import { sendPaymentLinkEmail } from "../utils/email.js";
 import crypto from "crypto";
+import { localToday } from "../utils/scheduleUtils.js";
 
 const getRazorpayInstance = () => {
   if (!process.env.RAZORPAY_KEY_ID || !process.env.RAZORPAY_KEY_SECRET) {
@@ -376,7 +377,7 @@ export const getAppointments = async (req, res) => {
     if (date === "today" || (date === undefined && range === undefined)) {
       // If date=today is explicit, filter to today
       if (date === "today") {
-        const today = new Date().toISOString().split("T")[0];
+        const today = localToday();
         conditions.push(eq(appointments.appointment_date, today));
       }
     } else if (date && date !== "today") {
@@ -491,6 +492,16 @@ export const cancelAppointment = async (req, res) => {
       return res.status(400).json({
         success: false,
         message: `Cannot cancel an appointment with status: ${appointment.status}`,
+      });
+    }
+
+    // Enforce 60-minute cancellation policy
+    const apptDateTime = new Date(`${appointment.appointment_date}T${appointment.start_time}`);
+    const diffInMinutes = (apptDateTime - new Date()) / (1000 * 60);
+    if (diffInMinutes <= 60) {
+      return res.status(400).json({
+        success: false,
+        message: "Appointments cannot be cancelled within 60 minutes of the scheduled time.",
       });
     }
 

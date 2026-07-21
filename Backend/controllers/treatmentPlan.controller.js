@@ -11,6 +11,7 @@ import {
   calculateExpectedSessions,
   generateScheduleRows,
   encodeDays,
+  localToday,
 } from "../utils/scheduleUtils.js";
 
 // ─── Background job: generate patient_schedule rows
@@ -106,7 +107,7 @@ export const createTreatmentPlan = async (req, res) => {
 
     await db.transaction(async (tx) => {
       if (activePlans.length > 0) {
-        const today = new Date().toISOString().split("T")[0];
+        const today = localToday();
 
         await tx
           .update(treatmentPlans)
@@ -417,6 +418,13 @@ export const completeTreatmentPlan = async (req, res) => {
         .status(404)
         .json({ success: false, message: "Treatment plan not found" });
 
+    if (['completed', 'cancelled'].includes(plan.status)) {
+      return res.status(400).json({
+        success: false,
+        message: `Cannot complete a plan that is already '${plan.status}'.`,
+      });
+    }
+
     const [updatedPlan] = await db
       .update(treatmentPlans)
       .set({ status: "completed", updated_at: new Date() })
@@ -450,6 +458,13 @@ export const cancelTreatmentPlan = async (req, res) => {
         .status(404)
         .json({ success: false, message: "Treatment plan not found" });
 
+    if (plan.status === 'cancelled') {
+      return res.status(400).json({
+        success: false,
+        message: "This treatment plan is already cancelled.",
+      });
+    }
+
     await db.transaction(async (tx) => {
       await tx
         .update(treatmentPlans)
@@ -464,7 +479,7 @@ export const cancelTreatmentPlan = async (req, res) => {
 
       const exerciseIds = planExercises.map((pe) => pe.id);
       if (exerciseIds.length > 0) {
-        const today = new Date().toISOString().split("T")[0];
+        const today = localToday();
         await tx
           .delete(patientSchedule)
           .where(
@@ -558,7 +573,7 @@ export const updateAssignment = async (req, res) => {
     }
 
     // New row always starts from today
-    const today = new Date().toISOString().split("T")[0];
+    const today = localToday();
     const newEndDate = end_date ?? oldTPE.end_date;
 
     const tempTpe = {
@@ -649,7 +664,7 @@ export const deleteAssignment = async (req, res) => {
         .status(400)
         .json({ success: false, message: "Assignment is already inactive." });
 
-    const today = new Date().toISOString().split("T")[0];
+    const today = localToday();
 
     await db.transaction(async (tx) => {
       await tx
@@ -753,7 +768,7 @@ export const modifyAssignment = async (req, res) => {
     const expected_sessions_count = calculateExpectedSessions(tempTpe);
 
     // Versioning logic: mark old as inactive and create new
-    const today = new Date().toISOString().split("T")[0];
+    const today = localToday();
     await db
       .update(treatmentPlanExercises)
       .set({ is_active: false, end_date: today })
@@ -801,7 +816,7 @@ export const modifyAssignment = async (req, res) => {
 export const discontinueAssignment = async (req, res) => {
   try {
     const { id } = req.params;
-    const today = new Date().toISOString().split("T")[0];
+    const today = localToday();
 
     await db
       .update(treatmentPlanExercises)
@@ -828,7 +843,7 @@ export const discontinueAssignment = async (req, res) => {
 export const discontinueTreatmentPlan = async (req, res) => {
   try {
     const { id } = req.params;
-    const today = new Date().toISOString().split("T")[0];
+    const today = localToday();
 
     // 1. Mark the plan as cancelled
     await db
@@ -878,9 +893,16 @@ export const discontinueTreatmentPlan = async (req, res) => {
 export const freezeTreatmentPlan = async (req, res) => {
   try {
     const { id } = req.params;
-    const today = new Date().toISOString().split("T")[0];
+    const today = localToday();
 
     await db.transaction(async (tx) => {
+      const [plan] = await tx.select().from(treatmentPlans).where(eq(treatmentPlans.id, id));
+      if (!plan) {
+        throw new Error('PLAN_NOT_FOUND');
+      }
+      if (plan.status !== 'active') {
+        throw new Error(`INVALID_STATE:${plan.status}`);
+      }
       await tx
         .update(treatmentPlans)
         .set({ status: "paused", updated_at: new Date() })
@@ -917,6 +939,13 @@ export const freezeTreatmentPlan = async (req, res) => {
         message: "Treatment plan frozen. Future exercises paused.",
       });
   } catch (error) {
+    if (error.message === 'PLAN_NOT_FOUND') {
+      return res.status(404).json({ success: false, message: 'Treatment plan not found.' });
+    }
+    if (error.message?.startsWith('INVALID_STATE:')) {
+      const state = error.message.split(':')[1];
+      return res.status(400).json({ success: false, message: `Cannot pause a plan that is already '${state}'. Only active plans can be paused.` });
+    }
     console.error("Error freezing treatment plan:", error);
     return res.status(500).json({ success: false, message: "Server error" });
   }
@@ -925,6 +954,17 @@ export const freezeTreatmentPlan = async (req, res) => {
 export const resumeTreatmentPlan = async (req, res) => {
   try {
     const { id } = req.params;
+
+    const [plan] = await db.select().from(treatmentPlans).where(eq(treatmentPlans.id, id));
+    if (!plan) {
+      return res.status(404).json({ success: false, message: 'Treatment plan not found.' });
+    }
+    if (plan.status !== 'paused') {
+      return res.status(400).json({
+        success: false,
+        message: `Cannot resume a plan that is '${plan.status}'. Only paused plans can be resumed.`,
+      });
+    }
 
     await db
       .update(treatmentPlans)

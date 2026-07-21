@@ -7,12 +7,13 @@ import {
   exercises,
 } from "../src/db/schema/index.js";
 import { eq, and, gte, lte, isNotNull } from "drizzle-orm";
+import { localToday } from "../utils/scheduleUtils.js";
 
 // Patient opens app → sees their full exercise list for today
 export const getDailySchedule = async (req, res) => {
   try {
     const patient_id = req.user.id;
-    const today = new Date().toISOString().split("T")[0];
+    const today = localToday();
 
     // Fetch all schedule rows for today for this patient
     // Join with exercises table to get exercise name, instructions, video
@@ -94,7 +95,7 @@ export const createExerciseLog = async (req, res) => {
     } = req.body;
 
     const patient_id = req.user.id;
-    const today = new Date().toISOString().split("T")[0];
+    const today = localToday();
 
     //general concern like pain or other issue
     if (!treatment_plan_exercise_id) {
