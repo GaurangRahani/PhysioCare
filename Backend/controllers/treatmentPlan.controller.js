@@ -13,6 +13,7 @@ import {
   encodeDays,
   localToday,
 } from "../utils/scheduleUtils.js";
+import { autoResolvePatientAlerts } from "./alert.controller.js";
 
 // ─── Background job: generate patient_schedule rows
 async function generateSchedule(tpeId) {
@@ -230,6 +231,9 @@ export const createTreatmentPlan = async (req, res) => {
       });
     }
 
+    // Auto-resolve any pending alerts since the doctor has given a new plan
+    await autoResolvePatientAlerts(patient_id, "Auto-resolved: New treatment plan assigned");
+
     return res.status(201).json({
       success: true,
       message:
@@ -392,6 +396,9 @@ export const addExerciseToPlan = async (req, res) => {
 
     // Generate schedule in background
     generateSchedule(insertedTPE.id);
+
+    // Auto-resolve any pending alerts since the doctor has edited the plan
+    await autoResolvePatientAlerts(plan.patient_id, "Auto-resolved: Plan edited");
 
     return res.status(201).json({
       success: true,

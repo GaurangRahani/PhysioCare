@@ -2,6 +2,7 @@ import express from "express";
 import {
   createPatient,
   searchPatients,
+  getAllPatients,
 } from "../controllers/receptionist.controller.js";
 import { requireAuth, requireRole } from "../middlewares/auth.middleware.js";
 import { validate } from "../middlewares/validate.middleware.js";
@@ -30,12 +31,20 @@ router.post(
   createPatient,
 );
 
-// Search/list all patients
+// Search/list all patients (specifically by query)
 router.get(
   "/patients/search",
   requireAuth,
   requireRole(["receptionist", "doctor"]),
   searchPatients,
+);
+
+// Get all patients
+router.get(
+  "/patients",
+  requireAuth,
+  requireRole(["receptionist", "admin"]),
+  getAllPatients,
 );
 
 export default router;

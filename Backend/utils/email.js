@@ -129,3 +129,32 @@ export const sendInvoiceEmail = ({ to, first_name, invoice_number, amount, descr
     });
 };
 
+
+// ─── Send Urgent Booking Request Email ─────────────────────────────────────────
+export const sendUrgentBookingEmail = ({ to, first_name }) => {
+    sendEmail({
+        to,
+        subject: 'Urgent: Please Book a Follow-Up Appointment — PhysioCare',
+        html: `
+            <div style="font-family: Arial, sans-serif; max-width: 500px; margin: 0 auto; border: 1px solid #fee2e2; border-radius: 12px; overflow: hidden;">
+                <div style="background: #ef4444; padding: 24px;">
+                    <h2 style="color: white; margin: 0;">PhysioCare</h2>
+                    <p style="color: #fecaca; margin: 4px 0 0;">Urgent Action Required</p>
+                </div>
+                <div style="padding: 24px;">
+                    <p>Hello ${first_name},</p>
+                    <p>Your doctor has reviewed your recent exercise logs and noted a critical pain/issue alert.</p>
+                    <div style="background: #fef2f2; border-left: 4px solid #ef4444; padding: 16px; margin: 16px 0;">
+                        <p style="margin: 0; color: #b91c1c;">
+                            <strong>Please book the next available appointment immediately for re-evaluation.</strong><br/><br/>
+                            While waiting for your appointment, please feel free to pause or gently modify any exercises that are causing severe discomfort.
+                        </p>
+                    </div>
+                    <p>Please contact the clinic or use your dashboard to book your follow-up.</p>
+                    <br/>
+                    <p>The PhysioCare Team</p>
+                </div>
+            </div>
+        `
+    });
+};

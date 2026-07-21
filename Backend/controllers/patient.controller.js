@@ -338,6 +338,7 @@ export const getTodaySchedule = async (req, res) => {
       .where(
         and(
           eq(patientSchedule.patient_id, patient_id),
+          eq(treatmentPlanExercises.treatment_plan_id, activePlan.id),
           eq(patientSchedule.scheduled_date, todayStr),
           eq(treatmentPlanExercises.is_active, true),
         ),

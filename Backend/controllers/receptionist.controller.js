@@ -1,7 +1,7 @@
 import { clerkClient } from "@clerk/express";
 import { db } from "../src/db/index.js";
 import { users, patientProfiles } from "../src/db/schema/index.js";
-import { eq, or, and, ilike } from "drizzle-orm";
+import { eq, or, and, ilike, desc } from "drizzle-orm";
 import { sendWelcomeEmail } from "../utils/email.js";
 
 // ─── HELPER: Generate a strong temporary password ─────────────────────────────
@@ -145,6 +145,35 @@ export const searchPatients = async (req, res) => {
       .json({ success: true, count: patients.length, patients });
   } catch (error) {
     console.error("Error searching patients:", error);
+    return res.status(500).json({ success: false, message: "Server error" });
+  }
+};
+
+// ─── GET /api/receptionists/patients ─────────────────────────────────────────
+export const getAllPatients = async (req, res) => {
+  try {
+    const patientsList = await db
+      .select({
+        id: users.id,
+        name: users.name,
+        email: users.email,
+        phone: users.phone,
+        date_of_birth: patientProfiles.date_of_birth,
+        gender: patientProfiles.gender,
+        address: patientProfiles.address,
+        created_at: users.created_at,
+      })
+      .from(users)
+      .leftJoin(patientProfiles, eq(users.id, patientProfiles.user_id))
+      .where(eq(users.role, "patient"))
+      .orderBy(desc(users.created_at))
+      .limit(100);
+
+    return res
+      .status(200)
+      .json({ success: true, count: patientsList.length, patients: patientsList });
+  } catch (error) {
+    console.error("Error getting patients:", error);
     return res.status(500).json({ success: false, message: "Server error" });
   }
 };
