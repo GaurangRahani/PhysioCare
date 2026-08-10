@@ -5,14 +5,22 @@ import { Link } from 'react-router-dom';
 
 const Register = () => {
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center py-12 px-4 sm:px-6 lg:px-8 bg-primary/5">
-      {/* Logo Header */}
-      <Link to="/" className="flex justify-center items-center gap-2 group mb-8">
-        <div className="bg-primary p-2 rounded-[8px] shadow-sm">
-          <Activity className="h-8 w-8 text-white" />
-        </div>
-        <span className="text-3xl font-bold text-dark tracking-tight">PhysioCare</span>
-      </Link>
+    <div 
+      className="min-h-screen flex flex-col items-center justify-center py-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden" 
+      style={{ 
+        backgroundColor: '#f8f9ff',
+        backgroundImage: 'radial-gradient(rgba(86, 90, 207, 0.15) 2px, transparent 2px)',
+        backgroundSize: '30px 30px'
+      }}
+    >
+      <div className="relative z-10 w-full flex flex-col items-center">
+        {/* Logo Header */}
+        <Link to="/" className="flex justify-center items-center gap-3 group mb-8" style={{ textDecoration: 'none' }}>
+          <div className="bg-primary/10 p-2 rounded-xl text-primary shadow-sm">
+            <Activity className="h-8 w-8" />
+          </div>
+          <span className="text-3xl font-bold tracking-tight" style={{ fontFamily: "'Poppins', sans-serif", color: 'var(--dark-brand-color)' }}>PhysioCare</span>
+        </Link>
 
       {/* Clerk Drop-in SignUp UI */}
       <SignUp
@@ -39,6 +47,7 @@ const Register = () => {
           }
         }}
       />
+      </div>
     </div>
   );
 };

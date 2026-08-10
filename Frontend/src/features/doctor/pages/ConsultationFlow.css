@@ -1,0 +1,353 @@
+/* ==========================================================================
+   1. EXACT COLOR PALETTE & VARIABLES
+   ========================================================================== */
+.consultation-flow-theme {
+    /* Primary Palette */
+    --primary: #565acf;
+    --secondary: #f17732;
+    --dark-brand: #1f2278;
+    --text-body: #444444;
+    --text-heading: #14181d;
+    --bg-body: #ffffff;
+    
+    /* State Colors */
+    --success: #209f84;
+    --info: #2754e6;
+    --warning: #fe970e;
+    --danger: #f72b50;
+    
+    /* Grays */
+    --gray-100: #f8f9fa;
+    --gray-200: #e9ecef;
+    --gray-300: #dee2e6;
+    --gray-400: #ced4da;
+    --gray-500: #adb5bd;
+    --gray-800: #343a40;
+    --gray-900: #212529;
+
+    /* Shadows & Transitions */
+    --focus-ring: 0 0 0 0.25rem rgba(86, 90, 207, 0.25);
+    --card-shadow: 0 10px 30px rgba(31, 34, 120, 0.05);
+    --hover-shadow: 0 15px 35px rgba(86, 90, 207, 0.12);
+    --transition-std: all 0.15s ease-in-out;
+    --transition-transform: transform 0.2s ease-in-out;
+    
+    /* Typography */
+    --font-primary: 'Montserrat', sans-serif;
+    --font-secondary: 'Poppins', sans-serif;
+    --h1-size: calc(1.4375rem + 2.25vw);
+
+    font-family: var(--font-primary);
+    font-size: 1rem;
+    font-weight: 500;
+    line-height: 1.5;
+    color: var(--text-body);
+    background-color: var(--gray-100); /* Soft background to contrast white cards */
+    position: relative;
+    overflow-x: hidden;
+    min-height: calc(100vh - 80px); /* Account for topnav */
+    box-sizing: border-box;
+}
+
+.consultation-flow-theme *, .consultation-flow-theme *::before, .consultation-flow-theme *::after {
+    box-sizing: inherit;
+}
+
+.consultation-flow-theme h1, 
+.consultation-flow-theme h2, 
+.consultation-flow-theme h3, 
+.consultation-flow-theme h4, 
+.consultation-flow-theme h5, 
+.consultation-flow-theme h6 {
+    font-family: var(--font-secondary);
+    font-weight: 500;
+    line-height: 1.2;
+    color: var(--text-heading);
+    margin-top: 0;
+    margin-bottom: 0.5rem;
+}
+
+.consultation-flow-theme h1 { font-size: var(--h1-size); font-weight: 700; color: var(--dark-brand); }
+.consultation-flow-theme a { text-decoration: none; color: var(--primary); transition: var(--transition-std); }
+.consultation-flow-theme a:hover { color: var(--secondary); }
+.consultation-flow-theme button { cursor: pointer; border: none; background: transparent; font-family: inherit; }
+
+/* ==========================================================================
+   3. ANIMATIONS
+   ========================================================================== */
+@keyframes flow-up-down {
+    0% { transform: translateY(0); }
+    50% { transform: translateY(-20px); }
+    100% { transform: translateY(0); }
+}
+@keyframes flow-up-down2 {
+    0% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+    100% { transform: translateY(0); }
+}
+@keyframes flow-left-right {
+    0% { transform: translateX(0); }
+    50% { transform: translateX(-25px); }
+    100% { transform: translateX(0); }
+}
+@keyframes flow-vibrate {
+    0% { transform: translate(0); }
+    20% { transform: translate(-2px, 2px); }
+    40% { transform: translate(-2px, -2px); }
+    60% { transform: translate(2px, 2px); }
+    80% { transform: translate(2px, -2px); }
+    100% { transform: translate(0); }
+}
+@keyframes flow-rotation {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+@keyframes flow-fadeIn {
+    from { opacity: 0; transform: translateY(15px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+@keyframes flow-modalFadeIn {
+    from { opacity: 0; transform: scale(0.95); }
+    to { opacity: 1; transform: scale(1); }
+}
+
+/* ==========================================================================
+   4. FULL THEME BACKGROUND (Fixing the blank sides)
+   ========================================================================== */
+/* ==========================================================================
+   FIXED THEME BACKGROUND (from template)
+   ========================================================================== */
+.consultation-flow-theme .theme-bg {
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  width: 100%; height: 420px;
+  background-repeat: no-repeat;
+  background-size: cover;
+  background-position: center;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.consultation-flow-theme .theme-bg .bg-shape-bottom {
+  position: absolute;
+  bottom: 0; left: 0; width: 100%; height: 100%;
+  background-image: url(/images/banner/shape.png);
+  background-repeat: no-repeat;
+  background-position: bottom;
+  background-size: contain;
+}
+
+.consultation-flow-theme .theme-bg .pt-img1 {
+  position: absolute; left: 15%; bottom: 120px; z-index: 0;
+}
+.consultation-flow-theme .theme-bg .pt-img2 {
+  position: absolute; left: 30px; top: 100px; z-index: 0;
+}
+.consultation-flow-theme .theme-bg .pt-img3 {
+  position: absolute; right: 8%; bottom: 30%; z-index: 0;
+}
+
+/* ==========================================================================
+   5. REUSABLE UI COMPONENTS
+   ========================================================================== */
+.consultation-flow-theme .flow-container {
+    max-width: 900px; /* Constrained width for forms to show background elements */
+    margin: 3rem auto 5rem;
+    padding: 0 1.5rem;
+    position: relative;
+    z-index: 10;
+}
+
+.consultation-flow-theme .card {
+    background-color: var(--bg-body);
+    border-radius: 12px;
+    box-shadow: var(--card-shadow);
+    border: 1px solid var(--gray-200);
+    padding: 1.5rem 2rem;
+    margin-bottom: 1.5rem;
+    transition: var(--transition-transform);
+    position: relative;
+    overflow: hidden;
+}
+.consultation-flow-theme .card:hover { box-shadow: var(--hover-shadow); }
+
+/* Accented Top Border for main cards */
+.consultation-flow-theme .card-accent-top { border-top: 4px solid var(--primary); }
+
+.consultation-flow-theme .btn-primary {
+    background-color: var(--primary);
+    color: var(--bg-body);
+    font-family: var(--font-secondary);
+    font-weight: 600;
+    padding: 0.85rem 1.5rem;
+    border-radius: 8px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    transition: var(--transition-std);
+    box-shadow: 0 4px 15px rgba(86, 90, 207, 0.2);
+    font-size: 1rem;
+    border: none;
+    cursor: pointer;
+}
+.consultation-flow-theme .btn-primary:hover { background: linear-gradient(135deg, var(--secondary), #c85f1e); transform: translateY(-2px); box-shadow: 0 8px 25px rgba(241, 119, 50, 0.35); color: white; }
+.consultation-flow-theme .btn-primary:focus { outline: none; box-shadow: var(--focus-ring); }
+.consultation-flow-theme .btn-primary:disabled { opacity: 0.7; cursor: not-allowed; transform: none; box-shadow: none; }
+
+.consultation-flow-theme .btn-outline {
+    background-color: transparent;
+    color: var(--text-body);
+    border: 1px solid var(--gray-300);
+    font-family: var(--font-secondary);
+    font-weight: 600;
+    padding: 0.6rem 1.2rem;
+    border-radius: 6px;
+    transition: var(--transition-std);
+    cursor: pointer;
+}
+.consultation-flow-theme .btn-outline:hover { background-color: var(--gray-100); color: var(--dark-brand); }
+
+.consultation-flow-theme .btn-text-danger { color: var(--danger); font-weight: 600; font-family: var(--font-secondary); transition: var(--transition-std); font-size: 0.9rem;}
+.consultation-flow-theme .btn-text-danger:hover { color: #d01c3d; transform: scale(1.05); }
+
+.consultation-flow-theme .btn-text-primary { color: var(--primary); font-weight: 600; font-family: var(--font-secondary); transition: var(--transition-std); font-size: 0.9rem;}
+.consultation-flow-theme .btn-text-primary:hover { color: var(--dark-brand); transform: scale(1.05); }
+
+.consultation-flow-theme .form-group { margin-bottom: 1.5rem; }
+.consultation-flow-theme .form-label {
+    display: block; font-family: var(--font-secondary); font-weight: 700; color: var(--text-heading);
+    font-size: 0.9rem; margin-bottom: 0.5rem;
+}
+.consultation-flow-theme .form-label span.req { color: var(--danger); }
+
+.consultation-flow-theme .form-control {
+    width: 100%; padding: 0.8rem 1rem; font-family: var(--font-primary); font-size: 1rem;
+    color: var(--text-heading); background-color: var(--bg-body);
+    border: 1px solid var(--gray-300); border-radius: 8px; transition: var(--transition-std);
+}
+.consultation-flow-theme .form-control:focus { outline: none; border-color: var(--primary); box-shadow: var(--focus-ring); }
+.consultation-flow-theme .form-control::placeholder { color: var(--gray-400); }
+.consultation-flow-theme textarea.form-control { resize: vertical; min-height: 100px; }
+
+/* Step Visibility */
+.consultation-flow-theme .step-container { animation: flow-fadeIn 0.4s ease-out forwards; }
+
+/* ==========================================================================
+   6. CONSULTATION & PLAN SPECIFIC STYLES
+   ========================================================================== */
+.consultation-flow-theme .back-nav {
+    display: inline-flex; align-items: center; gap: 0.5rem; font-weight: 600;
+    color: var(--gray-500); margin-bottom: 1.5rem; transition: var(--transition-std);
+    cursor: pointer; background: none; border: none; padding: 0; font-family: var(--font-primary);
+}
+.consultation-flow-theme .back-nav:hover { color: var(--primary); transform: translateX(-5px); }
+
+.consultation-flow-theme .header-title { display: flex; align-items: center; gap: 0.8rem; font-size: 1.5rem; margin-bottom: 0.5rem; }
+.consultation-flow-theme .header-title i { color: var(--primary); }
+.consultation-flow-theme .header-meta { color: var(--gray-500); font-size: 0.95rem; display: flex; gap: 0.5rem; align-items: center;}
+
+.consultation-flow-theme .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; }
+.consultation-flow-theme .info-block { border-left: 3px solid var(--gray-200); padding-left: 1rem; }
+.consultation-flow-theme .info-label { font-size: 0.75rem; text-transform: uppercase; color: var(--gray-400); font-weight: 700; letter-spacing: 0.5px; margin-bottom: 0.2rem;}
+.consultation-flow-theme .info-value { font-family: var(--font-secondary); font-weight: 700; color: var(--dark-brand); font-size: 1.1rem; }
+
+/* Radio Toggle Cards (Treatment Plan) */
+.consultation-flow-theme .radio-card {
+    display: flex; align-items: center; gap: 1rem; padding: 1.2rem 1.5rem;
+    border: 2px solid var(--gray-200); border-radius: 8px; margin-bottom: 1rem;
+    cursor: pointer; transition: var(--transition-std); font-family: var(--font-secondary);
+    font-weight: 600; color: var(--dark-brand);
+}
+.consultation-flow-theme .radio-card:hover { border-color: var(--primary); background-color: rgba(86, 90, 207, 0.02); }
+.consultation-flow-theme .radio-card input[type="radio"] {
+    appearance: none; width: 20px; height: 20px; border: 2px solid var(--gray-300);
+    border-radius: 50%; display: grid; place-content: center; transition: var(--transition-std);
+    margin: 0;
+}
+.consultation-flow-theme .radio-card input[type="radio"]::before {
+    content: ""; width: 10px; height: 10px; border-radius: 50%; transform: scale(0);
+    transition: transform 0.15s ease-in-out; box-shadow: inset 1em 1em var(--primary);
+}
+.consultation-flow-theme .radio-card input[type="radio"]:checked { border-color: var(--primary); }
+.consultation-flow-theme .radio-card input[type="radio"]:checked::before { transform: scale(1); }
+.consultation-flow-theme .radio-card.selected { border-color: var(--primary); background-color: rgba(86, 90, 207, 0.04); }
+
+/* Exercise List */
+.consultation-flow-theme .exercise-list-header { font-family: var(--font-secondary); font-weight: 700; color: var(--dark-brand); text-transform: uppercase; letter-spacing: 0.5px; font-size: 0.9rem; margin-bottom: 1rem; border-bottom: 2px solid var(--gray-100); padding-bottom: 0.5rem;}
+
+.consultation-flow-theme .exercise-item {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 1.2rem 0; border-bottom: 1px solid var(--gray-200);
+    transition: var(--transition-std);
+}
+.consultation-flow-theme .exercise-item:last-child { border-bottom: none; }
+.consultation-flow-theme .exercise-item:hover { background-color: var(--gray-50); padding-left: 0.5rem; padding-right: 0.5rem; border-radius: 8px;}
+
+.consultation-flow-theme .ex-name { font-family: var(--font-secondary); font-weight: 600; color: var(--text-heading); font-size: 1.05rem; margin-bottom: 0.3rem;}
+.consultation-flow-theme .ex-meta { display: flex; align-items: center; gap: 1rem; font-size: 0.85rem; color: var(--gray-500); }
+.consultation-flow-theme .badge-purple { background-color: rgba(86, 90, 207, 0.1); color: var(--primary); font-weight: 700; padding: 0.2rem 0.6rem; border-radius: 4px; }
+.consultation-flow-theme .ex-actions { display: flex; gap: 1.5rem; align-items: center; }
+
+.consultation-flow-theme .add-exercise-btn {
+    width: 100%; padding: 1.5rem; text-align: center; border: 2px dashed var(--gray-300);
+    border-radius: 8px; color: var(--gray-500); font-family: var(--font-secondary); font-weight: 600;
+    transition: var(--transition-std); cursor: pointer; margin-top: 1rem; background: transparent;
+}
+.consultation-flow-theme .add-exercise-btn:hover { border-color: var(--primary); color: var(--primary); background-color: rgba(86, 90, 207, 0.02); }
+
+.consultation-flow-theme .empty-state { text-align: center; padding: 3rem 1rem; color: var(--gray-400); font-weight: 500;}
+.consultation-flow-theme .empty-state i { font-size: 2.5rem; margin-bottom: 1rem; opacity: 0.5;}
+
+/* Dates Row */
+.consultation-flow-theme .dates-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+
+/* ==========================================================================
+   7. MODAL STYLES (Edit Exercise)
+   ========================================================================== */
+.consultation-flow-theme .modal-overlay {
+    position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+    background-color: rgba(33, 37, 41, 0.6); backdrop-filter: blur(4px);
+    z-index: 1000; display: flex; justify-content: center; align-items: center;
+    opacity: 0; animation: flow-fadeIn 0.2s forwards;
+}
+
+.consultation-flow-theme .modal-card {
+    width: 90%; max-width: 500px; background-color: var(--bg-body); border-radius: 12px;
+    box-shadow: 0 25px 50px rgba(0,0,0,0.2); padding: 0; overflow: hidden;
+    display: flex; flex-direction: column;
+    animation: flow-modalFadeIn 0.3s ease-out forwards;
+}
+
+.consultation-flow-theme .modal-header {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 1.2rem 1.5rem; border-bottom: 1px solid var(--gray-200);
+}
+.consultation-flow-theme .modal-header h3 { margin: 0; font-size: 1.2rem; font-weight: 700; color: var(--dark-brand); }
+.consultation-flow-theme .modal-close { font-size: 1.2rem; color: var(--gray-500); transition: var(--transition-std); background: none; border: none; cursor: pointer;}
+.consultation-flow-theme .modal-close:hover { color: var(--danger); transform: rotate(90deg); }
+
+.consultation-flow-theme .modal-body { padding: 1.5rem; overflow-y: auto; max-height: 70vh; }
+.consultation-flow-theme .modal-footer {
+    padding: 1.2rem 1.5rem; border-top: 1px solid var(--gray-200); background-color: var(--gray-50);
+    display: flex; justify-content: space-between; align-items: center;
+}
+
+.consultation-flow-theme .alert-warning {
+    background-color: rgba(254, 151, 14, 0.1); border: 1px solid rgba(254, 151, 14, 0.3);
+    border-radius: 8px; padding: 1rem; display: flex; gap: 0.8rem; font-size: 0.85rem; color: var(--text-body);
+    margin-top: 1.5rem;
+}
+.consultation-flow-theme .alert-warning i { color: var(--warning); font-size: 1.1rem; margin-top: 0.1rem;}
+
+.consultation-flow-theme .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+
+.consultation-flow-theme .flex-end { display: flex; justify-content: flex-end; width: 100%; margin-top: 1.5rem; }
+
+/* Responsive adjustments */
+@media (max-width: 640px) {
+    .consultation-flow-theme .dates-row { grid-template-columns: 1fr; }
+    .consultation-flow-theme .info-grid { grid-template-columns: 1fr; gap: 1rem; }
+    .consultation-flow-theme .radio-card { flex-direction: column; align-items: flex-start; gap: 0.5rem; }
+}

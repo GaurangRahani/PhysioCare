@@ -4,6 +4,7 @@ import { Loader2 } from 'lucide-react';
 import WeeklyRoutineTab from '../components/WeeklyRoutineTab';
 import DateOverridesTab from '../components/DateOverridesTab';
 import PreviewTab from '../components/PreviewTab';
+import './AvailabilitySettings.css';
 
 const AvailabilitySettings = () => {
   const [activeTab, setActiveTab] = useState('weekly'); // 'weekly', 'overrides', 'preview'
@@ -58,64 +59,82 @@ const AvailabilitySettings = () => {
   }
 
   return (
-    <div className="space-y-6 max-w-4xl mx-auto">
-      <div>
-        <h1 className="text-2xl font-bold text-heading">My Availability</h1>
-        <p className="text-body mt-1">Manage your weekly schedule and specific dates off.</p>
+    <div className="availability-theme">
+      {/* FIXED THEME BACKGROUND */}
+      <div className="theme-bg" style={{ backgroundImage: 'url(/images/banner/img1.jpg)' }}>
+        <img className="pt-img1" style={{ animation: 'left-right 8s infinite ease-in-out' }} src="/images/shap/wave-blue.png" alt="" />
+        <img className="pt-img2" style={{ animation: 'up-down 6s infinite ease-in-out' }} src="/images/shap/circle-dots.png" alt="" />
+        <img className="pt-img3" style={{ animation: 'rotation 20s infinite linear' }} src="/images/shap/plus-blue.png" alt="" />
+        <div className="bg-shape-bottom"></div>
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-        {/* Tabs */}
-        <div className="flex border-b border-gray-100">
-          <button
-            onClick={() => setActiveTab('weekly')}
-            className={`flex-1 py-4 text-sm font-medium text-center transition-colors ${
-              activeTab === 'weekly' ? 'text-primary border-b-2 border-primary bg-primary/5' : 'text-body hover:bg-gray-50 hover:text-dark'
-            }`}
-          >
-            Weekly Routine
-          </button>
-          <button
-            onClick={() => setActiveTab('overrides')}
-            className={`flex-1 py-4 text-sm font-medium text-center transition-colors ${
-              activeTab === 'overrides' ? 'text-primary border-b-2 border-primary bg-primary/5' : 'text-body hover:bg-gray-50 hover:text-dark'
-            }`}
-          >
-            Date Overrides
-          </button>
-          <button
-            onClick={() => setActiveTab('preview')}
-            className={`flex-1 py-4 text-sm font-medium text-center transition-colors ${
-              activeTab === 'preview' ? 'text-primary border-b-2 border-primary bg-primary/5' : 'text-body hover:bg-gray-50 hover:text-dark'
-            }`}
-          >
-            Preview
-          </button>
-        </div>
+      <main>
+        <div className="container animate-fade-in">
 
-        {/* Content */}
-        <div className="p-6">
-          {activeTab === 'weekly' && (
-            <WeeklyRoutineTab 
-              rules={availabilityRules} 
-              onUpdate={handleRulesUpdated} 
-              getToken={getToken} 
-            />
-          )}
-          {activeTab === 'overrides' && (
-            <DateOverridesTab 
-              rules={availabilityRules} 
-              onUpdate={handleRulesUpdated} 
-              getToken={getToken} 
-            />
-          )}
-          {activeTab === 'preview' && (
-            <PreviewTab 
-              getToken={getToken} 
-            />
-          )}
+          {/* Headers */}
+          <div className="header-section mb-6">
+            <h1>My Availability</h1>
+          </div>
+
+          <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden relative z-10">
+
+            {/* Custom Tabs */}
+            <div className="tabs-header">
+              <button
+                className={`tab-btn ${activeTab === 'weekly' ? 'active' : ''}`}
+                onClick={() => setActiveTab('weekly')}
+              >
+                Weekly Routine
+              </button>
+              <button
+                className={`tab-btn ${activeTab === 'overrides' ? 'active' : ''}`}
+                onClick={() => setActiveTab('overrides')}
+              >
+                Date Overrides
+              </button>
+              <button
+                className={`tab-btn ${activeTab === 'preview' ? 'active' : ''}`}
+                onClick={() => setActiveTab('preview')}
+              >
+                Preview Options
+              </button>
+            </div>
+
+            {/* TAB 1: Weekly Routine */}
+            {activeTab === 'weekly' && (
+              <div className="tab-content active">
+                <WeeklyRoutineTab
+                  rules={availabilityRules}
+                  onUpdate={handleRulesUpdated}
+                  getToken={getToken}
+                />
+              </div>
+            )}
+
+            {/* TAB 2: Date Overrides */}
+            {activeTab === 'overrides' && (
+              <div className="tab-content active">
+                <DateOverridesTab
+                  rules={availabilityRules}
+                  onUpdate={handleRulesUpdated}
+                  getToken={getToken}
+                />
+              </div>
+            )}
+
+            {/* TAB 3: Preview */}
+            {activeTab === 'preview' && (
+              <div className="tab-content active">
+                <PreviewTab
+                  getToken={getToken}
+                />
+              </div>
+            )}
+          </div>
         </div>
-      </div>
+      </main>
+
+
     </div>
   );
 };

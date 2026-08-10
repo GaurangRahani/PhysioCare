@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { useLocation, useNavigate, useParams } from 'react-router-dom';
+import { useLocation, useNavigate, useParams, Link } from 'react-router-dom';
 import { useAuth } from '@clerk/clerk-react';
-import { ArrowLeft, Stethoscope, Loader2, Save } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
+import './ConsultationFlow.css';
 
 const NewConsultation = () => {
   const { appointmentId } = useParams();
@@ -24,13 +25,16 @@ const NewConsultation = () => {
 
   if (!appointment || !overviewData) {
     return (
-      <div className="p-8">
-        <div className="bg-red-50 text-danger p-4 rounded-xl border border-red-100 mb-4">
-          Missing patient context. Please start from the dashboard.
+      <div className="consultation-flow-theme" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '60vh' }}>
+        <div style={{ textAlign: 'center', padding: '2rem' }}>
+          <div className="alert-warning" style={{ justifyContent: 'center', marginBottom: '1rem', display: 'inline-flex' }}>
+            <i className="fa-solid fa-triangle-exclamation"></i> Missing patient context. Please start from the dashboard.
+          </div>
+          <br/>
+          <Link to="/doctor-dashboard" className="btn-outline">
+            <i className="fa-solid fa-arrow-left"></i> Back to Dashboard
+          </Link>
         </div>
-        <button onClick={() => navigate('/doctor-dashboard')} className="text-primary font-semibold hover:underline flex items-center gap-2">
-          <ArrowLeft className="w-4 h-4" /> Back to Dashboard
-        </button>
       </div>
     );
   }
@@ -69,7 +73,7 @@ const NewConsultation = () => {
       const data = await res.json();
 
       if (data.success) {
-        // Navigate to Treatment Plan Builder (Screen 17)
+        // Navigate to Treatment Plan Builder
         navigate(`/doctor-dashboard/consultation/${appointmentId}/plan`, {
           state: {
             appointment,
@@ -89,100 +93,94 @@ const NewConsultation = () => {
   };
 
   return (
-    <div className="max-w-3xl mx-auto space-y-6 animate-fade-in pb-12">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-2">
-        <button 
-          onClick={() => navigate(-1)}
-          className="flex items-center gap-2 text-gray-500 hover:text-dark font-medium transition-colors"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          Back
+    <div className="consultation-flow-theme">
+      
+      {/* FIXED THEME BACKGROUND */}
+      <div className="theme-bg" style={{ backgroundImage: 'url(/images/banner/img1.jpg)' }}>
+        <img className="pt-img1" style={{ animation: 'left-right 8s infinite ease-in-out' }} src="/images/shap/wave-blue.png" alt=""/>
+        <img className="pt-img2" style={{ animation: 'up-down 6s infinite ease-in-out' }} src="/images/shap/circle-dots.png" alt=""/>
+        <img className="pt-img3" style={{ animation: 'rotation 20s infinite linear' }} src="/images/shap/plus-blue.png" alt=""/>
+        <div className="bg-shape-bottom"></div>
+      </div>
+
+      <div className="flow-container">
+        <button className="back-nav" onClick={() => navigate(-1)}>
+          <i className="fa-solid fa-arrow-left"></i> Back
         </button>
+
+        <div className="step-container">
+          
+          {error && (
+            <div className="alert-warning" style={{ backgroundColor: 'rgba(247, 43, 80, 0.08)', borderColor: 'rgba(247, 43, 80, 0.2)', color: 'var(--danger)', marginBottom: '1.5rem' }}>
+              <i className="fa-solid fa-triangle-exclamation" style={{ color: 'var(--danger)' }}></i> {error}
+            </div>
+          )}
+
+          {/* Header Card */}
+          <div className="card card-accent-top">
+              <h2 className="header-title"><i className="fa-solid fa-stethoscope"></i> New Consultation</h2>
+              <div className="header-meta">{user?.name || 'Unknown Patient'} &bull; {appointment?.start_time?.substring(0,5)}</div>
+          </div>
+
+          {/* Info Card */}
+          <div className="card">
+              <div className="info-grid">
+                  <div className="info-block">
+                      <div className="info-label">Visit Type</div>
+                      <div className="info-value">{isFirstVisit ? 'Initial Visit' : 'Follow-up Visit'}</div>
+                  </div>
+                  <div className="info-block" style={{ borderColor: active_plan ? 'rgba(86, 90, 207, 0.3)' : 'var(--gray-200)' }}>
+                      <div className="info-label">Reviewing Plan</div>
+                      <div className="info-value" style={{ color: active_plan ? 'var(--primary)' : 'var(--dark-brand)' }}>
+                        {active_plan ? active_plan.title : 'None (New Patient)'}
+                      </div>
+                  </div>
+              </div>
+          </div>
+
+          {/* Form Card */}
+          <div className="card">
+              <div className="form-group">
+                  <label className="form-label">Diagnosis <span className="req">*</span></label>
+                  <input 
+                    type="text" 
+                    className="form-control" 
+                    placeholder="e.g. Cervical Spondylosis"
+                    value={diagnosis}
+                    onChange={(e) => setDiagnosis(e.target.value)}
+                  />
+              </div>
+              
+              <div className="form-group">
+                  <label className="form-label">Clinical Notes <span className="req">*</span></label>
+                  <textarea 
+                    className="form-control" 
+                    placeholder="Record patient reports, ROM observations, etc."
+                    value={clinicalNotes}
+                    onChange={(e) => setClinicalNotes(e.target.value)}
+                  ></textarea>
+              </div>
+              
+              <div className="form-group" style={{ marginBottom: 0 }}>
+                  <label className="form-label">Treatment Recommendations</label>
+                  <textarea 
+                    className="form-control" 
+                    placeholder="General recommendations for the patient..."
+                    value={treatmentRecommendations}
+                    onChange={(e) => setTreatmentRecommendations(e.target.value)}
+                  ></textarea>
+              </div>
+          </div>
+
+          <div className="flex-end">
+              <button className="btn-primary" onClick={handleSave} disabled={saving}>
+                  {saving ? <Loader2 className="fa-spin" style={{ width: '1.2rem', height: '1.2rem' }} /> : <i className="fa-regular fa-floppy-disk"></i>} 
+                  {saving ? 'Saving...' : 'Save Consultation & Continue to Plan'}
+              </button>
+          </div>
+
+        </div>
       </div>
-
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-bl-full -z-10" />
-        
-        <div className="flex items-center gap-3 mb-1">
-          <Stethoscope className="w-6 h-6 text-primary" />
-          <h1 className="text-2xl font-extrabold text-heading">New Consultation</h1>
-        </div>
-        <p className="text-gray-500 font-medium">
-          {user?.name} &bull; {appointment?.start_time?.substring(0,5)}
-        </p>
-      </div>
-
-      {error && (
-        <div className="bg-red-50 text-danger p-4 rounded-xl border border-red-100 text-sm font-medium">
-          {error}
-        </div>
-      )}
-
-      {/* Form Context Info */}
-      <div className="bg-gray-50 rounded-2xl p-6 border border-gray-200 flex flex-col sm:flex-row sm:items-center gap-6">
-        <div>
-          <span className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Visit Type</span>
-          <span className="font-bold text-dark">{isFirstVisit ? 'Initial Visit' : 'Follow-up Visit'}</span>
-        </div>
-        <div className="hidden sm:block w-px h-10 bg-gray-200"></div>
-        <div>
-          <span className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Reviewing Plan</span>
-          <span className="font-bold text-dark">{active_plan ? active_plan.title : 'None (New Patient)'}</span>
-        </div>
-      </div>
-
-      {/* Form Fields */}
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 space-y-6">
-        <div>
-          <label className="block text-sm font-bold text-heading mb-2">
-            Diagnosis <span className="text-danger">*</span>
-          </label>
-          <input
-            type="text"
-            className="w-full border border-gray-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all font-medium"
-            placeholder="e.g. Cervical Spondylosis"
-            value={diagnosis}
-            onChange={(e) => setDiagnosis(e.target.value)}
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm font-bold text-heading mb-2">
-            Clinical Notes <span className="text-danger">*</span>
-          </label>
-          <textarea
-            className="w-full border border-gray-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all font-medium min-h-[120px]"
-            placeholder="Record patient reports, ROM observations, etc."
-            value={clinicalNotes}
-            onChange={(e) => setClinicalNotes(e.target.value)}
-          ></textarea>
-        </div>
-
-        <div>
-          <label className="block text-sm font-bold text-heading mb-2">
-            Treatment Recommendations
-          </label>
-          <textarea
-            className="w-full border border-gray-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all font-medium min-h-[100px]"
-            placeholder="General recommendations for the patient..."
-            value={treatmentRecommendations}
-            onChange={(e) => setTreatmentRecommendations(e.target.value)}
-          ></textarea>
-        </div>
-      </div>
-
-      <div className="flex justify-end pt-4">
-        <button
-          onClick={handleSave}
-          disabled={saving}
-          className="bg-primary text-white font-bold px-8 py-3.5 rounded-xl hover:bg-dark transition-all shadow-md flex items-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
-        >
-          {saving ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
-          Save Consultation & Continue to Plan
-        </button>
-      </div>
-
     </div>
   );
 };

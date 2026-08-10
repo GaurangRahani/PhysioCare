@@ -1,0 +1,113 @@
+.complete-page-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 2rem;
+  position: relative;
+  z-index: 10;
+  animation: fadeIn 0.5s ease;
+}
+
+.success-icon-container {
+  width: 7rem;
+  height: 7rem;
+  border-radius: 50%;
+  background-color: var(--primary-light);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 2rem;
+  box-shadow: 0 10px 30px rgba(86, 90, 207, 0.2);
+  transition: all 0.7s cubic-bezier(0.34, 1.56, 0.64, 1);
+  transform: scale(0);
+  opacity: 0;
+}
+
+.success-icon-container.show {
+  transform: scale(1);
+  opacity: 1;
+}
+
+.success-icon {
+  color: var(--primary-color);
+  width: 3.5rem;
+  height: 3.5rem;
+}
+
+.complete-title {
+  font-size: 2.25rem;
+  font-weight: 900;
+  color: var(--heading-text-color);
+  margin: 0 0 0.5rem 0;
+  text-align: center;
+}
+
+.complete-subtitle {
+  font-size: 1.15rem;
+  color: var(--gray-600);
+  font-weight: 600;
+  margin: 0 0 2.5rem 0;
+  text-align: center;
+}
+
+.compliance-container {
+  width: 100%;
+  max-width: 400px;
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(10px);
+  padding: 2rem;
+  border-radius: 24px;
+  box-shadow: 0 10px 40px rgba(31, 34, 120, 0.08);
+  border: 1px solid rgba(86, 90, 207, 0.1);
+  margin-bottom: 2.5rem;
+}
+
+.compliance-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-bottom: 1rem;
+}
+
+.compliance-label {
+  font-size: 0.85rem;
+  font-weight: 800;
+  color: var(--gray-500);
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+}
+
+.compliance-value {
+  font-size: 1.75rem;
+  font-weight: 900;
+  color: var(--heading-text-color);
+  line-height: 1;
+}
+
+.compliance-track {
+  height: 12px;
+  background: var(--gray-150);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.compliance-fill {
+  height: 100%;
+  border-radius: 6px;
+  transition: width 1.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.compliance-fill.excellent { background: var(--success); }
+.compliance-fill.good { background: var(--warning); }
+.compliance-fill.needs-work { background: var(--danger); }
+
+.streak-message {
+  text-align: center;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--gray-500);
+  margin-top: 1.5rem;
+  margin-bottom: 0;
+}

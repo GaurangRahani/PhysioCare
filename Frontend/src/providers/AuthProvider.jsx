@@ -17,6 +17,8 @@ const AuthProvider = ({ children }) => {
       publishableKey={PUBLISHABLE_KEY} 
       navigate={(to) => navigate(to)}
       afterSignOutUrl="/"
+      signInUrl="/login"
+      signUpUrl="/register"
       appearance={clerkAppearance}
     >
       {children}

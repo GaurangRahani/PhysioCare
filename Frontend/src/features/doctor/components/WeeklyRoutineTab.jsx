@@ -133,127 +133,121 @@ const WeeklyRoutineTab = ({ rules, onUpdate, getToken }) => {
   };
 
   return (
-    <div className="space-y-8 animate-fade-in">
+    <div className="animate-fade-in">
       
       {/* Slot Duration */}
-      <div>
-        <h3 className="text-lg font-semibold text-heading flex items-center gap-2">
-          <Clock className="w-5 h-5 text-primary" />
-          Slot Duration
-        </h3>
-        <p className="text-sm text-body mt-1 mb-4">
-          Changing slot duration affects all future bookings. Existing appointments are not affected.
-        </p>
-        <div className="flex gap-4">
-          {SLOT_OPTIONS.map((min) => (
-            <label key={min} className="flex items-center gap-2 cursor-pointer">
-              <input
-                type="radio"
-                name="slot_minutes"
-                checked={slotMinutes === min}
-                onChange={() => handleSlotChange(min)}
-                className="w-4 h-4 text-primary focus:ring-primary border-gray-300"
-              />
-              <span className="text-sm font-medium text-dark">{min} min</span>
-            </label>
-          ))}
-        </div>
+      <h3><i className="fa-regular fa-clock" style={{ color: 'var(--secondary)', marginRight: '8px' }}></i> Slot Duration</h3>
+      <p style={{ fontSize: '0.95rem', color: 'var(--gray-800)' }}>
+        Changing slot duration affects all future bookings. Existing appointments are not affected.
+      </p>
+      
+      <div className="radio-group">
+        {SLOT_OPTIONS.map((min) => (
+          <label key={min} className="radio-label">
+            <input
+              type="radio"
+              name="slot_minutes"
+              value={min}
+              checked={slotMinutes === min}
+              onChange={() => handleSlotChange(min)}
+            />
+            {min} min
+          </label>
+        ))}
       </div>
 
-      <hr className="border-gray-100" />
+      <h3 style={{ margin: '2.5rem 0 1rem 0', textTransform: 'uppercase', fontSize: '0.9rem', letterSpacing: '1px', color: 'var(--gray-400)' }}>
+        Weekly Schedule
+      </h3>
 
       {/* Weekly Schedule */}
       <div>
-        <h3 className="text-lg font-semibold text-heading mb-4">WEEKLY SCHEDULE</h3>
-        
-        <div className="space-y-6">
-          {DAYS_OF_WEEK.map((day) => {
-            const shifts = routine[day.value] || [];
-            const isActive = shifts.length > 0;
+        {DAYS_OF_WEEK.map((day) => {
+          const shifts = routine[day.value] || [];
+          const isActive = shifts.length > 0;
 
-            return (
-              <div key={day.value} className="flex flex-col md:flex-row md:items-start gap-4">
-                {/* Day Header */}
-                <div className="w-40 flex items-center gap-3 mt-2">
-                  <label className="relative inline-flex items-center cursor-pointer">
-                    <input 
-                      type="checkbox" 
-                      className="sr-only peer" 
-                      checked={isActive}
-                      onChange={() => handleDayToggle(day.value)}
-                    />
-                    <div className="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary"></div>
-                  </label>
-                  <span className={`font-medium ${isActive ? 'text-dark' : 'text-gray-400'}`}>
-                    {day.label}
-                  </span>
-                </div>
+          return (
+            <div key={day.value} className="schedule-row">
+              <div className={`day-label ${!isActive ? 'off' : ''}`}>
+                <label className="toggle-switch">
+                  <input 
+                    type="checkbox" 
+                    checked={isActive}
+                    onChange={() => handleDayToggle(day.value)}
+                  />
+                  <span className="slider"></span>
+                </label>
+                {day.label}
+              </div>
 
-                {/* Shifts Container */}
-                <div className="flex-1 space-y-3">
-                  {!isActive ? (
-                    <span className="text-sm text-gray-400 inline-block mt-2">Off</span>
-                  ) : (
-                    <>
-                      {shifts.map((shift, idx) => (
-                        <div key={idx} className="flex items-center gap-3">
+              <div className="time-blocks">
+                {!isActive ? (
+                  <span style={{ color: 'var(--gray-400)', marginTop: '0.5rem', display: 'block', fontWeight: '600' }}>Off</span>
+                ) : (
+                  <>
+                    {shifts.map((shift, idx) => (
+                      <div key={idx} className="time-inputs">
+                        <div className="time-input-wrap">
                           <input
                             type="time"
                             value={shift.start}
                             onChange={(e) => updateShift(day.value, idx, 'start', e.target.value)}
-                            className="px-3 py-1.5 border border-gray-200 rounded text-sm focus:ring-primary focus:border-primary outline-none"
                           />
-                          <span className="text-body text-sm">to</span>
+                          <i className="fa-regular fa-clock"></i>
+                        </div>
+                        <span>to</span>
+                        <div className="time-input-wrap">
                           <input
                             type="time"
                             value={shift.end}
                             onChange={(e) => updateShift(day.value, idx, 'end', e.target.value)}
-                            className="px-3 py-1.5 border border-gray-200 rounded text-sm focus:ring-primary focus:border-primary outline-none"
                           />
-                          <button
-                            onClick={() => removeShift(day.value, idx)}
-                            className="p-1.5 text-gray-400 hover:text-danger hover:bg-red-50 rounded transition-colors ml-2"
-                            title="Remove Block"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
+                          <i className="fa-regular fa-clock"></i>
                         </div>
-                      ))}
-                      
-                      <button
-                        onClick={() => addShift(day.value)}
-                        className="text-sm text-primary font-medium flex items-center gap-1 hover:text-dark transition-colors"
-                      >
-                        <Plus className="w-4 h-4" /> Add Hours Block
-                      </button>
-                    </>
-                  )}
-                </div>
+                        <button
+                          onClick={() => removeShift(day.value, idx)}
+                          className="btn-icon"
+                          title="Remove Block"
+                        >
+                          <i className="fa-regular fa-trash-can"></i>
+                        </button>
+                      </div>
+                    ))}
+                    
+                    <button
+                      onClick={() => addShift(day.value)}
+                      className="add-link"
+                    >
+                      + Add Hours Block
+                    </button>
+                  </>
+                )}
               </div>
-            );
-          })}
-        </div>
+              <div></div>
+            </div>
+          );
+        })}
       </div>
 
       {errorMsg && (
-        <div className="p-3 text-sm text-danger bg-red-50 border border-red-100 rounded-lg">
+        <div style={{ padding: '1rem', color: 'var(--danger)', backgroundColor: 'rgba(247, 43, 80, 0.1)', borderRadius: '8px', marginTop: '1rem' }}>
           {errorMsg}
         </div>
       )}
       {successMsg && (
-        <div className="p-3 text-sm text-green-700 bg-green-50 border border-green-100 rounded-lg">
+        <div style={{ padding: '1rem', color: 'var(--success)', backgroundColor: 'rgba(32, 159, 132, 0.1)', borderRadius: '8px', marginTop: '1rem' }}>
           {successMsg}
         </div>
       )}
 
-      <div className="pt-4 border-t border-gray-100">
+      <div style={{ marginTop: '2rem' }}>
         <button
           onClick={handleSave}
           disabled={loading}
-          className="w-full md:w-auto px-8 py-2.5 bg-primary text-white font-medium rounded-lg hover:bg-dark transition-colors disabled:opacity-70 flex items-center justify-center gap-2"
+          className="btn btn-primary"
         >
-          {loading && <Loader2 className="w-4 h-4 animate-spin" />}
-          Save Weekly Routine
+          {loading ? <Loader2 className="w-4 h-4 animate-spin" style={{ marginRight: '8px' }} /> : null}
+          Save Weekly Routine <i className="fa-solid fa-chevron-right" style={{ fontSize: '0.8rem', marginLeft: '4px' }}></i>
         </button>
       </div>
       

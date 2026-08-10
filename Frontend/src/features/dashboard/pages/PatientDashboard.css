@@ -1,0 +1,274 @@
+/* =========================================
+   1. Design System Tokens & Variables
+   ========================================= */
+.patient-dashboard-wrapper {
+    /* Brand Colors */
+    --primary-color: #565acf;
+    --secondary-color: #f17732;
+    --dark-brand-color: #1f2278;
+    --body-text-color: #444444;
+    --heading-text-color: #14181d;
+    --body-bg: #ffffff;
+    
+    /* State Colors */
+    --success: #209f84;
+    --info: #2754e6;
+    --warning: #fe970e;
+    --danger: #f72b50;
+    
+    /* Grays */
+    --gray-100: #f8f9fa;
+    --gray-200: #e9ecef;
+    --gray-300: #dee2e6;
+    --gray-400: #ced4da;
+    --gray-600: #6c757d;
+    --gray-900: #212529;
+
+    /* Shadows & Focus Rings */
+    --focus-ring: 0 0 0 0.25rem rgba(86, 90, 207, 0.25);
+    --focus-ring-secondary: 0 0 0 0.25rem rgba(241, 119, 50, 0.25);
+    --card-shadow: 0 4px 15px rgba(31, 34, 120, 0.05);
+    --card-hover-shadow: 0 10px 25px rgba(86, 90, 207, 0.12);
+
+    font-family: 'Montserrat', sans-serif;
+    font-size: 1rem;
+    font-weight: 500;
+    line-height: 1.5;
+    color: var(--body-text-color);
+    background-color: transparent; /* Allow the global theme background to show through! */
+    position: relative;
+    min-height: 100vh;
+}
+
+.patient-dashboard-wrapper h1, 
+.patient-dashboard-wrapper h2, 
+.patient-dashboard-wrapper h3, 
+.patient-dashboard-wrapper h4, 
+.patient-dashboard-wrapper h5, 
+.patient-dashboard-wrapper h6 {
+    font-family: 'Poppins', sans-serif;
+    font-weight: 500;
+    line-height: 1.2;
+    margin-bottom: 0.5rem;
+    color: var(--heading-text-color);
+}
+
+/* =========================================
+   3. Exact Background Theme & Animations
+   ========================================= */
+@keyframes pd-up-down {
+    0% { transform: translateY(0); }
+    50% { transform: translateY(-15px); }
+    100% { transform: translateY(0); }
+}
+@keyframes pd-left-right {
+    0% { transform: translateX(0); }
+    50% { transform: translateX(15px); }
+    100% { transform: translateX(0); }
+}
+@keyframes pd-rotation {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Dotted Grid Base */
+.patient-dashboard-wrapper .bg-grid {
+    position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+    background-image: radial-gradient(var(--gray-300) 1.5px, transparent 1.5px);
+    background-size: 35px 35px;
+    z-index: -3;
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+/* The Prominent Purple Wave */
+.patient-dashboard-wrapper .bg-wave-container {
+    position: fixed;
+    top: 75px; /* Positions wave right below the sticky header */
+    left: 0;
+    width: 100vw;
+    z-index: -2;
+    pointer-events: none;
+}
+.patient-dashboard-wrapper .bg-wave-container svg {
+    width: 100%;
+    height: auto;
+    display: block;
+}
+
+/* Floating Geometric Decor Elements */
+.patient-dashboard-wrapper .theme-decor { position: fixed; z-index: -1; pointer-events: none; }
+
+.patient-dashboard-wrapper .decor-triangle { top: 120px; left: 5%; color: var(--secondary-color); animation: pd-rotation 30s linear infinite; width: 40px; height: 40px; }
+.patient-dashboard-wrapper .decor-zigzag-1 { top: 600px; left: 8%; color: var(--primary-color); animation: pd-left-right 6s ease-in-out infinite; width: 60px; height: 20px; opacity: 0.8; }
+.patient-dashboard-wrapper .decor-square { top: 300px; left: 3%; color: var(--secondary-color); animation: pd-up-down 5s ease-in-out infinite; width: 35px; height: 35px; opacity: 0.7; }
+.patient-dashboard-wrapper .decor-zigzag-2 { top: 150px; right: 10%; color: var(--primary-color); animation: pd-left-right 5s ease-in-out infinite reverse; width: 50px; height: 15px; opacity: 0.6; }
+.patient-dashboard-wrapper .decor-dotted-circle { top: 350px; right: 5%; color: var(--primary-color); animation: pd-rotation 40s linear infinite; width: 70px; height: 70px; opacity: 0.7; }
+.patient-dashboard-wrapper .decor-plus { bottom: 100px; right: 12%; color: var(--primary-color); animation: pd-up-down 4s ease-in-out infinite; width: 25px; height: 25px; opacity: 0.6; }
+.patient-dashboard-wrapper .decor-solid-circle { bottom: 50px; right: 5%; color: var(--warning); animation: pd-up-down 6s ease-in-out infinite reverse; width: 30px; height: 30px; opacity: 0.5; }
+
+/* =========================================
+   5. Main Dashboard Layout & Components
+   ========================================= */
+.patient-dashboard-wrapper .dashboard-container {
+    max-width: 950px;
+    margin: 0 auto;
+    padding: 3rem 1.5rem;
+    position: relative;
+    z-index: 10; /* Keeps content above the background wave */
+}
+
+/* Buttons */
+.patient-dashboard-wrapper .btn {
+    font-family: 'Poppins', sans-serif; font-size: 0.875rem; font-weight: 500;
+    padding: 0.65rem 1.5rem; border-radius: 0.5rem; cursor: pointer;
+    display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem;
+    border: none; transition: all 0.15s ease-in-out; text-decoration: none;
+}
+.patient-dashboard-wrapper .btn-secondary { background-color: var(--secondary-color); color: var(--body-bg); box-shadow: 0 4px 10px rgba(241, 119, 50, 0.2); }
+.patient-dashboard-wrapper .btn-secondary:hover { transform: translateY(-2px); box-shadow: 0 6px 15px rgba(241, 119, 50, 0.3); }
+.patient-dashboard-wrapper .btn-secondary:focus { outline: none; box-shadow: var(--focus-ring-secondary); }
+
+/* Headers */
+.patient-dashboard-wrapper .section-header-wrapper {
+    display: flex; justify-content: space-between; align-items: center;
+    flex-wrap: wrap; gap: 1rem; margin-bottom: 2rem;
+}
+.patient-dashboard-wrapper .section-header {
+    font-family: 'Poppins', sans-serif; font-size: 1.25rem; font-weight: 600;
+    color: var(--dark-brand-color); margin-bottom: 0;
+    display: flex; align-items: center; gap: 0.5rem;
+}
+/* Thick colorful accent border for the header */
+.patient-dashboard-wrapper .section-header::before {
+    content: ''; display: block; width: 4px; height: 20px;
+    background: linear-gradient(to bottom, var(--primary-color), var(--secondary-color));
+    border-radius: 4px;
+}
+
+/* Dashboard Cards General */
+.patient-dashboard-wrapper .dash-card {
+    background-color: #ffffff;
+    border-radius: 1rem;
+    box-shadow: 0 10px 30px rgba(31, 34, 120, 0.08);
+    border: 1px solid rgba(86, 90, 207, 0.1);
+    transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.4s ease, border-color 0.4s ease;
+    position: relative;
+    overflow: hidden;
+}
+.patient-dashboard-wrapper .dash-card:hover { 
+    transform: translateY(-6px); 
+    box-shadow: 0 20px 40px rgba(86, 90, 207, 0.2); 
+    border-color: rgba(86, 90, 207, 0.3);
+}
+
+/* Upcoming Appointment Card (Matched to Image) */
+.patient-dashboard-wrapper .upcoming-card {
+    padding: 1.5rem 2rem;
+    max-width: 400px;
+    margin-bottom: 4rem;
+}
+/* Clean curved left accent line */
+.patient-dashboard-wrapper .upcoming-card::after {
+    content: ''; position: absolute; top: 0; left: 0; bottom: 0; width: 6px;
+    background-color: var(--secondary-color);
+}
+/* Inner soft orange glow matched to image */
+.patient-dashboard-wrapper .upcoming-card::before {
+    content: ''; position: absolute; top: -30px; right: -30px; width: 120px; height: 120px;
+    background: radial-gradient(circle, rgba(241,119,50,0.15) 0%, transparent 70%);
+    border-radius: 50%; pointer-events: none;
+}
+
+.patient-dashboard-wrapper .doc-name { font-size: 1.25rem; font-weight: 600; color: var(--heading-text-color); margin-bottom: 0.25rem; }
+.patient-dashboard-wrapper .apt-time { font-size: 0.875rem; color: var(--primary-color); font-weight: 600; margin-bottom: 1.25rem; display: flex; align-items: center; gap: 0.5rem; }
+
+.patient-dashboard-wrapper .btn-cancel-light {
+    color: var(--danger); font-size: 0.875rem; font-weight: 600;
+    text-decoration: none; display: inline-flex; align-items: center; gap: 0.35rem;
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); padding: 0.4rem 0.8rem; border-radius: 0.4rem; 
+    background: rgba(247, 43, 80, 0.05); border: 1px solid rgba(247, 43, 80, 0.1);
+}
+.patient-dashboard-wrapper .btn-cancel-light:hover { 
+    background: rgba(247, 43, 80, 0.15); 
+    transform: scale(1.02);
+}
+.patient-dashboard-wrapper .btn-cancel-light:active {
+    transform: scale(0.96);
+}
+
+/* Sessions Section */
+.patient-dashboard-wrapper .sub-header {
+    font-size: 0.875rem; text-transform: uppercase; letter-spacing: 1.5px;
+    font-weight: 700; color: var(--gray-600); margin-bottom: 1.5rem;
+}
+
+.patient-dashboard-wrapper .session-stack { display: flex; flex-direction: column; gap: 2rem; }
+
+/* Matched to Image: Green top border for sessions */
+.patient-dashboard-wrapper .session-card {
+    border-top: 4px solid var(--gray-300);
+    padding: 1.5rem 2rem;
+    background: #ffffff;
+    transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.patient-dashboard-wrapper .session-card.completed {
+    border-top-color: var(--success);
+}
+.patient-dashboard-wrapper .session-card:hover {
+    border-top-color: var(--primary-color);
+}
+.patient-dashboard-wrapper .session-card.completed:hover {
+    border-top-color: var(--success);
+}
+
+.patient-dashboard-wrapper .session-header {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 1.5rem;
+}
+.patient-dashboard-wrapper .session-title { font-family: 'Poppins', sans-serif; font-size: 1.125rem; font-weight: 600; color: var(--heading-text-color); }
+.patient-dashboard-wrapper .session-count { font-size: 0.75rem; color: var(--gray-600); font-weight: 600; background: var(--gray-200); padding: 0.3rem 0.75rem; border-radius: 1rem;}
+
+.patient-dashboard-wrapper .task-list {
+    display: flex; align-items: center; gap: 0.875rem; margin-bottom: 1.5rem;
+    font-weight: 500; color: var(--body-text-color); background: var(--gray-100); 
+    padding: 1rem 1.25rem; border-radius: 0.5rem; font-size: 0.95rem;
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    cursor: default;
+    border: 1px solid transparent;
+}
+.patient-dashboard-wrapper .task-list:hover {
+    background: #ffffff;
+    transform: translateX(8px) scale(1.01);
+    border: 1px solid rgba(86, 90, 207, 0.2);
+    border-left: 4px solid var(--primary-color);
+    box-shadow: 0 8px 20px rgba(86, 90, 207, 0.12);
+}
+.patient-dashboard-wrapper .task-icon { color: var(--gray-400); flex-shrink: 0; }
+.patient-dashboard-wrapper .task-icon.completed { color: var(--success); }
+
+/* Progress Bar */
+.patient-dashboard-wrapper .progress-header { display: flex; justify-content: space-between; font-size: 0.75rem; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 0.75rem; }
+.patient-dashboard-wrapper .progress-label { color: var(--gray-600); }
+.patient-dashboard-wrapper .progress-value { color: var(--dark-brand-color); }
+
+.patient-dashboard-wrapper .progress-track {
+    background-color: var(--gray-200); height: 6px; border-radius: 3px; overflow: hidden; margin-bottom: 1.5rem;
+}
+.patient-dashboard-wrapper .progress-fill { height: 100%; background-color: var(--success); transition: width 0.5s ease-in-out; }
+
+/* Light Green Button for Complete */
+.patient-dashboard-wrapper .btn-success-light {
+    background-color: rgba(32, 159, 132, 0.15); color: var(--success); font-weight: 600; 
+    width: 100%; border-radius: 0.5rem; padding: 0.85rem; border: none; font-family: 'Poppins', sans-serif;
+    display: flex; align-items: center; justify-content: center; gap: 0.5rem; transition: all 0.2s ease;
+    cursor: pointer; position: relative; overflow: hidden;
+}
+.patient-dashboard-wrapper .btn-success-light:hover { 
+    background-color: rgba(32, 159, 132, 0.25); 
+    transform: scale(1.02);
+}
+.patient-dashboard-wrapper .btn-success-light:active {
+    transform: scale(0.98);
+}
+/* The Start Session button which dynamically gets inline blue style, will also inherit this scale */

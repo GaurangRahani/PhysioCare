@@ -1,0 +1,554 @@
+/* =========================================
+   1. COLOR PALETTE & DESIGN SYSTEM
+   ========================================= */
+:root {
+  --primary: #565acf;
+  --secondary: #f17732;
+  --dark-brand: #1f2278;
+  --body-text: #444444;
+  --heading-text: #14181d;
+  --bg-color: #ffffff;
+  
+  /* State Colors */
+  --success: #209f84;
+  --info: #2754e6;
+  --warning: #fe970e;
+  --danger: #f72b50;
+  
+  /* Custom Light Tints for Accordions */
+  --danger-light: #fde9ed;
+  --warning-light: #fff6e8;
+  
+  /* Grays */
+  --gray-light: #f8f9fa;
+  --gray-border: #e9ecef;
+  --gray-dark: #212529;
+  --gray-muted: #6c757d;
+
+  /* Focus / Hover Rings */
+  --focus-ring: 0 0 0 0.25rem rgba(86, 90, 207, 0.25);
+  
+  /* Fonts */
+  --font-primary: 'Montserrat', sans-serif;
+  --font-secondary: 'Poppins', sans-serif;
+}
+
+/* =========================================
+   2. GLOBAL & TYPOGRAPHY SETTINGS (Scoped to patients-tab-wrapper)
+   ========================================= */
+.patients-tab-wrapper {
+  background-color: var(--gray-light); /* Off-white to make cards pop */
+  color: var(--body-text);
+  font-family: var(--font-primary); font-size: 1rem; font-weight: 500; line-height: 1.5;
+  position: relative; overflow-x: hidden; height: 100%;
+}
+
+.patients-tab-wrapper h1, 
+.patients-tab-wrapper h2, 
+.patients-tab-wrapper h3, 
+.patients-tab-wrapper h4, 
+.patients-tab-wrapper h5, 
+.patients-tab-wrapper h6 {
+  font-family: var(--font-secondary); color: var(--heading-text); font-weight: 600;
+  line-height: 1.2; margin-top: 0; margin-bottom: 0.5rem;
+}
+
+.patients-tab-wrapper h1 { font-size: calc(1.4375rem + 2.25vw); }
+.patients-tab-wrapper h2 { font-size: 1.75rem; color: var(--primary); }
+
+.patients-tab-wrapper a { text-decoration: none; color: var(--primary); transition: all 0.15s ease-in-out; }
+
+/* =========================================
+   3. BACKGROUND THEME
+   ========================================= */
+.bg-elements {
+  position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+  overflow: hidden; z-index: 0; pointer-events: none;
+}
+.bg-dotted-layer {
+  position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+  background-image: radial-gradient(var(--gray-border) 1.5px, transparent 1.5px);
+  background-size: 24px 24px; opacity: 0.6;
+}
+.floating-shape { position: absolute; opacity: 0.7; }
+.shape-square { top: 10%; left: 5%; width: 40px; height: 40px; border: 3px solid var(--primary); border-radius: 4px; animation: rotation 12s linear infinite; }
+.shape-zigzag { top: 35%; right: 5%; width: 60px; height: 30px; background: repeating-linear-gradient(45deg, transparent, transparent 4px, var(--secondary) 4px, var(--secondary) 6px); animation: left-right 5s ease-in-out infinite; opacity: 0.2; }
+.shape-cross { bottom: 15%; left: 10%; width: 40px; height: 40px; position: relative; animation: up-down 4s ease-in-out infinite; }
+.shape-cross::before, .shape-cross::after { content: ''; position: absolute; background-color: var(--primary); border-radius: 2px; opacity: 0.3;}
+.shape-cross::before { top: 18px; left: 0; width: 40px; height: 4px; }
+.shape-cross::after { top: 0; left: 18px; width: 4px; height: 40px; }
+
+@keyframes up-down { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-15px); } }
+@keyframes left-right { 0%, 100% { transform: translateX(0); } 50% { transform: translateX(15px); } }
+@keyframes rotation { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+/* =========================================
+   4. LAYOUT
+   ========================================= */
+.patients-container { width: 95%; max-width: 1300px; margin: 0 auto; padding: 2.5rem 0; position: relative; z-index: 1; }
+
+/* =========================================
+   5. ACCORDION ALERTS (Red & Yellow)
+   ========================================= */
+.alerts-container {
+  display: flex; flex-direction: column; gap: 1.25rem; margin-bottom: 3rem;
+}
+
+.accordion-item {
+  border-radius: 8px; overflow: hidden;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+  transition: all 0.3s ease-in-out;
+}
+
+/* Accordion Headers */
+.accordion-header {
+  padding: 1.25rem 1.5rem;
+  display: flex; justify-content: space-between; align-items: center;
+  cursor: pointer; transition: background-color 0.15s ease-in-out;
+  font-family: var(--font-secondary);
+}
+
+.accordion-header h3 { 
+  margin: 0; font-size: 1.1rem; font-weight: 600; 
+  display: flex; align-items: center; gap: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px;
+}
+
+.icon-chevron {
+  transition: transform 0.3s ease-in-out;
+  width: 24px; height: 24px; display: flex; align-items: center; justify-content: center;
+}
+
+/* Danger (Red) Accordion Styling */
+.acc-danger { border: 1px solid var(--danger); }
+.acc-danger .accordion-header { background-color: var(--danger); color: #fff; }
+.acc-danger .accordion-header h3, .acc-danger .icon-chevron { color: #fff; }
+.acc-danger .accordion-body-wrapper { background-color: var(--danger-light); }
+
+/* Warning (Yellow/Amber) Accordion Styling */
+.acc-warning { border: 1px solid var(--warning); }
+.acc-warning .accordion-header { background-color: var(--warning); color: #fff; }
+.acc-warning .accordion-header h3, .acc-warning .icon-chevron { color: #fff; }
+.acc-warning .accordion-body-wrapper { background-color: var(--warning-light); }
+
+/* Pulsing Alert Dot */
+@keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(255,255,255, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(255,255,255, 0); } 100% { box-shadow: 0 0 0 0 rgba(255,255,255, 0); } }
+.pulse-dot { width: 10px; height: 10px; background-color: #fff; border-radius: 50%; display: inline-block; animation: pulse 2s infinite; }
+
+/* Accordion Body / Content Expand Logic */
+.patients-tab-wrapper .accordion-body {
+  max-height: 0; /* JS will toggle this */
+  overflow: hidden;
+  transition: max-height 0.3s ease-in-out;
+}
+.patients-tab-wrapper .accordion-content {
+  padding: 1.5rem;
+  display: flex; flex-direction: column; gap: 0.75rem;
+  max-height: 450px;
+  overflow-y: auto;
+}
+
+/* Custom sleek scrollbar for the accordion content */
+.patients-tab-wrapper .accordion-content::-webkit-scrollbar { width: 6px; }
+.patients-tab-wrapper .accordion-content::-webkit-scrollbar-track { background: transparent; }
+.patients-tab-wrapper .accordion-content::-webkit-scrollbar-thumb { background: var(--gray-400); border-radius: 10px; }
+.patients-tab-wrapper .accordion-content::-webkit-scrollbar-thumb:hover { background: var(--gray-500); }
+
+/* Alert List Items Inside Accordion */
+.alert-card {
+  background: #fff; border-radius: 6px; padding: 1.25rem 1.5rem;
+  display: flex; justify-content: space-between; align-items: center;
+  border-left: 4px solid transparent; box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+  transition: transform 0.2s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+.alert-card:hover { transform: translateX(5px); box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+.acc-danger .alert-card { border-left-color: var(--danger); border-right: 1px solid rgba(247, 43, 80, 0.2); border-top: 1px solid rgba(247, 43, 80, 0.2); border-bottom: 1px solid rgba(247, 43, 80, 0.2); }
+.acc-warning .alert-card { border-left-color: var(--warning); border-right: 1px solid rgba(254, 151, 14, 0.2); border-top: 1px solid rgba(254, 151, 14, 0.2); border-bottom: 1px solid rgba(254, 151, 14, 0.2);}
+
+.alert-details h4 { margin: 0 0 0.25rem 0; font-size: 1.05rem; color: var(--heading-text); }
+.alert-details p { margin: 0; font-size: 0.9rem; color: var(--body-text); }
+.alert-meta { font-size: 0.8rem; color: var(--gray-muted); font-style: italic; margin-top: 0.25rem; display: block;}
+
+.btn-review-alert {
+  background: transparent; border: none; font-family: var(--font-secondary);
+  font-weight: 600; font-size: 0.9rem; cursor: pointer; transition: all 0.15s ease-in-out;
+}
+.acc-danger .btn-review-alert { color: var(--danger); }
+.acc-warning .btn-review-alert { color: var(--warning); }
+.btn-review-alert:hover { text-decoration: underline; }
+
+/* =========================================
+   6. TOOLBAR & PATIENTS LIST
+   ========================================= */
+.patients-section-header {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;
+  border-bottom: 2px solid var(--gray-border); padding-bottom: 1rem;
+}
+
+.toolbar-actions {
+  display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;
+}
+
+.form-select, .form-input {
+  padding: 0.6rem 1rem; border: 1px solid var(--gray-border); border-radius: 6px;
+  font-family: var(--font-primary); font-size: 0.95rem; color: var(--body-text);
+  transition: all 0.15s ease-in-out; outline: none; background: #fff;
+}
+.form-select:focus, .form-input:focus { border-color: var(--primary); box-shadow: var(--focus-ring); }
+
+.search-wrapper { position: relative; }
+.search-wrapper input { padding-right: 2.5rem; width: 280px; }
+.search-wrapper svg { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); color: var(--gray-muted); pointer-events: none;}
+
+/* =========================================
+   7. CARD WISE PATIENT GRID
+   ========================================= */
+.patient-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 1.5rem;
+  margin-bottom: 3rem;
+}
+
+/* Card Container */
+.pt-card {
+    background-color: #ffffff;
+    width: 100%;
+    border-radius: 12px;
+    padding: 24px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+    border: 1.5px solid transparent; 
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+/* Card Hover State */
+.pt-card:hover {
+    border-color: var(--primary);
+    box-shadow: 0 8px 30px rgba(92, 98, 214, 0.12);
+    background-color: #f8f9ff; 
+}
+
+/* Header Section */
+.pt-header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.pt-avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background-color: #eef0fa;
+    color: var(--primary);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-weight: 700;
+    font-size: 16px;
+}
+
+.pt-user-info {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.pt-name-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.pt-name {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--heading-text);
+}
+
+.pt-sub-info {
+    font-size: 13px;
+    color: var(--gray-muted);
+    font-weight: 500;
+}
+
+/* Dashed Divider */
+.pt-divider {
+    width: 100%;
+    height: 1px;
+    border-top: 1px dashed #d1d5dc;
+    margin: 20px 0;
+}
+
+/* Details Section */
+.pt-details-container {
+    width: 75%; /* Controls how wide the details block is */
+    margin: 0 auto 30px auto; /* Centers the block itself */
+}
+
+.pt-detail-row {
+    display: flex;
+    justify-content: space-between; /* Pushes label left, value right */
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid #f1f3f6;
+}
+
+/* Remove border from last item */
+.pt-detail-row:last-child {
+    border-bottom: none;
+}
+
+.pt-label {
+    font-size: 12px;
+    color: var(--gray-muted);
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.pt-value {
+    font-size: 14px;
+    color: var(--heading-text);
+    font-weight: 700;
+    text-align: right;
+}
+
+/* Action Button */
+.pt-action-btn {
+    display: block;
+    width: 100%;
+    text-align: center;
+    font-size: 15px;
+    font-weight: 600;
+    text-decoration: none;
+    padding: 14px 0;
+    border-radius: 8px;
+    color: var(--primary);
+    background-color: transparent;
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+/* Button Hover State (Triggered when hovering over the card) */
+.pt-card:hover .pt-action-btn {
+    background-color: var(--primary);
+    color: white;
+}
+
+/* =========================================
+   8. PAGINATION
+   ========================================= */
+/* Pagination Bar */
+.pagination-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem 0;
+    margin-top: 1.5rem;
+    border-top: 1px solid var(--gray-200);
+}
+
+.pagination-left-panel {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-size: 0.875rem;
+    color: var(--gray-500);
+}
+
+.rows-dropdown {
+    padding: 0.35rem 0.5rem;
+    border-radius: 0.375rem;
+    border: 1px solid var(--gray-300);
+    background-color: white;
+    font-size: 0.875rem;
+    color: var(--heading-text);
+    cursor: pointer;
+}
+
+.pagination-center-panel {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.pagination-numbers-nav {
+    display: flex;
+    gap: 0.25rem;
+}
+
+.page-num-btn {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 0.375rem;
+    border: 1px solid transparent;
+    background: transparent;
+    color: var(--gray-500);
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.page-num-btn:hover:not(:disabled) {
+    background-color: var(--gray-100);
+}
+
+.page-num-btn.active {
+    background-color: var(--primary);
+    color: white;
+    font-weight: 600;
+}
+
+.page-num-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.pagination-right-panel {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    font-size: 0.875rem;
+    color: var(--gray-500);
+    font-weight: 500;
+}
+
+/* =========================================
+   9. HORIZONTAL CARD (Receptionist Style)
+   ========================================= */
+.cards-stack {
+  display: flex; flex-direction: column; gap: 1.25rem; width: 100%; margin-bottom: 3rem;
+}
+
+.appointment-horizontal-card {
+    background-color: #fff; 
+    border: 1px solid var(--gray-border);
+    border-left: 4px solid var(--gray-border);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
+    border-radius: 0.75rem;
+    padding: 1.25rem 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    box-sizing: border-box;
+    transition: all 0.2s ease-in-out, transform 0.2s ease-in-out;
+}
+
+.card-theme-primary:hover {
+    transform: translateX(4px);
+    background-color: var(--gray-light);
+    border-left-color: var(--primary);
+    border-top-color: rgba(86, 90, 207, 0.15);
+    border-right-color: rgba(86, 90, 207, 0.15);
+    border-bottom-color: rgba(86, 90, 207, 0.15);
+    box-shadow: 0 8px 24px rgba(86, 90, 207, 0.12);
+}
+
+.card-theme-warning:hover {
+    transform: translateX(4px);
+    background-color: var(--gray-light);
+    border-left-color: var(--warning);
+    border-top-color: rgba(254, 151, 14, 0.15);
+    border-right-color: rgba(254, 151, 14, 0.15);
+    border-bottom-color: rgba(254, 151, 14, 0.15);
+    box-shadow: 0 8px 24px rgba(254, 151, 14, 0.12);
+}
+
+.appointment-horizontal-card.flagged {
+    border-left-color: var(--danger);
+}
+.appointment-horizontal-card.flagged:hover {
+    border-top-color: rgba(247, 43, 80, 0.15);
+    border-right-color: rgba(247, 43, 80, 0.15);
+    border-bottom-color: rgba(247, 43, 80, 0.15);
+    box-shadow: 0 8px 24px rgba(247, 43, 80, 0.12);
+}
+
+
+.card-time-block {
+    flex: 0 0 160px;
+    display: flex;
+    flex-direction: column;
+}
+
+.appointment-time {
+    font-family: var(--font-secondary);
+    font-size: 1.15rem;
+    font-weight: 600;
+    color: var(--heading-text);
+    text-transform: capitalize;
+}
+
+.appointment-date {
+    font-size: 0.85rem;
+    color: var(--gray-muted);
+    margin-top: 0.15rem;
+}
+
+.card-status-block {
+    flex: 0 0 140px;
+    display: flex;
+    align-items: center;
+}
+
+.card-details-block {
+    flex: 1;
+    padding-left: 2rem;
+    padding-right: 2rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.patient-heading {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: var(--heading-text);
+    margin-bottom: 0.25rem;
+}
+
+.practitioner-info {
+    font-size: 0.85rem;
+    color: var(--gray-muted);
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+}
+
+.card-actions-block {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.5rem;
+}
+
+.btn-action {
+    background-color: var(--gray-light);
+    font-family: var(--font-secondary);
+    font-size: 0.875rem;
+    font-weight: 500;
+    padding: 0.5rem 1rem;
+    border-radius: 0.5rem;
+    color: var(--primary);
+    border: 1px solid var(--gray-border);
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.btn-action:hover {
+    background-color: var(--primary);
+    color: white;
+    border-color: var(--primary);
+}
+

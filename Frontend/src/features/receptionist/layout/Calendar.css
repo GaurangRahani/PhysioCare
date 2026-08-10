@@ -1,0 +1,243 @@
+/* =========================================
+   11. Calendar Wrapper & Header
+   ========================================= */
+.receptionist-theme .page-layout {
+    display: flex;
+    width: 100%;
+    align-items: flex-start;
+    min-height: calc(100vh - 150px);
+    
+    /* The Unified Card Layer */
+    background-color: var(--bg-body);
+    border-radius: 1.25rem;
+    padding: 1.5rem;
+    box-shadow: var(--card-shadow);
+}
+
+.receptionist-theme .calendar-wrapper {
+    flex: 1;
+    min-width: 0; /* Crucial for smooth flex shrinking */
+    /* DO NOT put a width transition here; it fights with flex and causes layout thrashing */
+}
+
+.receptionist-theme .cal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 1px solid var(--gray-200); }
+.receptionist-theme .cal-title h2 { font-size: 1.5rem; font-weight: 600; color: var(--text-heading); margin-bottom: 0.25rem; }
+.receptionist-theme .cal-title p { font-size: 0.875rem; color: var(--gray-600); font-weight: 600; }
+
+.receptionist-theme .cal-actions { display: flex; align-items: center; gap: 1rem; }
+
+.receptionist-theme .nav-group { display: flex; align-items: center; border: 1px solid var(--gray-300); border-radius: 0.5rem; overflow: hidden; }
+.receptionist-theme .nav-btn { background: var(--bg-body); border: none; padding: 0.6rem 1rem; cursor: pointer; color: var(--text-body); font-weight: 600; transition: all 0.15s ease-in-out; }
+.receptionist-theme .nav-btn:hover { background: var(--gray-100); color: var(--primary); }
+.receptionist-theme .nav-btn.border-sides { border-left: 1px solid var(--gray-300); border-right: 1px solid var(--gray-300); }
+
+.receptionist-theme .cal-toolbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem; }
+.receptionist-theme .doctor-filters { display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; }
+.receptionist-theme .filter-label { font-size: 0.875rem; font-weight: 600; color: var(--gray-600); margin-right: 0.25rem; }
+
+.receptionist-theme .chip {
+    padding: 0.4rem 1rem; border-radius: 2rem; font-size: 0.875rem; font-weight: 600;
+    font-family: var(--font-secondary); cursor: pointer; border: 1px solid var(--gray-300);
+    background: var(--bg-body); color: var(--text-body); transition: all 0.15s ease-in-out;
+    display: flex; align-items: center; gap: 0.35rem;
+}
+.receptionist-theme .chip:hover { transform: translateY(-2px); box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+.receptionist-theme .chip.active-all { background-color: var(--gray-900); color: var(--bg-body); border-color: var(--gray-900); }
+
+.receptionist-theme .view-toggle { display: flex; background: var(--gray-100); border-radius: 0.5rem; padding: 0.25rem; }
+.receptionist-theme .view-toggle button {
+    border: none; background: transparent; padding: 0.4rem 1rem; border-radius: 0.35rem;
+    font-family: var(--font-secondary); font-size: 0.875rem; font-weight: 600; color: var(--gray-600);
+    cursor: pointer; transition: all 0.15s ease-in-out;
+}
+.receptionist-theme .view-toggle button.active { background: var(--bg-body); color: var(--primary); box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+
+/* =========================================
+   12. Calendar Grid
+   ========================================= */
+.receptionist-theme .calendar-grid { border: 1px solid var(--gray-200); border-radius: 0.5rem; background: var(--bg-body); overflow: hidden; display: flex; flex-direction: column; }
+.receptionist-theme .grid-header { display: grid; border-bottom: 1px solid var(--gray-200); background: var(--bg-body); }
+.receptionist-theme .layout-week .grid-header { grid-template-columns: 60px repeat(7, minmax(0, 1fr)); }
+.receptionist-theme .layout-day .grid-header { grid-template-columns: 60px repeat(var(--doc-count, 1), minmax(0, 1fr)); } 
+
+.receptionist-theme .header-cell { padding: 1rem 0.5rem; text-align: center; border-right: 1px solid var(--gray-200); display: flex; flex-direction: column; justify-content: center; }
+.receptionist-theme .header-cell:last-child { border-right: none; }
+.receptionist-theme .header-cell.time-col { border-right: 1px solid var(--gray-200); background: var(--gray-100); }
+.receptionist-theme .header-day { font-size: 0.75rem; text-transform: uppercase; font-weight: 700; color: var(--gray-600); letter-spacing: 1px; }
+.receptionist-theme .header-date { font-family: var(--font-secondary); font-size: 1.5rem; font-weight: 700; color: var(--text-heading); line-height: 1; margin-top: 0.25rem; }
+.receptionist-theme .header-date.today { color: var(--primary); }
+
+.receptionist-theme .doc-header-name { font-family: var(--font-secondary); font-size: 1.125rem; font-weight: 600; }
+
+.receptionist-theme .grid-body { display: flex; flex-direction: column; } /* Removed max-height and overflow-y to eliminate double scrollbars */
+.receptionist-theme .time-row { display: grid; min-height: 80px; border-bottom: 1px solid var(--gray-200); }
+.receptionist-theme .layout-week .time-row { grid-template-columns: 60px repeat(7, minmax(0, 1fr)); }
+.receptionist-theme .layout-day .time-row { grid-template-columns: 60px repeat(var(--doc-count, 1), minmax(0, 1fr)); }
+.receptionist-theme .time-row:last-child { border-bottom: none; }
+
+.receptionist-theme .time-label {
+    padding: 0.5rem; font-size: 0.75rem; font-weight: 600; color: var(--gray-600);
+    text-align: center; border-right: 1px solid var(--gray-200); background: var(--gray-100);
+    display: flex; align-items: flex-start; justify-content: center;
+}
+
+/* Calendar Cell & Interactions */
+.receptionist-theme .cal-cell {
+    border-right: 1px dashed var(--gray-200); padding: 0.25rem; position: relative;
+    display: flex; gap: 4px; transition: background 0.15s ease-in-out;
+    cursor: pointer;
+}
+.receptionist-theme .cal-cell:last-child { border-right: none; }
+.receptionist-theme .cal-cell:hover { background-color: rgba(86, 90, 207, 0.02); }
+
+.receptionist-theme .hover-book {
+    position: absolute; top: 2px; left: 2px; right: 2px; bottom: 2px;
+    background: rgba(86, 90, 207, 0.05); border: 1.5px dashed var(--primary);
+    border-radius: 0.35rem; display: flex; align-items: center; justify-content: center;
+    color: var(--primary); font-weight: 600; font-size: 0.875rem;
+    opacity: 0; pointer-events: none; transition: all 0.15s ease-in-out; 
+    z-index: 1;
+}
+
+/* HIDDEN entirely if the cell contains ANY appointments. Prevents overlap! */
+.receptionist-theme .cal-cell:has(.apt-block):hover .hover-book { display: none !important; }
+
+/* Only show big book border if cell is truly empty */
+.receptionist-theme .cal-cell:hover .hover-book { opacity: 1; }
+
+/* =========================================
+   13. Appointment Blocks & Themes
+   ========================================= */
+.receptionist-theme .apt-block {
+    flex: 1; min-width: 0; border-radius: 0.35rem; padding: 0.4rem 0.5rem; font-size: 0.75rem;
+    display: flex; flex-direction: column; cursor: pointer; position: relative; z-index: 5;
+    transition: transform 0.2s ease-in-out, box-shadow 0.15s ease-in-out;
+    border-left-width: 3px; border-left-style: solid; text-align: left;
+}
+.receptionist-theme .apt-block:hover { transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.1); z-index: 20; }
+
+.receptionist-theme .apt-patient { font-family: var(--font-secondary); font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; }
+.receptionist-theme .apt-doctor { font-size: 0.7rem; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 2px; opacity: 0.85; display: block; }
+
+/* Dynamic Themes */
+.receptionist-theme .apt-theme-0 { background-color: #EDE9FE; border-left-color: #6B46C1; color: #6B46C1; }
+.receptionist-theme .apt-theme-1 { background-color: #CCFBF1; border-left-color: #0D9488; color: #0D9488; }
+.receptionist-theme .apt-theme-2 { background-color: #FFEDD5; border-left-color: #EA580C; color: #EA580C; }
+.receptionist-theme .apt-theme-3 { background-color: #DBEAFE; border-left-color: #2563EB; color: #2563EB; }
+.receptionist-theme .apt-theme-4 { background-color: #FCE7F3; border-left-color: #DB2777; color: #DB2777; }
+
+.receptionist-theme .doc-header-color.theme-0, .receptionist-theme .detail-value.theme-0 { color: #6B46C1 !important; }
+.receptionist-theme .doc-header-color.theme-1, .receptionist-theme .detail-value.theme-1 { color: #0D9488 !important; }
+.receptionist-theme .doc-header-color.theme-2, .receptionist-theme .detail-value.theme-2 { color: #EA580C !important; }
+.receptionist-theme .doc-header-color.theme-3, .receptionist-theme .detail-value.theme-3 { color: #2563EB !important; }
+.receptionist-theme .doc-header-color.theme-4, .receptionist-theme .detail-value.theme-4 { color: #DB2777 !important; }
+
+.receptionist-theme .chip.active-theme-0 { background-color: #6B46C1; color: var(--bg-body); border-color: #6B46C1; }
+.receptionist-theme .chip.active-theme-1 { background-color: #0D9488; color: var(--bg-body); border-color: #0D9488; }
+.receptionist-theme .chip.active-theme-2 { background-color: #EA580C; color: var(--bg-body); border-color: #EA580C; }
+.receptionist-theme .chip.active-theme-3 { background-color: #2563EB; color: var(--bg-body); border-color: #2563EB; }
+.receptionist-theme .chip.active-theme-4 { background-color: #DB2777; color: var(--bg-body); border-color: #DB2777; }
+
+/* The "+X More" Badge */
+.receptionist-theme .apt-more {
+    flex: 1; background-color: var(--gray-100); border: 1px dashed var(--gray-400); color: var(--primary);
+    display: flex; align-items: center; justify-content: center; font-family: var(--font-secondary);
+    font-weight: 600; font-size: 0.75rem; border-radius: 0.35rem; cursor: pointer;
+    transition: all 0.15s ease-in-out; z-index: 5; min-width: 0; white-space: nowrap;
+}
+.receptionist-theme .apt-more:hover {
+    background-color: var(--primary); color: var(--bg-body); border-color: var(--primary);
+    transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.receptionist-theme .layout-day .apt-doctor { display: none; }
+
+/* =========================================
+   14. Inline Push Drawer (Smooth Animation)
+   ========================================= */
+.receptionist-theme .drawer-wrapper {
+    width: 0;
+    opacity: 0;
+    margin-left: 0;
+    overflow: hidden;
+    flex-shrink: 0;
+    will-change: width, margin-left, opacity; /* Force hardware acceleration */
+    /* Clean transition: only animate what matters, avoiding layout thrashing with padding */
+    transition: width 0.25s cubic-bezier(0.2, 0.8, 0.2, 1),
+                margin-left 0.25s cubic-bezier(0.2, 0.8, 0.2, 1),
+                opacity 0.2s ease;
+}
+
+.receptionist-theme .drawer-wrapper.open {
+    width: 350px;
+    opacity: 1;
+    margin-left: 1.5rem; /* Gap between calendar grid and drawer */
+    border-left: 1px solid var(--gray-200);
+}
+
+.receptionist-theme .drawer-inner {
+    width: 350px; /* Fixed width stops text wrapping/thrashing during slide animation */
+    padding-left: 1.5rem; /* Space between the left border line and content */
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.receptionist-theme .drawer-header { padding: 0 0 1.5rem 0; border-bottom: 1px solid var(--gray-200); display: flex; justify-content: space-between; align-items: center; }
+.receptionist-theme .drawer-header h3 { margin: 0; font-size: 1.25rem; }
+.receptionist-theme .btn-close { background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--gray-600); transition: color 0.15s; }
+.receptionist-theme .btn-close:hover { color: var(--danger); }
+.receptionist-theme .drawer-body { padding: 1.5rem 0; flex: 1; overflow-y: auto; }
+.receptionist-theme .detail-group { margin-bottom: 1.25rem; }
+.receptionist-theme .detail-label { font-size: 0.75rem; color: var(--gray-600); text-transform: uppercase; font-weight: 700; letter-spacing: 0.5px; margin-bottom: 0.25rem;}
+.receptionist-theme .detail-value { font-size: 1rem; font-weight: 600; color: var(--text-heading); }
+
+.receptionist-theme .status-badge { display: inline-block; padding: 0.25rem 0.75rem; border-radius: 2rem; font-size: 0.75rem; font-weight: 600; background: rgba(32, 159, 132, 0.1); color: var(--success); }
+.receptionist-theme .drawer-footer { padding: 1.5rem 0 0 0; border-top: 1px solid var(--gray-200); display: flex; flex-direction: column; gap: 0.75rem; }
+.receptionist-theme .btn-block { width: 100%; justify-content: center; }
+.receptionist-theme .btn-outline-danger { background: transparent; border: 1px solid var(--danger); color: var(--danger); }
+.receptionist-theme .btn-outline-danger:hover { background: var(--danger); color: var(--bg-body); }
+.receptionist-theme .btn-outline-warning { background: transparent; border: 1px solid var(--warning); color: var(--warning); }
+.receptionist-theme .btn-outline-warning:hover { background: var(--warning); color: var(--bg-body); }
+
+/* Modals & Overlays */
+.receptionist-theme .modal-overlay {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.4); z-index: 100; opacity: 0; pointer-events: none; transition: opacity 0.2s ease-in-out;
+}
+.receptionist-theme .modal-overlay.open { opacity: 1; pointer-events: auto; }
+
+/* Hide drawer overlay on desktop so it doesn't darken the screen when drawer slides in */
+@media (min-width: 1025px) {
+    .receptionist-theme .modal-overlay.drawer-only {
+        display: none !important;
+    }
+}
+
+.receptionist-theme .overflow-modal {
+    position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0.95);
+    background: var(--bg-body); border-radius: 1rem; width: 90%; max-width: 400px;
+    box-shadow: 0 10px 30px rgba(31, 34, 120, 0.15); z-index: 101;
+    opacity: 0; pointer-events: none; transition: all 0.2s ease-in-out; display: flex; flex-direction: column;
+}
+.receptionist-theme .overflow-modal.open { opacity: 1; pointer-events: auto; transform: translate(-50%, -50%) scale(1); }
+.receptionist-theme .overflow-header { padding: 1.25rem 1.5rem; border-bottom: 1px solid var(--gray-200); display: flex; justify-content: space-between; align-items: center; }
+.receptionist-theme .overflow-header h3 { margin: 0; font-size: 1.125rem; font-weight: 600; font-family: var(--font-secondary); color: var(--text-heading); }
+
+.receptionist-theme .overflow-body { padding: 1.5rem; display: flex; flex-direction: column; gap: 0.75rem; max-height: 60vh; overflow-y: auto; }
+.receptionist-theme .overflow-body .apt-block { flex: none; width: 100%; padding: 0.8rem 1rem; border-radius: 0.5rem; }
+.receptionist-theme .overflow-body .apt-patient { font-size: 1rem; }
+.receptionist-theme .overflow-body .apt-doctor { font-size: 0.85rem; }
+
+/* Responsive Fallback for Drawer */
+@media (max-width: 1024px) {
+    .receptionist-theme .drawer-wrapper {
+        position: fixed; top: 0; right: 0; height: 100%; z-index: 102; width: 100% !important;
+        max-width: 400px; margin-left: 0 !important; transform: translateX(100%);
+        opacity: 1; transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+        box-shadow: var(--drawer-shadow);
+        background: var(--bg-body); /* Add background back for mobile drawer */
+    }
+    .receptionist-theme .drawer-wrapper.open { transform: translateX(0); }
+    .receptionist-theme .drawer-inner { width: 100%; min-width: 0; padding-left: 1.5rem; margin-left: 0; border-left: none; }
+}

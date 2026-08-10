@@ -1,0 +1,381 @@
+/* =========================================================
+   KEYFRAMES & ANIMATIONS
+   ========================================================= */
+@keyframes profile-up-down {
+    0% { transform: translateY(0); }
+    100% { transform: translateY(-20px); }
+}
+
+@keyframes profile-rotate-infinite {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* =========================================================
+   CSS VARIABLES
+   ========================================================= */
+.profile-page-wrapper {
+    /* Color Palette */
+    --primary-color: #565acf;
+    --primary-light: rgba(86, 90, 207, 0.1);
+    --secondary-color: #f17732;
+    --secondary-light: rgba(241, 119, 50, 0.1);
+    --dark-brand-color: #1f2278;
+    --body-text-color: #444444;
+    --heading-text-color: #14181d;
+    --body-bg: #ffffff;
+    
+    /* State Colors */
+    --success-color: #209f84;
+    --success-light: rgba(32, 159, 132, 0.1);
+    --info-color: #2754e6;
+    --warning-color: #fe970e;
+    --danger-color: #f72b50;
+    --danger-light: rgba(247, 43, 80, 0.1);
+    
+    /* Grays */
+    --gray-100: #f8f9fa;
+    --gray-200: #e9ecef;
+    --gray-300: #dee2e6;
+    --gray-400: #ced4da;
+    --gray-500: #adb5bd;
+    
+    /* Typography */
+    --font-primary: 'Montserrat', sans-serif;
+    --font-secondary: 'Poppins', sans-serif;
+    
+    /* Transitions */
+    --transition-standard: all 0.15s ease-in-out;
+    --transition-transform: transform 0.2s ease-in-out;
+}
+
+/* =========================================================
+   PROFILE PAGE WRAPPER & GLOBAL STYLES
+   ========================================================= */
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Poppins:wght@500;600;700&display=swap');
+
+.profile-page-wrapper {
+    font-family: var(--font-primary);
+    font-size: 1rem;
+    font-weight: 500;
+    line-height: 1.5;
+    color: var(--body-text-color);
+    background-color: #fcfcfd; 
+    /* Theme Background */
+    background-image: radial-gradient(var(--gray-300) 1.5px, transparent 1.5px);
+    background-size: 30px 30px;
+    position: relative;
+    overflow-x: hidden;
+    min-height: calc(100vh - 73px);
+    display: flex;
+    flex-direction: column;
+    /* Break out of DashboardLayout padding */
+    margin: -3rem -1.5rem;
+}
+
+.profile-page-wrapper h1, 
+.profile-page-wrapper h2, 
+.profile-page-wrapper h3, 
+.profile-page-wrapper h4, 
+.profile-page-wrapper h5, 
+.profile-page-wrapper h6 {
+    font-family: var(--font-secondary);
+    font-weight: 600;
+    line-height: 1.2;
+    color: var(--heading-text-color);
+}
+
+/* Animated Background Shapes */
+.profile-page-wrapper .shape { position: absolute; pointer-events: none; z-index: 0; }
+.profile-page-wrapper .shape-circle {
+    width: 80px; height: 80px; border: 2px dashed var(--primary-color); border-radius: 50%;
+    top: 5%; left: 5%; opacity: 0.3; animation: profile-up-down 4s infinite alternate ease-in-out;
+}
+.profile-page-wrapper .shape-plus {
+    width: 40px; height: 40px; top: 15%; right: 5%; opacity: 0.2; animation: profile-rotate-infinite 20s infinite linear;
+}
+.profile-page-wrapper .shape-plus::before, .profile-page-wrapper .shape-plus::after { content: ''; position: absolute; background-color: var(--secondary-color); border-radius: 4px; }
+.profile-page-wrapper .shape-plus::before { top: 16px; left: 0; width: 40px; height: 8px; }
+.profile-page-wrapper .shape-plus::after { top: 0; left: 16px; width: 8px; height: 40px; }
+
+/* Main Profile Container */
+.profile-page-wrapper .main-container {
+    width: 100%;
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 2rem 1.5rem;
+    position: relative;
+    z-index: 10;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+/* Page Header Row */
+.profile-page-wrapper .page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    margin-bottom: 1rem;
+}
+
+.profile-page-wrapper .header-title h1 {
+    font-size: calc(1.4375rem + 1vw);
+    color: var(--dark-brand-color);
+    margin-bottom: 0.25rem;
+}
+
+.profile-page-wrapper .header-title p {
+    color: var(--gray-500);
+    font-size: 0.95rem;
+}
+
+/* Sign Out Button */
+.profile-page-wrapper .btn-signout {
+    border: 1px solid var(--danger-color);
+    color: var(--danger-color);
+    padding: 0.5rem 1.25rem;
+    border-radius: 6px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: var(--body-bg);
+    transition: var(--transition-standard);
+    cursor: pointer;
+}
+.profile-page-wrapper .btn-signout:hover {
+    background: var(--danger-color);
+    color: white;
+    box-shadow: 0 4px 15px rgba(247, 43, 80, 0.2);
+    transform: translateY(-2px);
+}
+
+/* =========================================================
+   PROFILE CARDS UI
+   ========================================================= */
+.profile-page-wrapper .profile-card {
+    background: #ffffff;
+    border: 1px solid rgba(86, 90, 207, 0.15);
+    border-left: 4px solid var(--primary-color);
+    border-radius: 12px;
+    padding: 2rem;
+    position: relative;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 4px 15px rgba(31, 34, 120, 0.04);
+}
+
+.profile-page-wrapper .profile-card:hover {
+    transform: translateY(-4px);
+    border-color: rgba(86, 90, 207, 0.3);
+    border-left-width: 6px;
+    box-shadow: 0 12px 25px rgba(86, 90, 207, 0.15);
+}
+
+.profile-page-wrapper .card-header-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+}
+
+.profile-page-wrapper .section-label {
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--gray-500);
+    font-weight: 700;
+}
+
+.profile-page-wrapper .action-link {
+    color: var(--primary-color);
+    font-weight: 600;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    cursor: pointer;
+    background: none;
+    border: none;
+    padding: 0;
+    transition: var(--transition-standard);
+}
+.profile-page-wrapper .action-link:hover { color: var(--dark-brand-color); }
+
+/* Personal Info Rows */
+.profile-page-wrapper .info-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+}
+
+.profile-page-wrapper .info-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+}
+
+.profile-page-wrapper .info-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    background: var(--primary-light);
+    color: var(--primary-color);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 1.1rem;
+    flex-shrink: 0;
+}
+
+.profile-page-wrapper .info-content {
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+}
+
+.profile-page-wrapper .info-label {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    color: var(--gray-500);
+    font-weight: 700;
+    letter-spacing: 0.5px;
+}
+
+.profile-page-wrapper .info-value {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--heading-text-color);
+}
+
+.profile-page-wrapper .info-sub {
+    font-size: 0.75rem;
+    color: var(--gray-400);
+}
+
+/* Medical History Empty State */
+.profile-page-wrapper .empty-state {
+    text-align: center;
+    padding: 2rem 0 1rem 0;
+}
+.profile-page-wrapper .empty-state p {
+    color: var(--gray-500);
+    margin-bottom: 1rem;
+    font-size: 0.95rem;
+}
+
+/* Bills List */
+.profile-page-wrapper .bill-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.25rem 0;
+    border-bottom: 1px solid var(--gray-200);
+    transition: var(--transition-standard);
+}
+
+.profile-page-wrapper .bill-row:first-of-type { padding-top: 0; }
+.profile-page-wrapper .bill-row:last-of-type { border-bottom: none; padding-bottom: 0; }
+
+.profile-page-wrapper .bill-info { display: flex; flex-direction: column; gap: 0.2rem; }
+.profile-page-wrapper .bill-id { font-weight: 600; color: var(--primary-color); font-size: 0.95rem; }
+.profile-page-wrapper .bill-date { font-size: 0.8rem; color: var(--gray-500); }
+.profile-page-wrapper .bill-desc { font-size: 0.9rem; color: var(--body-text-color); }
+
+.profile-page-wrapper .bill-meta {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.5rem;
+}
+
+.profile-page-wrapper .bill-price-row {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+}
+.profile-page-wrapper .bill-price { font-weight: 700; color: var(--heading-text-color); font-size: 1.1rem; }
+
+.profile-page-wrapper .badge-paid {
+    background: var(--success-light);
+    color: var(--success-color);
+    padding: 0.2rem 0.6rem;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.profile-page-wrapper .bill-actions {
+    display: flex;
+    gap: 1.25rem;
+}
+
+.profile-page-wrapper .btn-page:hover { background: var(--gray-200); border-color: var(--gray-300); }
+.profile-page-wrapper .btn-page:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.profile-page-wrapper .page-indicator {
+    font-size: 0.85rem;
+    color: var(--gray-500);
+    font-weight: 600;
+}
+
+/* Edit Mode Styling Overrides */
+.profile-page-wrapper .edit-input {
+    width: 100%;
+    border: 2px solid var(--gray-200);
+    border-radius: 8px;
+    padding: 0.6rem 1rem;
+    font-family: var(--font-primary);
+    font-size: 0.95rem;
+    color: var(--body-text-color);
+    transition: var(--transition-standard);
+    outline: none;
+    margin-top: 0.25rem;
+}
+.profile-page-wrapper .edit-input:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px var(--primary-light);
+}
+
+.profile-page-wrapper .edit-actions {
+    display: flex;
+    gap: 1rem;
+    margin-top: 2rem;
+}
+.profile-page-wrapper .btn-save {
+    background: var(--primary-color);
+    color: #fff;
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.95rem;
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 0.5rem;
+}
+.profile-page-wrapper .btn-save:hover { background: var(--dark-brand-color); }
+.profile-page-wrapper .btn-save:disabled { opacity: 0.7; cursor: not-allowed; }
+
+.profile-page-wrapper .btn-cancel {
+    background: var(--gray-100);
+    color: var(--body-text-color);
+    border: 1px solid var(--gray-200);
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.95rem;
+    flex: 1;
+}
+.profile-page-wrapper .btn-cancel:hover { background: var(--gray-200); }
+
+/* Responsive */
+@media (max-width: 768px) {
+    .profile-page-wrapper .page-header { flex-direction: column; align-items: flex-start; gap: 1rem; }
+    .profile-page-wrapper .bill-row { flex-direction: column; align-items: flex-start; gap: 1rem; }
+    .profile-page-wrapper .bill-meta { align-items: flex-start; width: 100%; }
+    .profile-page-wrapper .bill-price-row { width: 100%; justify-content: space-between; }
+}

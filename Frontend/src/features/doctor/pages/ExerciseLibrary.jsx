@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import ExerciseFormModal from '../components/ExerciseFormModal';
 import ExerciseDetailModal from '../components/ExerciseDetailModal';
+import './ExerciseLibrary.css';
 
 const BODY_PARTS = [
   'All', 'Neck', 'Shoulder', 'Upper Back', 'Lower Back', 'Core',
@@ -36,6 +37,10 @@ const ExerciseLibrary = () => {
   const [search, setSearch] = useState('');
   const [bodyPartFilter, setBodyPartFilter] = useState('All');
   const [showInactive, setShowInactive] = useState(false);
+
+  // Pagination
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
 
   // Modals
   const [formModal, setFormModal] = useState({ open: false, exercise: null });
@@ -89,6 +94,12 @@ const ExerciseLibrary = () => {
       ex.target_body_part?.toLowerCase().includes(q)
     );
   });
+
+  // Pagination Logic
+  const totalPages = Math.ceil(filtered.length / itemsPerPage);
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentExercises = filtered.slice(indexOfFirstItem, indexOfLastItem);
 
   const handleSaved = (savedExercise) => {
     setExercises(prev => {
@@ -152,153 +163,217 @@ const ExerciseLibrary = () => {
   };
 
   return (
-    <div className="space-y-6 animate-fade-in">
-      {/* Toast */}
-      {toast && (
-        <div className={`fixed top-6 right-6 z-[200] px-5 py-3.5 rounded-xl shadow-lg text-sm font-bold flex items-center gap-2 transition-all ${
-          toast.type === 'success' ? 'bg-success text-white' :
-          toast.type === 'warning' ? 'bg-warning text-white' :
-          'bg-danger text-white'
-        }`}>
-          {toast.type === 'warning' && <AlertTriangle className="w-4 h-4" />}
-          {toast.message}
-        </div>
-      )}
-
-      {/* Modals */}
-      <ExerciseFormModal
-        isOpen={formModal.open}
-        exercise={formModal.exercise}
-        onClose={() => setFormModal({ open: false, exercise: null })}
-        onSaved={handleSaved}
-      />
-      <ExerciseDetailModal
-        isOpen={detailModal.open}
-        exercise={detailModal.exercise}
-        onClose={() => setDetailModal({ open: false, exercise: null })}
-        onEdit={(ex) => setFormModal({ open: true, exercise: ex })}
-        onDeactivate={handleDeactivate}
-        onActivate={handleActivate}
-      />
-
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-heading">Exercise Library</h1>
-          <p className="text-sm text-gray-400 mt-1">
-            {stats.active} active exercise{stats.active !== 1 ? 's' : ''} in the clinic library
-          </p>
-        </div>
-        <button
-          onClick={() => setFormModal({ open: true, exercise: null })}
-          className="flex items-center gap-2 px-5 py-2.5 bg-primary text-white font-semibold text-sm rounded-xl hover:bg-dark transition-colors shadow-sm self-start sm:self-auto"
-        >
-          <Plus className="w-4 h-4" />
-          Add Exercise
-        </button>
+    <div className="library-theme animate-fade-in">
+      {/* APPOINTMENT STYLE THEME BACKGROUND */}
+      <div className="theme-bg" style={{ backgroundImage: "url('/images/background/line-bg2.png')", backgroundColor: "#f9fbfe" }}>
+        <img className="pt-img1" src="/images/shap/trangle-orange.png" alt="" />
+        <img className="pt-img2" src="/images/shap/wave-blue.png" alt="" />
+        <img className="pt-img3" src="/images/shap/circle-dots.png" alt="" />
+        <img className="pt-img4" src="/images/shap/plus-blue.png" alt="" />
+        <img className="pt-img5" src="/images/shap/wave-blue.png" alt="" />
+        <img className="pt-img6" src="/images/shap/circle-dots.png" alt="" />
       </div>
 
-      {/* Stats row */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
-          <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Total</p>
-          <p className="text-3xl font-black text-dark mt-1">{stats.total}</p>
-        </div>
-        <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
-          <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Active</p>
-          <p className="text-3xl font-black text-success mt-1">{stats.active}</p>
-        </div>
-        <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
-          <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Inactive</p>
-          <p className="text-3xl font-black text-gray-400 mt-1">{stats.total - stats.active}</p>
-        </div>
-        <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
-          <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Body Parts</p>
-          <p className="text-3xl font-black text-primary mt-1">
-            {Object.values(stats.byPart).filter(v => v > 0).length}
-          </p>
-        </div>
-      </div>
+      <div className="container">
+        {/* Toast */}
+        {toast && (
+          <div className={`fixed top-6 right-6 z-[200] px-5 py-3.5 rounded-xl shadow-lg text-sm font-bold flex items-center gap-2 transition-all ${
+            toast.type === 'success' ? 'bg-success text-white' :
+            toast.type === 'warning' ? 'bg-warning text-white' :
+            'bg-danger text-white'
+          }`}>
+            {toast.type === 'warning' && <AlertTriangle className="w-4 h-4" />}
+            {toast.message}
+          </div>
+        )}
 
-      {/* Filter bar */}
-      <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
-        <div className="flex flex-col md:flex-row gap-4 items-center">
-          {/* Search */}
-          <div className="relative flex-1 w-full">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-            <input
+        {/* Modals */}
+        <ExerciseFormModal
+          isOpen={formModal.open}
+          exercise={formModal.exercise}
+          onClose={() => setFormModal({ open: false, exercise: null })}
+          onSaved={handleSaved}
+        />
+        <ExerciseDetailModal
+          isOpen={detailModal.open}
+          exercise={detailModal.exercise}
+          onClose={() => setDetailModal({ open: false, exercise: null })}
+          onEdit={(ex) => setFormModal({ open: true, exercise: ex })}
+          onDeactivate={handleDeactivate}
+          onActivate={handleActivate}
+        />
+
+        {/* Page Header */}
+        <div className="page-header">
+          <div className="page-title">
+            <span>Clinic Resources</span>
+            <h1>Exercise Library</h1>
+            <p>Manage and prescribe exercises for your patients' recovery journey.</p>
+          </div>
+          <button 
+            className="btn btn-primary"
+            onClick={() => setFormModal({ open: true, exercise: null })}
+          >
+            <Plus className="w-4 h-4" /> Add Exercise
+          </button>
+        </div>
+
+        {/* Stats Grid */}
+        <div className="stats-grid">
+          <div className="stat-card c-total">
+            <h5>Total Exercises</h5>
+            <h2>{stats.total < 10 ? `0${stats.total}` : stats.total}</h2>
+          </div>
+          <div className="stat-card c-active">
+            <h5>Active</h5>
+            <h2>{stats.active < 10 ? `0${stats.active}` : stats.active}</h2>
+          </div>
+          <div className="stat-card c-inactive">
+            <h5>Inactive</h5>
+            <h2>{(stats.total - stats.active) < 10 ? `0${stats.total - stats.active}` : (stats.total - stats.active)}</h2>
+          </div>
+          <div className="stat-card c-bodyparts">
+            <h5>Body Parts</h5>
+            <h2>{Object.values(stats.byPart).filter(v => v > 0).length < 10 ? `0${Object.values(stats.byPart).filter(v => v > 0).length}` : Object.values(stats.byPart).filter(v => v > 0).length}</h2>
+          </div>
+        </div>
+
+        {/* Toolbar */}
+        <div className="toolbar">
+          <div className="search-wrapper">
+            <Search className="icon w-4 h-4" />
+            <input 
+              type="text" 
+              placeholder="Search exercises by name, description..." 
               value={search}
               onChange={e => setSearch(e.target.value)}
-              placeholder="Search exercises by name..."
-              className="w-full pl-9 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm text-dark placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition"
             />
           </div>
-
-          <div className="flex items-center gap-4 w-full md:w-auto">
-            {/* Body part dropdown */}
-            <select
+          <div className="filter-wrapper">
+            <select 
               value={bodyPartFilter}
               onChange={(e) => setBodyPartFilter(e.target.value)}
-              className="px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm text-dark focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition cursor-pointer min-w-[160px]"
             >
               {BODY_PARTS.map(bp => (
-                <option key={bp} value={bp}>{bp}</option>
+                <option key={bp} value={bp}>{bp === 'All' ? 'Filter by Body Part' : bp}</option>
               ))}
             </select>
-
-            {/* Inactive toggle */}
-            <label className="flex items-center gap-2 cursor-pointer flex-shrink-0">
-              <input
-                type="checkbox"
+            <label className="toggle-inactive">
+              <input 
+                type="checkbox" 
                 checked={showInactive}
                 onChange={() => setShowInactive(!showInactive)}
-                className="w-4 h-4 text-primary bg-gray-50 border-gray-300 rounded focus:ring-primary focus:ring-2"
               />
-              <span className="text-sm font-medium text-gray-600 select-none">Show Inactive</span>
+              Show Inactive
             </label>
           </div>
         </div>
-      </div>
 
-      {/* Content */}
-      {loading ? (
-        <div className="flex justify-center items-center py-24">
-          <Loader2 className="w-8 h-8 text-primary animate-spin" />
-        </div>
-      ) : error ? (
-        <div className="text-center py-16 text-danger bg-red-50 rounded-xl border border-red-100">
-          {error}
-        </div>
-      ) : filtered.length === 0 ? (
-        <div className="text-center py-20 bg-white rounded-xl border border-gray-100">
-          <Dumbbell className="w-12 h-12 text-gray-200 mx-auto mb-4" />
-          <h3 className="font-bold text-heading mb-1">No exercises found</h3>
-          <p className="text-sm text-gray-400 mb-6">
-            {search ? `No results for "${search}"` : 'Start building your library by adding an exercise.'}
-          </p>
-          {!search && (
-            <button
-              onClick={() => setFormModal({ open: true, exercise: null })}
-              className="inline-flex items-center gap-2 px-5 py-2.5 bg-primary text-white font-bold text-sm rounded-xl hover:bg-dark transition-colors"
-            >
-              <Plus className="w-4 h-4" /> Add First Exercise
-            </button>
-          )}
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
-          {filtered.map(ex => (
-            <ExerciseCard
-              key={ex.id}
-              exercise={ex}
-              onClick={() => setDetailModal({ open: true, exercise: ex })}
-              onEdit={(e) => { e.stopPropagation(); setFormModal({ open: true, exercise: ex }); }}
-              onDeactivate={(e) => { e.stopPropagation(); handleDeactivate(ex); }}
-              onActivate={(e) => { e.stopPropagation(); handleActivate(ex); }}
-            />
-          ))}
-        </div>
-      )}
+        {/* Content */}
+        {loading ? (
+          <div className="flex justify-center items-center py-24">
+            <Loader2 className="w-8 h-8 text-primary animate-spin" />
+          </div>
+        ) : error ? (
+          <div className="text-center py-16 text-danger bg-red-50 rounded-xl border border-red-100">
+            {error}
+          </div>
+        ) : filtered.length === 0 ? (
+          <div className="stat-card text-center py-20" style={{ alignItems: 'center' }}>
+            <Dumbbell className="w-12 h-12 text-gray-200 mx-auto mb-4" />
+            <h3 className="font-bold text-heading mb-1">No exercises found</h3>
+            <p className="text-sm text-gray-400 mb-6">
+              {search ? `No results for "${search}"` : 'Start building your library by adding an exercise.'}
+            </p>
+            {!search && (
+              <button
+                onClick={() => setFormModal({ open: true, exercise: null })}
+                className="btn btn-primary"
+              >
+                <Plus className="w-4 h-4" /> Add First Exercise
+              </button>
+            )}
+          </div>
+        ) : (
+          <div className="exercise-grid">
+            {currentExercises.map(ex => (
+              <ExerciseCard
+                key={ex.id}
+                exercise={ex}
+                onClick={() => setDetailModal({ open: true, exercise: ex })}
+                onEdit={(e) => { e.stopPropagation(); setFormModal({ open: true, exercise: ex }); }}
+                onDeactivate={(e) => { e.stopPropagation(); handleDeactivate(ex); }}
+                onActivate={(e) => { e.stopPropagation(); handleActivate(ex); }}
+              />
+            ))}
+          </div>
+        )}
+
+        {/* Global Pagination Bar */}
+        {!loading && filtered.length > 0 && (
+          <div className="pagination-bar">
+            <div className="pagination-left-panel">
+                <label htmlFor="perPageSelect">Rows per page:</label>
+                <select 
+                    id="perPageSelect" 
+                    className="rows-dropdown"
+                    value={itemsPerPage}
+                    onChange={(e) => {
+                        setItemsPerPage(Number(e.target.value));
+                        setCurrentPage(1);
+                    }}
+                >
+                    <option value="5">5</option>
+                    <option value="10">10</option>
+                    <option value="20">20</option>
+                    <option value="50">50</option>
+                </select>
+            </div>
+            
+            <div className="pagination-center-panel">
+                <nav className="pagination-numbers-nav" aria-label="Exercises page navigation">
+                    <button 
+                        className="page-item-btn" 
+                        onClick={() => setCurrentPage(currentPage - 1)}
+                        disabled={currentPage === 1}
+                    >
+                        &lt;
+                    </button>
+
+                    {[...Array(totalPages)].map((_, i) => {
+                        const page = i + 1;
+                        if (page === 1 || page === totalPages || (page >= currentPage - 1 && page <= currentPage + 1)) {
+                            return (
+                                <button 
+                                    key={page}
+                                    className={`page-item-btn ${currentPage === page ? 'active' : ''}`}
+                                    onClick={() => setCurrentPage(page)}
+                                >
+                                    {page}
+                                </button>
+                            );
+                        } else if (page === currentPage - 2 || page === currentPage + 2) {
+                            return <span key={page} className="page-item-spacer">...</span>;
+                        }
+                        return null;
+                    })}
+
+                    <button 
+                        className="page-item-btn" 
+                        onClick={() => setCurrentPage(currentPage + 1)}
+                        disabled={currentPage === totalPages}
+                    >
+                        &gt;
+                    </button>
+                </nav>
+            </div>
+            
+            <div className="pagination-right-panel">
+                <span>Showing {filtered.length > 0 ? indexOfFirstItem + 1 : 0}-{Math.min(indexOfLastItem, filtered.length)} of {filtered.length} entries</span>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 };
@@ -308,32 +383,26 @@ const ExerciseCard = ({ exercise, onClick, onEdit, onDeactivate, onActivate }) =
   const [menuOpen, setMenuOpen] = useState(false);
   const hasMedia = (exercise.photo_urls?.length > 0) || exercise.video_url;
   const thumbnail = exercise.photo_urls?.[0] || null;
-  const bodyPartColor = BODY_PART_COLORS[exercise.target_body_part] || 'bg-gray-100 text-gray-600';
+  const bpKey = exercise.target_body_part ? exercise.target_body_part.toLowerCase().replace(' ', '-') : 'other';
 
   return (
     <div
       onClick={onClick}
-      className={`group bg-white rounded-xl border overflow-hidden cursor-pointer transition-all hover:shadow-md hover:-translate-y-0.5 ${
-        exercise.is_active ? 'border-gray-100' : 'border-gray-100 opacity-60'
-      }`}
+      className={`exercise-card group ${exercise.is_active ? '' : 'inactive'}`}
     >
       {/* Thumbnail / Placeholder */}
-      <div className="relative h-40 bg-gradient-to-br from-gray-50 to-gray-100 overflow-hidden">
+      <div className="card-media">
         {thumbnail ? (
           <img src={thumbnail} alt={exercise.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
         ) : exercise.video_url ? (
-          <div className="w-full h-full flex flex-col items-center justify-center gap-2">
-            <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
-              <Video className="w-6 h-6 text-primary" />
-            </div>
-            <p className="text-xs text-gray-400 font-medium">Video attached</p>
+          <div className="media-placeholder w-full h-full flex flex-col items-center justify-center gap-2">
+            <Video className="w-8 h-8" />
+            <p className="text-xs font-medium m-0">Video attached</p>
           </div>
         ) : (
-          <div className="w-full h-full flex flex-col items-center justify-center gap-2">
-            <div className="w-12 h-12 rounded-full bg-gray-200 flex items-center justify-center">
-              <Dumbbell className="w-6 h-6 text-gray-400" />
-            </div>
-            <p className="text-xs text-gray-400 font-medium">No media</p>
+          <div className="media-placeholder w-full h-full flex flex-col items-center justify-center gap-2">
+            <Dumbbell className="w-8 h-8" />
+            <p className="text-xs font-medium m-0">No media</p>
           </div>
         )}
 
@@ -346,15 +415,15 @@ const ExerciseCard = ({ exercise, onClick, onEdit, onDeactivate, onActivate }) =
 
         {/* Media count badge */}
         {hasMedia && exercise.is_active && (
-          <div className="absolute bottom-2 left-2 flex items-center gap-1">
+          <div className="media-badges">
             {exercise.video_url && (
-              <span className="flex items-center gap-1 bg-black/50 backdrop-blur-sm text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
-                <Video className="w-2.5 h-2.5" /> Video
+              <span className="media-badge">
+                <Video className="w-3 h-3 mr-1" />
               </span>
             )}
             {(exercise.photo_urls?.length || 0) > 0 && (
-              <span className="flex items-center gap-1 bg-black/50 backdrop-blur-sm text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
-                <Image className="w-2.5 h-2.5" /> {exercise.photo_urls.length}
+              <span className="media-badge">
+                <Image className="w-3 h-3 mr-1" /> {exercise.photo_urls.length}
               </span>
             )}
           </div>
@@ -364,23 +433,23 @@ const ExerciseCard = ({ exercise, onClick, onEdit, onDeactivate, onActivate }) =
         <div className="absolute top-2 right-2" onClick={e => e.stopPropagation()}>
           <button
             onClick={() => setMenuOpen(v => !v)}
-            className="w-7 h-7 rounded-full bg-white/80 backdrop-blur-sm flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all shadow-sm hover:bg-white"
+            className="w-7 h-7 rounded-full bg-white/80 backdrop-blur-sm flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all shadow-sm hover:bg-white border-0 cursor-pointer"
           >
             <MoreHorizontal className="w-4 h-4 text-gray-600" />
           </button>
           {menuOpen && (
-            <div className="absolute top-8 right-0 bg-white rounded-xl shadow-lg border border-gray-100 py-1 w-40 z-10">
+            <div className="absolute top-8 right-0 bg-white rounded-xl shadow-lg border border-gray-100 py-1 w-40 z-10 text-left">
               {exercise.is_active ? (
                 <>
                   <button
                     onClick={onEdit}
-                    className="w-full flex items-center gap-2 px-4 py-2 text-sm font-semibold text-dark hover:bg-gray-50 transition-colors"
+                    className="w-full flex items-center gap-2 px-4 py-2 text-sm font-semibold text-dark hover:bg-gray-50 transition-colors border-0 bg-transparent cursor-pointer"
                   >
                     <Edit2 className="w-3.5 h-3.5 text-primary" /> Edit
                   </button>
                   <button
                     onClick={onDeactivate}
-                    className="w-full flex items-center gap-2 px-4 py-2 text-sm font-semibold text-danger hover:bg-red-50 transition-colors"
+                    className="w-full flex items-center gap-2 px-4 py-2 text-sm font-semibold text-danger hover:bg-red-50 transition-colors border-0 bg-transparent cursor-pointer"
                   >
                     <EyeOff className="w-3.5 h-3.5" /> Deactivate
                   </button>
@@ -388,7 +457,7 @@ const ExerciseCard = ({ exercise, onClick, onEdit, onDeactivate, onActivate }) =
               ) : (
                 <button
                   onClick={onActivate}
-                  className="w-full flex items-center gap-2 px-4 py-2 text-sm font-semibold text-success hover:bg-green-50 transition-colors"
+                  className="w-full flex items-center gap-2 px-4 py-2 text-sm font-semibold text-success hover:bg-green-50 transition-colors border-0 bg-transparent cursor-pointer"
                 >
                   <Eye className="w-3.5 h-3.5" /> Reactivate
                 </button>
@@ -399,17 +468,15 @@ const ExerciseCard = ({ exercise, onClick, onEdit, onDeactivate, onActivate }) =
       </div>
 
       {/* Card body */}
-      <div className="p-4">
-        <div className="flex items-start justify-between gap-2 mb-2">
-          <h3 className="font-bold text-heading text-sm leading-tight line-clamp-2 flex-1">{exercise.name}</h3>
-        </div>
+      <div className="card-body">
         {exercise.target_body_part && (
-          <span className={`inline-block px-2.5 py-0.5 rounded-full text-[11px] font-bold ${bodyPartColor} mb-2`}>
+          <span className={`badge badge-${bpKey} mb-2 block w-fit`}>
             {exercise.target_body_part}
           </span>
         )}
+        <h4>{exercise.name}</h4>
         {exercise.description && (
-          <p className="text-xs text-gray-400 leading-relaxed line-clamp-2">{exercise.description}</p>
+          <p className="text-xs text-gray-500 leading-relaxed line-clamp-2 m-0">{exercise.description}</p>
         )}
       </div>
     </div>

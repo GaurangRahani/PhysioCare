@@ -47,6 +47,37 @@ const CollectPaymentModal = ({ isOpen, onClose, appointment, onPaymentComplete }
     }
   };
 
+  const handleResendLink = async () => {
+    setError('');
+    setLoading(true);
+    
+    try {
+      const token = await getToken();
+      const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/appointments/${appointment.id}/resend-payment-link`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      const data = await res.json();
+      
+      if (res.ok && data.success) {
+        alert("Payment link has been successfully resent to the patient!");
+        // We trigger onPaymentComplete just to force a refresh on the dashboard so the timer updates!
+        onPaymentComplete(); 
+        onClose();
+      } else {
+        setError(data.message || 'Failed to resend payment link');
+      }
+    } catch (err) {
+      console.error("Resend error", err);
+      setError('A network error occurred while resending.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   if (!isOpen || !appointment) return null;
 
   return (
@@ -141,14 +172,31 @@ const CollectPaymentModal = ({ isOpen, onClose, appointment, onPaymentComplete }
               </div>
             )}
 
-            <div className="pt-6 mt-4 border-t border-gray-100 flex gap-4">
+            <div className="pt-6 mt-4 border-t border-gray-100 flex gap-3">
               <button
                 type="button"
                 onClick={onClose}
-                className="px-6 py-4 rounded-xl font-bold text-gray-500 hover:text-dark hover:bg-gray-100 transition-colors"
+                className="px-5 py-4 rounded-xl font-bold text-gray-500 hover:text-dark hover:bg-gray-100 transition-colors"
               >
                 Cancel
               </button>
+
+              <button
+                type="button"
+                onClick={handleResendLink}
+                disabled={loading}
+                className="flex-1 py-4 bg-orange-50 text-orange-600 border border-orange-200 hover:bg-orange-100 hover:border-orange-300 font-bold rounded-xl transition-all flex justify-center items-center gap-2 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {loading ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                      <path d="M15.854.146a.5.5 0 0 1 .11.54l-5.819 14.547a.75.75 0 0 1-1.329.124l-3.178-4.995L.643 7.184a.75.75 0 0 1 .124-1.33L15.314.037a.5.5 0 0 1 .54.11ZM6.636 10.07l2.761 4.338L14.13 2.576zm6.787-8.201L1.591 6.602l4.339 2.76z"/>
+                  </svg>
+                )}
+                Resend Link
+              </button>
+
               <button
                 type="submit"
                 disabled={loading}

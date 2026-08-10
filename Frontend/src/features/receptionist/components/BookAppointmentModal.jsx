@@ -17,7 +17,7 @@ const BookAppointmentModal = ({ isOpen, onClose, onBooked, onRequestRegister }) 
   // Step 2 State: Pick a Slot
   const [doctors, setDoctors] = useState([]);
   const [selectedDoctorId, setSelectedDoctorId] = useState('');
-  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
+  const [selectedDate, setSelectedDate] = useState(new Date().toLocaleDateString('en-CA'));
   const [availableSlots, setAvailableSlots] = useState([]);
   const [selectedSlot, setSelectedSlot] = useState('');
   const [visitReason, setVisitReason] = useState('');

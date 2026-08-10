@@ -1,0 +1,1106 @@
+/* ==========================================================================
+   1. STRICT DESIGN SYSTEM & VARIABLES
+   ========================================================================== */
+.consultation-theme {
+    /* Exact Colors from Prompt */
+    --primary: #565acf;
+    --secondary: #f17732;
+    --dark-brand: #1f2278;
+    --text-body: #444444;
+    --text-heading: #14181d;
+    --bg-body: #ffffff;
+
+    --success: #209f84;
+    --info: #2754e6;
+    --warning: #fe970e;
+    --danger: #f72b50;
+
+    /* Grays */
+    --gray-50:  #f8f9fa;
+    --gray-100: #f1f3f5;
+    --gray-200: #e9ecef;
+    --gray-300: #dee2e6;
+    --gray-400: #ced4da;
+    --gray-500: #adb5bd;
+    --gray-600: #868e96;
+    --gray-800: #343a40;
+    --gray-900: #212529;
+
+    /* Theme-specific */
+    --bg-theme: #ffffff;
+    --primary-light: rgba(86, 90, 207, 0.08);
+    --primary-tint: rgba(86, 90, 207, 0.15);
+
+    /* Shadows */
+    --focus-ring: 0 0 0 0.25rem rgba(86, 90, 207, 0.25);
+    --card-shadow: 0 4px 20px rgba(31, 34, 120, 0.07);
+    --hover-shadow: 0 12px 40px rgba(86, 90, 207, 0.15);
+    --card-shadow-md: 0 8px 30px rgba(31, 34, 120, 0.1);
+
+    /* Typography */
+    --font-primary: 'Montserrat', sans-serif;
+    --font-secondary: 'Poppins', sans-serif;
+
+    font-family: var(--font-primary);
+    font-size: 1rem;
+    font-weight: 500;
+    line-height: 1.5;
+    color: var(--text-body);
+    background-color: var(--gray-50);
+    min-height: 100vh;
+    overflow-x: hidden;
+    position: relative;
+    box-sizing: border-box;
+}
+
+*, *::before, *::after {
+    box-sizing: inherit;
+}
+
+.consultation-theme h1,
+.consultation-theme h2,
+.consultation-theme h3,
+.consultation-theme h4,
+.consultation-theme h5,
+.consultation-theme h6 {
+    font-family: var(--font-secondary);
+    font-weight: 600;
+    line-height: 1.2;
+    color: var(--text-heading);
+    margin-top: 0;
+    margin-bottom: 0.5rem;
+}
+
+.consultation-theme a {
+    text-decoration: none;
+    color: var(--primary);
+    transition: all 0.15s ease-in-out;
+}
+.consultation-theme a:hover { color: var(--secondary); }
+.consultation-theme ul { list-style: none; padding: 0; margin: 0; }
+.consultation-theme button { font-family: inherit; cursor: pointer; border: none; background: none; }
+
+/* ==========================================================================
+   2. KEYFRAME ANIMATIONS
+@keyframes up-down {
+    0% { transform: translateY(0); }
+    50% { transform: translateY(-20px); }
+    100% { transform: translateY(0); }
+}
+@keyframes left-right {
+    0% { transform: translateX(0); }
+    50% { transform: translateX(-20px); }
+    100% { transform: translateX(0); }
+}
+@keyframes vibrate {
+    0% { transform: translate(0); }
+    20% { transform: translate(-2px, 2px); }
+    40% { transform: translate(-2px, -2px); }
+    60% { transform: translate(2px, 2px); }
+    80% { transform: translate(2px, -2px); }
+    100% { transform: translate(0); }
+}
+@keyframes rotation {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+@keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+@keyframes pulse-glow {
+    0% { box-shadow: 0 0 0 0 rgba(86, 90, 207, 0.4); }
+    70% { box-shadow: 0 0 0 10px rgba(86, 90, 207, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(86, 90, 207, 0); }
+}
+@keyframes sc-vibrate {
+    0%, 100% { transform: translate(0, 0) rotate(0deg); }
+    20% { transform: translate(-2px, 2px) rotate(-1deg); }
+    40% { transform: translate(-2px, -2px) rotate(1deg); }
+    60% { transform: translate(2px, 2px) rotate(-1deg); }
+    80% { transform: translate(2px, -2px) rotate(1deg); }
+}
+@keyframes sc-fadeInUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes sc-pulse-ring {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(86, 90, 207, 0.35); }
+    50% { box-shadow: 0 0 0 12px rgba(86, 90, 207, 0); }
+}
+@keyframes sc-shimmer {
+    0% { background-position: -200% center; }
+    100% { background-position: 200% center; }
+}
+
+/* ==========================================================================
+   3. THEME BACKGROUND LAYER (Matches Dashboard & Availability)
+   ========================================================================== */
+/* ==========================================================================
+   FIXED THEME BACKGROUND (from template)
+   ========================================================================== */
+.consultation-theme .theme-bg {
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  width: 100%; height: 420px;
+  background-repeat: no-repeat;
+  background-size: cover;
+  background-position: center;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.consultation-theme .theme-bg .bg-shape-bottom {
+  position: absolute;
+  bottom: 0; left: 0; width: 100%; height: 100%;
+  background-image: url(/images/banner/shape.png);
+  background-repeat: no-repeat;
+  background-position: bottom;
+  background-size: contain;
+}
+
+.consultation-theme .theme-bg .pt-img1 {
+  position: absolute; left: 2%; bottom: 120px; z-index: 0;
+}
+.consultation-theme .theme-bg .pt-img2 {
+  position: absolute; left: 30px; top: 100px; z-index: 0;
+}
+.consultation-theme .theme-bg .pt-img3 {
+  position: absolute; right: 8%; bottom: 30%; z-index: 0;
+}
+
+/* ==========================================================================
+   4. LAYOUT
+   ========================================================================== */
+.consultation-theme .app-container {
+    width: 94%;
+    max-width: 1300px;
+    margin: 0 auto;
+    padding: 2rem 0 5rem;
+    position: relative;
+    z-index: 10;
+}
+
+/* ==========================================================================
+   5. REUSABLE COMPONENTS: CARDS
+   ========================================================================== */
+.consultation-theme .card {
+    background-color: var(--bg-body);
+    border-radius: 16px;
+    box-shadow: var(--card-shadow);
+    border: 1px solid var(--gray-200);
+    padding: 2rem;
+    transition: transform 0.3s ease-out, box-shadow 0.3s ease-out;
+    animation: fadeInUp 0.5s ease-out forwards;
+}
+.consultation-theme .card.hoverable:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--hover-shadow);
+    border-color: rgba(86, 90, 207, 0.2);
+}
+
+/* ==========================================================================
+   6. REUSABLE COMPONENTS: BUTTONS
+   ========================================================================== */
+.consultation-theme .btn-primary {
+    background-color: var(--primary); color: var(--bg-body); font-family: var(--font-secondary);
+    font-weight: 600; padding: 0.8rem 1.8rem; border-radius: 8px; display: inline-flex;
+    align-items: center; gap: 0.6rem; transition: all 0.15s ease-in-out; font-size: 1rem;
+    box-shadow: 0 4px 15px rgba(86, 90, 207, 0.25); border: none; cursor: pointer;
+}
+.consultation-theme .btn-primary:hover {
+    background: linear-gradient(135deg, var(--secondary), #c85f1e);
+    box-shadow: 0 8px 25px rgba(241, 119, 50, 0.35);
+    transform: translateY(-3px);
+    color: #fff;
+}
+.consultation-theme .btn-primary:focus { outline: none; box-shadow: var(--focus-ring); }
+
+.consultation-theme .btn-outline {
+    background: var(--primary-light);
+    color: var(--primary);
+    font-family: var(--font-secondary);
+    font-weight: 600;
+    font-size: 0.82rem;
+    padding: 0.45rem 1.1rem;
+    border-radius: 25px;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    border: 1.5px solid transparent;
+    transition: all 0.15s ease-in-out;
+    cursor: pointer;
+}
+.consultation-theme .btn-outline:hover {
+    background: var(--primary);
+    color: #fff;
+    border-color: var(--primary);
+    box-shadow: 0 4px 12px rgba(86, 90, 207, 0.3);
+}
+
+/* ==========================================================================
+   7. REUSABLE COMPONENTS: BADGES & LABELS
+   ========================================================================== */
+.consultation-theme .badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.22rem 0.65rem;
+    border-radius: 6px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    font-family: var(--font-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+}
+.consultation-theme .badge.outline {
+    background: transparent;
+    border: 1.5px solid var(--primary);
+    color: var(--primary);
+    border-radius: 25px;
+}
+.consultation-theme .badge.info {
+    background: rgba(39, 84, 230, 0.1);
+    color: var(--info);
+    border: 1px solid rgba(39, 84, 230, 0.2);
+    border-radius: 25px;
+}
+.consultation-theme .badge.warning {
+    background: rgba(241, 119, 50, 0.1);
+    color: var(--secondary);
+    border: 1px solid rgba(241, 119, 50, 0.25);
+    border-radius: 25px;
+}
+.consultation-theme .badge.success {
+    background: rgba(32, 159, 132, 0.1);
+    color: var(--success);
+    border: 1px solid rgba(32, 159, 132, 0.2);
+    border-radius: 25px;
+}
+.consultation-theme .badge.danger {
+    background: rgba(247, 43, 80, 0.08);
+    color: var(--danger);
+    border: 1px solid rgba(247, 43, 80, 0.2);
+    border-radius: 25px;
+}
+
+.consultation-theme .label-sm {
+    font-family: var(--font-secondary);
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: var(--gray-500);
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    display: block;
+    margin-bottom: 0.4rem;
+}
+
+.consultation-theme .section-title {
+    font-family: var(--font-secondary);
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--secondary);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 0.3rem;
+}
+
+.consultation-theme .section-header {
+    font-family: var(--font-secondary);
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--dark-brand);
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    gap: 0.55rem;
+    margin-bottom: 1.4rem;
+}
+.consultation-theme .section-header i { color: var(--primary); font-size: 1rem; }
+
+/* ==========================================================================
+   8. HEADER / BACK-LINK / PATIENT CARD
+   ========================================================================== */
+.consultation-theme .page-header {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.consultation-theme .back-link {
+    font-family: var(--font-secondary);
+    font-weight: 600;
+    font-size: 0.88rem;
+    color: var(--gray-600);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    width: fit-content;
+    transition: all 0.15s ease-in-out;
+}
+.consultation-theme .back-link:hover {
+    color: var(--secondary);
+    transform: translateX(-4px);
+}
+
+.consultation-theme .patient-card {
+    display: flex; justify-content: space-between; align-items: center;
+    border-left: 6px solid var(--primary);
+    padding: 1.5rem 2rem; margin-bottom: 2.5rem;
+}
+.consultation-theme .patient-info { display: flex; align-items: center; gap: 1.5rem; }
+.consultation-theme .patient-avatar {
+    width: 75px; height: 75px; border-radius: 50%; background-color: rgba(86, 90, 207, 0.08);
+    border: 2px solid rgba(86, 90, 207, 0.2); display: flex; align-items: center;
+    justify-content: center; font-size: 2.2rem; color: var(--primary);
+}
+.consultation-theme .patient-details h2 { margin: 0 0 0.2rem 0; font-size: 2rem; display: flex; align-items: center; gap: 1rem; color: var(--dark-brand); }
+.consultation-theme .patient-meta { display: flex; gap: 1.5rem; color: var(--gray-500); font-size: 0.95rem; font-family: var(--font-secondary); font-weight: 500;}
+.consultation-theme .patient-meta span { display: flex; align-items: center; gap: 0.5rem; }
+.consultation-theme .patient-meta i { color: var(--primary); font-size: 0.9rem; }
+
+/* ==========================================================================
+   9. TABS NAVIGATION
+   ========================================================================== */
+.consultation-theme .tabs-container {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 2.5rem;
+    border-bottom: 2px solid var(--gray-200);
+    padding-bottom: 0px;
+}
+
+.consultation-theme .tab-btn {
+    padding: 0.8rem 1.5rem;
+    font-family: var(--font-secondary);
+    font-weight: 600;
+    font-size: 0.95rem;
+    color: var(--gray-500);
+    border-radius: 8px 8px 0 0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.15s ease-in-out;
+    position: relative;
+    top: 2px;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+}
+.consultation-theme .tab-btn i {
+    font-size: 0.85rem;
+}
+.consultation-theme .tab-btn:hover {
+    color: var(--primary);
+    background-color: rgba(86, 90, 207, 0.05);
+}
+.consultation-theme .tab-btn:focus { outline: none; }
+.consultation-theme .tab-btn.active {
+    background-color: var(--primary);
+    color: var(--bg-body);
+    box-shadow: 0 -4px 15px rgba(86, 90, 207, 0.15);
+}
+.consultation-theme .tab-item.active i { color: rgba(255,255,255,0.9); }
+
+.consultation-theme .tab-content {
+    display: none;
+    animation: sc-fadeInUp 0.35s ease-out forwards;
+}
+.consultation-theme .tab-content.active { display: block; }
+
+/* ==========================================================================
+   10. OVERVIEW TAB
+   ========================================================================== */
+.consultation-theme .overview-grid {
+    display: grid;
+    grid-template-columns: 300px 1fr;
+    gap: 2rem;
+    align-items: start;
+}
+@media (max-width: 900px) {
+    .consultation-theme .overview-grid { grid-template-columns: 1fr; }
+}
+
+/* Medical Profile Card */
+.consultation-theme .medical-profile-card {
+    border-top: 4px solid var(--dark-brand);
+}
+.consultation-theme .card-title {
+    font-family: var(--font-secondary);
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--dark-brand);
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    margin-bottom: 1.5rem;
+}
+.consultation-theme .card-title i { color: var(--primary); }
+.consultation-theme .medical-content p {
+    color: var(--text-body);
+    font-weight: 500;
+    font-size: 0.95rem;
+    line-height: 1.6;
+    margin: 0;
+}
+.consultation-theme .emergency-section p {
+    color: var(--text-body);
+    font-size: 0.95rem;
+}
+
+/* Treatment Plan Card */
+.consultation-theme .treatment-plan-card {
+    border-top: 4px solid var(--secondary);
+}
+.consultation-theme .tp-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+.consultation-theme .tp-header h3 {
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: var(--dark-brand);
+    margin: 0;
+}
+.consultation-theme .btn-link {
+    font-family: var(--font-secondary);
+    font-weight: 600;
+    color: var(--primary);
+    background: rgba(86, 90, 207, 0.08);
+    padding: 0.4rem 1rem;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    transition: all 0.15s ease-in-out;
+    border: none;
+    cursor: pointer;
+}
+.consultation-theme .btn-link:hover {
+    background: var(--primary);
+    color: var(--bg-body);
+}
+
+.consultation-theme .tp-date {
+    color: var(--gray-400);
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    margin-bottom: 2.5rem;
+}
+
+/* Compliance Progress */
+.consultation-theme .compliance-wrapper {
+    margin-bottom: 3rem;
+}
+.consultation-theme .comp-labels {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    margin-bottom: 0.8rem;
+}
+.consultation-theme .comp-val {
+    color: var(--success);
+    font-family: var(--font-secondary);
+    font-weight: 700;
+    font-size: 1.4rem;
+    line-height: 1;
+}
+.consultation-theme .progress-track {
+    width: 100%;
+    height: 8px;
+    background-color: var(--gray-200);
+    border-radius: 4px;
+    overflow: hidden;
+}
+.consultation-theme .progress-fill {
+    height: 100%;
+    background-color: var(--success);
+    border-radius: 4px;
+    width: 100%;
+    transition: width 0.6s ease-out;
+}
+
+/* Exercise List */
+.consultation-theme .exercise-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    margin-bottom: 3rem;
+}
+.consultation-theme .exercise-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: var(--bg-body);
+    padding: 1.2rem 1.5rem;
+    border-radius: 12px;
+    font-family: var(--font-secondary);
+    font-weight: 600;
+    color: var(--dark-brand);
+    border: 1px solid var(--gray-200);
+    transition: all 0.2s ease-in-out;
+}
+.consultation-theme .exercise-item:hover {
+    border-color: rgba(86, 90, 207, 0.3);
+    background-color: rgba(86, 90, 207, 0.02);
+    transform: translateX(6px);
+    box-shadow: 0 4px 12px rgba(86, 90, 207, 0.05);
+}
+.consultation-theme .ex-status {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    color: var(--success);
+    font-weight: 700;
+    font-size: 0.9rem;
+}
+.consultation-theme .ex-dot {
+    width: 10px;
+    height: 10px;
+    background-color: var(--success);
+    border-radius: 50%;
+    box-shadow: 0 0 8px rgba(32, 159, 132, 0.5);
+}
+
+/* Pain Trend Box */
+.consultation-theme .pain-trend-box {
+    background-color: var(--gray-50);
+    padding: 1.2rem 1.5rem;
+    border-radius: 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-family: var(--font-secondary);
+    font-weight: 700;
+    color: var(--dark-brand);
+    border: 1px solid var(--gray-100);
+}
+.consultation-theme .pain-trend-box span.status { color: var(--gray-500); font-weight: 600; font-size: 0.9rem;}
+
+/* ==========================================================================
+   11. CLINICAL HISTORY TAB
+   ========================================================================== */
+.consultation-theme .history-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1.2rem;
+}
+
+.consultation-theme .history-item {
+    background: var(--bg-body);
+    border-radius: 16px;
+    padding: 2rem;
+    box-shadow: var(--card-shadow);
+    border: 1px solid rgba(86, 90, 207, 0.08);
+    border-left: 6px solid var(--primary);
+    transition: transform 0.2s ease-out, box-shadow 0.2s ease-out, border-color 0.2s;
+    animation: sc-fadeInUp 0.35s ease-out both;
+    margin-bottom: 1.5rem;
+}
+.consultation-theme .history-item:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--hover-shadow);
+    border-left-color: var(--secondary);
+}
+
+.consultation-theme .hi-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--gray-200);
+    padding-bottom: 1rem;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.consultation-theme .hi-title {
+    font-family: var(--font-secondary);
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--dark-brand);
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.consultation-theme .hi-notes {
+    margin-bottom: 1.2rem;
+    background: var(--gray-50);
+    padding: 1.2rem 1.5rem;
+    border-radius: 8px;
+    border-left: 3px solid rgba(86, 90, 207, 0.3);
+}
+.consultation-theme .hi-notes p {
+    color: var(--text-body);
+    font-size: 0.95rem;
+    margin: 0;
+    line-height: 1.6;
+}
+
+/* ==========================================================================
+   12. COMPLIANCE & LOGS TAB
+   ========================================================================== */
+.consultation-theme .summary-cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 1.2rem;
+    margin-bottom: 2.5rem;
+}
+
+.consultation-theme .summary-card {
+    padding: 1.5rem;
+    position: relative;
+    overflow: hidden;
+    border-top: 3px solid var(--primary);
+    transition: transform 0.2s ease-out, box-shadow 0.2s ease-out;
+}
+.consultation-theme .summary-card:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--hover-shadow);
+}
+.consultation-theme .summary-card .card-watermark {
+    position: absolute;
+    bottom: -10px; right: -10px;
+    font-size: 4rem;
+    color: var(--primary);
+    opacity: 0.04;
+    font-family: var(--font-secondary);
+    font-weight: 900;
+    pointer-events: none;
+    user-select: none;
+}
+
+.consultation-theme .summary-card h4 {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--dark-brand);
+    margin-bottom: 1.2rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.consultation-theme .summary-stats {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+}
+.consultation-theme .stat-block { display: flex; flex-direction: column; gap: 0.2rem; }
+.consultation-theme .stat-val {
+    font-family: var(--font-secondary);
+    font-size: 1.4rem;
+    font-weight: 800;
+    color: var(--dark-brand);
+    line-height: 1;
+}
+.consultation-theme .stat-val span {
+    color: var(--gray-500);
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+.consultation-theme .mini-bar {
+    width: 100%;
+    height: 4px;
+    background: var(--gray-200);
+    border-radius: 4px;
+    margin-top: 1rem;
+    overflow: hidden;
+}
+.consultation-theme .mini-bar-fill {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 0.6s ease-out;
+}
+
+/* Flagged Alert */
+.consultation-theme .flagged-alert {
+    background: rgba(247, 43, 80, 0.03);
+    border: 1px solid rgba(247, 43, 80, 0.18);
+    border-left: 4px solid var(--danger);
+    border-radius: 12px;
+    padding: 1.4rem 1.8rem;
+    margin-bottom: 2rem;
+    transition: all 0.15s ease-in-out;
+    animation: sc-fadeInUp 0.35s ease-out both;
+}
+.consultation-theme .flagged-alert:hover {
+    background: rgba(247, 43, 80, 0.06);
+    box-shadow: 0 4px 15px rgba(247, 43, 80, 0.1);
+}
+.consultation-theme .flagged-title {
+    color: var(--danger);
+    font-family: var(--font-secondary);
+    font-weight: 700;
+    font-size: 0.82rem;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+.consultation-theme .flagged-title i {
+    animation: flow-vibrate 0.3s ease-in-out infinite alternate;
+}
+.consultation-theme .flagged-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+.consultation-theme .flagged-content { display: flex; flex-direction: column; gap: 0.45rem; }
+.consultation-theme .flagged-top-line {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    flex-wrap: wrap;
+    font-family: var(--font-secondary);
+    font-weight: 700;
+    color: var(--dark-brand);
+    font-size: 0.95rem;
+}
+.consultation-theme .flagged-date {
+    background: var(--bg-body);
+    border: 1px solid var(--gray-200);
+    padding: 0.12rem 0.55rem;
+    border-radius: 5px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--gray-600);
+}
+.consultation-theme .flagged-issue {
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--warning);
+}
+.consultation-theme .flagged-note {
+    font-style: italic;
+    color: var(--gray-600);
+    font-size: 0.9rem;
+}
+
+.consultation-theme .pain-pill {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 52px;
+    height: 32px;
+    padding: 0 0.8rem;
+    border-radius: 20px;
+    font-family: var(--font-secondary);
+    font-weight: 800;
+    font-size: 0.85rem;
+    color: #fff;
+}
+
+/* Accordions */
+.consultation-theme .accordion-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
+}
+.consultation-theme .accordion-item {
+    background: transparent;
+    border: none;
+    border-radius: 8px;
+    margin-bottom: 0.8rem;
+    overflow: hidden;
+    transition: all 0.15s ease-in-out;
+}
+.consultation-theme .accordion-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(86, 90, 207, 0.15);
+}
+.consultation-theme .accordion-item.open {
+    box-shadow: 0 8px 25px rgba(241, 119, 50, 0.2);
+}
+
+.consultation-theme .accordion-header {
+    padding: 1.1rem 1.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    transition: background 0.15s ease-in-out;
+    width: 100%;
+    background: var(--primary);
+    color: #ffffff;
+    border-radius: 8px;
+}
+.consultation-theme .accordion-header:hover { background: var(--dark-brand); }
+.consultation-theme .accordion-item.open .accordion-header { 
+    background: var(--secondary); 
+    border-radius: 8px 8px 0 0;
+}
+.consultation-theme .accordion-header:focus { outline: none; box-shadow: 0 0 0 3px rgba(86, 90, 207, 0.3); }
+
+.consultation-theme .acc-title {
+    font-family: var(--font-secondary);
+    font-weight: 600;
+    color: #ffffff;
+    font-size: 0.95rem;
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+}
+.consultation-theme .acc-title span {
+    color: rgba(255, 255, 255, 0.8);
+    font-weight: 500;
+    font-size: 0.85rem;
+}
+.consultation-theme .acc-icon {
+    color: #ffffff;
+    transition: transform 0.3s ease-out;
+}
+.consultation-theme .accordion-item.open .acc-icon { transform: rotate(180deg); }
+
+.consultation-theme .accordion-body {
+    display: none;
+    background: var(--gray-50);
+    border: 1px solid var(--gray-200);
+    border-top: none;
+    border-radius: 0 0 8px 8px;
+}
+.consultation-theme .accordion-item.open .accordion-body {
+    display: block;
+    animation: sc-fadeInUp 0.3s ease-out;
+}
+
+/* Log Table */
+.consultation-theme .log-table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+}
+.consultation-theme .log-table th {
+    padding: 0.9rem 1.5rem;
+    font-family: var(--font-secondary);
+    font-size: 0.72rem;
+    color: var(--gray-600);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    border-bottom: 2px solid var(--gray-100);
+    background: var(--bg-body);
+}
+.consultation-theme .log-table td {
+    padding: 1rem 1.5rem;
+    font-family: var(--font-secondary);
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--dark-brand);
+    border-bottom: 1px solid var(--gray-100);
+    transition: background 0.1s;
+}
+.consultation-theme .log-table tr:last-child td { border-bottom: none; }
+.consultation-theme .log-table tr:hover td { background: var(--primary-light); }
+
+.consultation-theme .td-note {
+    font-family: var(--font-primary) !important;
+    font-weight: 500 !important;
+    font-size: 0.875rem !important;
+    color: var(--gray-600) !important;
+    max-width: 280px;
+}
+
+/* ==========================================================================
+   13. EMPTY STATES
+   ========================================================================== */
+.consultation-theme .empty-state {
+    text-align: center;
+    padding: 3.5rem 2rem;
+    color: var(--gray-500);
+}
+.consultation-theme .empty-state i {
+    font-size: 2.8rem;
+    color: var(--gray-300);
+    margin-bottom: 1rem;
+    display: block;
+}
+.consultation-theme .empty-state h3 {
+    color: var(--dark-brand);
+    margin-bottom: 0.5rem;
+}
+.consultation-theme .empty-state p {
+    font-size: 0.9rem;
+}
+
+/* ==========================================================================
+   14. RESPONSIVE
+   ========================================================================== */
+@media (max-width: 768px) {
+    .consultation-theme .patient-card { flex-direction: column; align-items: flex-start; }
+    .consultation-theme .tabs-wrapper { flex-wrap: wrap; }
+    .consultation-theme .tab-item { font-size: 0.8rem; padding: 0.55rem 1rem; }
+    .consultation-theme .decor-bg { display: none; }
+    .consultation-theme .summary-cards-grid { grid-template-columns: 1fr; }
+}
+
+/* =========================================
+   NEW PATIENT HEADER CARD (From User)
+   ========================================= */
+.patient-header-card {
+    background-color: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03);
+    padding: 2.5rem 3rem;
+    position: relative;
+    overflow: hidden;
+    width: 100%;
+}
+
+.patient-header-card::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 6px;
+    background-color: #5c62d6; /* primary-purple */
+}
+
+.patient-header-card .card-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+}
+
+.patient-header-card .left-section {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+}
+
+.patient-header-card .avatar {
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    border: 2px solid #dbe0f9;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: #f8f9ff;
+    flex-shrink: 0;
+}
+
+.patient-header-card .avatar svg {
+    width: 36px;
+    height: 36px;
+    fill: #5c62d6;
+}
+
+.patient-header-card .info {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.patient-header-card .name-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.patient-header-card .name {
+    color: #2a2c65; /* text-dark */
+    font-size: 26px;
+    font-weight: 700;
+    margin: 0;
+}
+
+.patient-header-card .hc-badge {
+    background-color: #ffeadd; /* badge-bg */
+    color: #e77b4a; /* badge-text */
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+    border: 1px solid #fbd0b9;
+    text-transform: uppercase;
+}
+
+.patient-header-card .details-row {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    color: #9398b1; /* text-gray */
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.patient-header-card .detail-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.patient-header-card .detail-item svg {
+    width: 16px;
+    height: 16px;
+    fill: #5c62d6;
+}
+
+.patient-header-card .consult-btn {
+    background-color: #5c62d6;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 14px 28px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    transition: all 0.3s ease;
+    white-space: nowrap;
+}
+
+.patient-header-card .consult-btn svg {
+    width: 18px;
+    height: 18px;
+    fill: white;
+}
+
+.patient-header-card .consult-btn:hover {
+    background-color: #d86524; /* hover-orange */
+    box-shadow: 0 6px 16px rgba(216, 101, 36, 0.35);
+    transform: translateY(-1px);
+}
+
+@media (max-width: 850px) {
+    .patient-header-card .card-content {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 24px;
+    }
+    .patient-header-card .consult-btn {
+        width: 100%;
+        justify-content: center;
+    }
+}
+
+@media (max-width: 600px) {
+    .patient-header-card .left-section {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    .patient-header-card .details-row {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+}

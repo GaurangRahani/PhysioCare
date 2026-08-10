@@ -1,16 +1,18 @@
 import React from 'react';
 import { Outlet, Link, useLocation } from 'react-router-dom';
-import { Activity, LayoutDashboard, Calendar, Users } from 'lucide-react';
 import { UserButton, useUser } from '@clerk/clerk-react';
+import Footer from '../../../components/layout/Footer';
+import UnifiedHeader from '../../../components/layout/UnifiedHeader';
+import './ReceptionistTheme.css';
 
 const ReceptionistLayout = () => {
   const { user } = useUser();
   const location = useLocation();
 
   const navigation = [
-    { name: 'Dashboard', href: '/receptionist-dashboard', icon: LayoutDashboard },
-    { name: 'Calendar', href: '/receptionist-dashboard/calendar', icon: Calendar },
-    { name: 'Patients', href: '/receptionist-dashboard/patients', icon: Users },
+    { name: 'Dashboard', href: '/receptionist-dashboard', icon: 'fa-solid fa-border-all' },
+    { name: 'Calendar', href: '/receptionist-dashboard/calendar', icon: 'fa-regular fa-calendar' },
+    { name: 'Patients', href: '/receptionist-dashboard/patients', icon: 'fa-solid fa-users' },
   ];
 
   const isActive = (path) => {
@@ -21,80 +23,53 @@ const ReceptionistLayout = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
-      {/* Horizontal Top Navbar */}
-      <header className="bg-light sticky top-0 z-50 w-full border-b border-gray-100 shadow-sm">
-        <div className="container mx-auto px-4 md:px-6">
-          <div className="flex items-center justify-between h-20">
-            
-            {/* Logo */}
-            <Link to="/receptionist-dashboard" className="flex items-center gap-2 group">
-              <div className="bg-primary p-2 rounded-lg">
-                <Activity className="h-6 w-6 text-light" />
-              </div>
-              <span className="text-2xl font-bold text-dark tracking-tight">PhysioCare <span className="text-sm font-medium text-primary ml-1">Receptionist</span></span>
-            </Link>
-
-            {/* Desktop Navigation */}
-            <nav className="hidden md:flex items-center gap-8">
-              {navigation.map((item) => {
-                const active = isActive(item.href);
-                return (
-                  <Link
-                    key={item.name}
-                    to={item.href}
-                    className={`flex items-center gap-2 text-sm font-semibold transition-colors duration-300 ${
-                      active 
-                        ? 'text-primary' 
-                        : 'text-body hover:text-primary'
-                    }`}
-                  >
-                    <item.icon className="h-4 w-4" />
-                    {item.name}
-                  </Link>
-                );
-              })}
-            </nav>
-
-            {/* User Profile */}
-            <div className="flex items-center gap-4">
-              <span className="hidden md:block text-sm font-semibold text-dark">
-                {user?.fullName || 'Receptionist'}
-              </span>
-              <UserButton afterSignOutUrl="/" appearance={{ elements: { userButtonAvatarBox: "w-10 h-10 shadow-sm" } }} />
-            </div>
-
+    <div className="receptionist-theme">
+      
+      {/* =========================================================
+           1. FULL-WIDTH THEME BACKGROUND & ANIMATED MARGIN SHAPES
+           ========================================================= */}
+      <div className="theme-background">
+          {/* Top Wave Overlay */}
+          <div className="bg-wave-top">
+              <svg viewBox="0 0 1440 320" preserveAspectRatio="none">
+                  <path fill="#f8f9fa" fillOpacity="1" d="M0,256L48,229.3C96,203,192,149,288,154.7C384,160,480,224,576,218.7C672,213,768,139,864,117.3C960,96,1056,128,1152,149.3C1248,171,1344,181,1392,186.7L1440,192L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path>
+              </svg>
           </div>
-        </div>
+          
+          {/* Dot Matrix */}
+          <div className="bg-dot-matrix"></div>
 
-        {/* Mobile Navigation */}
-        <div className="md:hidden border-t border-gray-100 bg-white px-4 py-3 overflow-x-auto">
-          <nav className="flex items-center gap-6 min-w-max">
-            {navigation.map((item) => {
-              const active = isActive(item.href);
-              return (
-                <Link
-                  key={item.name}
-                  to={item.href}
-                  className={`flex items-center gap-2 text-sm font-semibold transition-colors duration-300 ${
-                    active 
-                      ? 'text-primary' 
-                      : 'text-body hover:text-primary'
-                  }`}
-                >
-                  <item.icon className="h-4 w-4" />
-                  {item.name}
-                </Link>
-              );
-            })}
-          </nav>
-        </div>
-      </header>
+          {/* Animated Floating Elements */}
+          <div className="shape-zigzag">
+              <svg width="80" height="60" viewBox="0 0 80 60">
+                  <polyline points="0,15 15,0 30,15 45,0 60,15 75,0" fill="none" stroke="rgba(86, 90, 207, 0.4)" strokeWidth="2"/>
+                  <polyline points="0,30 15,15 30,30 45,15 60,30 75,15" fill="none" stroke="rgba(86, 90, 207, 0.4)" strokeWidth="2"/>
+                  <polyline points="0,45 15,30 30,45 45,30 60,45 75,30" fill="none" stroke="rgba(86, 90, 207, 0.4)" strokeWidth="2"/>
+              </svg>
+          </div>
+          <div className="shape-cross">
+              <svg viewBox="0 0 50 50">
+                  <path d="M20,0 h10 v20 h20 v10 h-20 v20 h-10 v-20 h-20 v-10 h20 z" fill="none" stroke="rgba(86, 90, 207, 0.4)" strokeWidth="3"/>
+              </svg>
+          </div>
+          <div className="shape-circle"></div>
+      </div>
 
-      {/* Main Content Area */}
-      <main className="flex-1 w-full max-w-7xl mx-auto p-4 md:p-8">
-        <Outlet />
+      <UnifiedHeader 
+        brandLink="/receptionist-dashboard" 
+        roleName="Receptionist"
+        userName={user?.fullName || 'Receptionist'} 
+        navigation={navigation} 
+      />
+
+      {/* =========================================================
+           3. MAIN DASHBOARD CONTENT
+           ========================================================= */}
+      <main>
+          <Outlet />
       </main>
+
+      <Footer />
     </div>
   );
 };

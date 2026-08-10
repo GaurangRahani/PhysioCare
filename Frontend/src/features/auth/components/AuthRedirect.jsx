@@ -36,6 +36,14 @@ const AuthRedirect = ({ children }) => {
         if (role) {
           setIsVerifying(false);
 
+          if (role === 'admin') {
+            // Admin never goes to patient/doctor/receptionist dashboards
+            if (!location.pathname.startsWith('/admin')) {
+              navigate('/admin/dashboard', { replace: true });
+            }
+            return;
+          }
+
           if (role === 'doctor' && (location.pathname === '/dashboard' || location.pathname === '/dashboard/' || location.pathname === '/receptionist-dashboard')) {
             navigate('/doctor-dashboard', { replace: true });
           } else if (role === 'patient' && (location.pathname === '/doctor-dashboard' || location.pathname === '/doctor-dashboard/' || location.pathname === '/receptionist-dashboard')) {

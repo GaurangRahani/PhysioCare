@@ -1,0 +1,362 @@
+/* ==========================================================================
+   1. CSS VARIABLES & STRICT DESIGN SYSTEM
+   ========================================================================== */
+.availability-theme {
+    /* Core Palette */
+    --primary: #565acf;
+    --secondary: #f17732;
+    --dark-brand: #1f2278;
+    --text-body: #444444;
+    --text-heading: #14181d;
+    --bg-body: #ffffff;
+    
+    /* State Colors */
+    --success: #209f84;
+    --info: #2754e6;
+    --warning: #fe970e;
+    --danger: #f72b50;
+    
+    /* Grays */
+    --gray-100: #f8f9fa;
+    --gray-200: #e9ecef;
+    --gray-300: #dee2e6;
+    --gray-400: #ced4da;
+    --gray-500: #adb5bd;
+    --gray-800: #343a40;
+
+    /* Interactive Shadows */
+    --focus-ring: 0 0 0 0.25rem rgba(86, 90, 207, 0.25);
+    --card-shadow: 0 15px 45px rgba(31, 34, 120, 0.08);
+    --hover-shadow: 0 8px 25px rgba(86, 90, 207, 0.15);
+    
+    /* Typography */
+    --font-primary: 'Montserrat', sans-serif;
+    --font-secondary: 'Poppins', sans-serif;
+
+    font-family: var(--font-primary);
+    font-size: 1rem;
+    font-weight: 500;
+    line-height: 1.5;
+    color: var(--text-body);
+    background-color: transparent;
+    position: relative;
+    overflow-x: hidden;
+    min-height: calc(100vh - 80px);
+    display: flex;
+    flex-direction: column;
+}
+
+.availability-theme h1, 
+.availability-theme h2, 
+.availability-theme h3, 
+.availability-theme h4, 
+.availability-theme h5, 
+.availability-theme h6 {
+    font-family: var(--font-secondary);
+    font-weight: 600;
+    line-height: 1.2;
+    color: var(--text-heading);
+    margin-bottom: 0.5rem;
+}
+
+.availability-theme h1 {
+    font-size: calc(1.4375rem + 2.25vw);
+    color: var(--dark-brand);
+    font-weight: 700;
+}
+
+.availability-theme a { text-decoration: none; color: var(--primary); transition: all 0.15s ease-in-out; }
+.availability-theme a:hover { color: var(--secondary); }
+
+/* ==========================================================================
+   3. EXACT THEME ANIMATIONS
+   ========================================================================== */
+@keyframes at-up-down {
+    0% { transform: translateY(0); }
+    50% { transform: translateY(-25px); }
+    100% { transform: translateY(0); }
+}
+
+@keyframes at-left-right {
+    0% { transform: translateX(0); }
+    50% { transform: translateX(-25px); }
+    100% { transform: translateX(0); }
+}
+
+@keyframes at-rotation {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+@keyframes at-vibrate {
+    0% { transform: translate(0); }
+    20% { transform: translate(-2px, 2px); }
+    40% { transform: translate(-2px, -2px); }
+    60% { transform: translate(2px, 2px); }
+    80% { transform: translate(2px, -2px); }
+    100% { transform: translate(0); }
+}
+
+/* ==========================================================================
+   FIXED THEME BACKGROUND (from template)
+   ========================================================================== */
+.availability-theme .theme-bg {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    width: 100vw; height: 100vh;
+    background-repeat: no-repeat;
+    background-size: cover;
+    background-position: center;
+    z-index: -1;
+    pointer-events: none;
+    overflow: hidden;
+}
+
+.availability-theme .theme-bg .bg-shape-bottom {
+  position: absolute;
+  bottom: 0; left: 0; width: 100%; height: 25vh;
+  background-image: url(/images/banner/shape.png);
+  background-repeat: no-repeat;
+  background-position: bottom;
+  background-size: cover;
+}
+
+.availability-theme .theme-bg .pt-img1 {
+  position: absolute; left: 15%; bottom: 120px; z-index: 0;
+}
+.availability-theme .theme-bg .pt-img2 {
+  position: absolute; left: 30px; top: 100px; z-index: 0;
+}
+.availability-theme .theme-bg .pt-img3 {
+  position: absolute; right: 8%; bottom: 30%; z-index: 0;
+}
+
+/* ==========================================================================
+   6. MAIN APP CONTAINER (AVAILABILITY UI)
+   ========================================================================== */
+.availability-theme main { flex: 1 0 auto; position: relative; padding: 2rem 1.5rem 6rem 1.5rem; }
+
+.availability-theme .container { max-width: 1200px; margin: 0 auto; position: relative; z-index: 10; }
+
+.availability-theme .header-section { margin-bottom: 2rem; }
+.availability-theme .header-section p { color: var(--text-body); font-size: 0.95rem; margin: 0.25rem 0 0; }
+.availability-theme .header-section h1 {
+    font-family: var(--font-secondary); font-weight: 700;
+    font-size: 2rem; color: var(--dark-brand); line-height: 1.2;
+    margin-bottom: 0.25rem;
+}
+.availability-theme .badge-title {
+    display: inline-block; font-family: var(--font-secondary); color: var(--primary);
+    font-weight: 600; font-size: 0.9rem; letter-spacing: 1px; text-transform: uppercase;
+    margin-bottom: 0.5rem; background: rgba(86,90,207,0.1); padding: 0.3rem 1rem; border-radius: 20px;
+}
+
+/* Card & Tabs */
+.availability-theme .app-card {
+    background-color: var(--bg-body); border-radius: 16px; box-shadow: var(--card-shadow);
+    border: 1px solid rgba(86, 90, 207, 0.08); overflow: hidden; transition: transform 0.3s ease-out;
+    position: relative;
+}
+
+.availability-theme .app-card::before {
+    content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 8px;
+    background: linear-gradient(90deg, var(--primary) 0%, var(--secondary) 100%);
+    opacity: 0.9;
+}
+
+.availability-theme .tabs-header { display: flex; background-color: var(--gray-100); border-bottom: 1px solid var(--gray-200); position: relative; }
+.availability-theme .tab-btn {
+    flex: 1; padding: 1.5rem 1rem; font-family: var(--font-secondary); font-weight: 600;
+    font-size: 1.05rem; color: var(--gray-800); background: transparent; border: none;
+    cursor: pointer; transition: all 0.15s ease-in-out; position: relative;
+}
+.availability-theme .tab-btn:focus-visible { outline: none; box-shadow: inset var(--focus-ring); }
+.availability-theme .tab-btn:hover:not(.active) { color: var(--primary); background-color: rgba(86, 90, 207, 0.03); }
+.availability-theme .tab-btn.active { color: var(--primary); background-color: var(--bg-body); }
+.availability-theme .tab-btn.active::after {
+    content: ''; position: absolute; bottom: -1px; left: 0; width: 100%; height: 3px; background-color: var(--primary);
+}
+
+.availability-theme .tab-content { display: none; padding: 3.5rem; animation: at-fadeUp 0.35s ease-out forwards; }
+@keyframes at-fadeUp { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+.availability-theme .tab-content.active { display: block; }
+
+/* Interactive Elements */
+.availability-theme .btn {
+    font-family: var(--font-secondary); display: inline-flex; align-items: center; justify-content: center;
+    gap: 0.6rem; padding: 0.85rem 2rem; border-radius: 8px; font-weight: 600; cursor: pointer; border: none;
+    transition: all 0.15s ease-in-out; font-size: 1rem;
+}
+.availability-theme .btn-primary { background-color: var(--primary); color: var(--bg-body); }
+.availability-theme .btn-primary:hover { background-color: var(--secondary); transform: translateY(-3px); box-shadow: var(--hover-shadow); }
+.availability-theme .btn-primary:disabled { opacity: 0.7; cursor: not-allowed; transform: none; box-shadow: none; }
+.availability-theme .btn-outline { background-color: transparent; border: 2px solid var(--primary); color: var(--primary); }
+.availability-theme .btn-outline:hover { background-color: var(--secondary); border-color: var(--secondary); color: var(--bg-body); transform: translateY(-2px); box-shadow: var(--hover-shadow); }
+.availability-theme .btn-icon { background: transparent; color: var(--gray-400); border: none; font-size: 1.25rem; cursor: pointer; transition: all 0.15s ease-in-out; padding: 0.5rem; border-radius: 6px; }
+.availability-theme .btn:focus, .availability-theme input:focus, .availability-theme button:focus { outline: none; box-shadow: var(--focus-ring); }
+
+.availability-theme .radio-group { display: flex; gap: 2.5rem; margin: 1.5rem 0 3.5rem 0; }
+.availability-theme .radio-label { display: flex; align-items: center; gap: 0.5rem; cursor: pointer; font-size: 1.05rem; transition: all 0.15s ease-in-out;}
+.availability-theme .radio-label:hover { color: var(--primary); }
+.availability-theme .radio-label input[type="radio"] {
+    appearance: none; width: 1.5rem; height: 1.5rem; border: 2px solid var(--gray-300); border-radius: 50%;
+    display: grid; place-content: center; transition: all 0.15s ease-in-out; margin: 0;
+}
+.availability-theme .radio-label input[type="radio"]::before {
+    content: ""; width: 0.75rem; height: 0.75rem; border-radius: 50%; transform: scale(0);
+    transition: 120ms transform ease-in-out; box-shadow: inset 1em 1em var(--primary);
+}
+.availability-theme .radio-label input[type="radio"]:checked { border-color: var(--primary); }
+.availability-theme .radio-label input[type="radio"]:checked::before { transform: scale(1); }
+
+.availability-theme .toggle-switch { position: relative; display: inline-block; width: 50px; height: 26px; }
+.availability-theme .toggle-switch input { opacity: 0; width: 0; height: 0; }
+.availability-theme .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: var(--gray-300); transition: all 0.15s ease-in-out; border-radius: 34px; }
+.availability-theme .slider:before { position: absolute; content: ""; height: 20px; width: 20px; left: 3px; bottom: 3px; background-color: white; transition: transform 0.2s ease-in-out; border-radius: 50%; box-shadow: 0 2px 4px rgba(0,0,0,0.1);}
+.availability-theme input:checked + .slider { background-color: var(--primary); }
+.availability-theme input:focus-visible + .slider { box-shadow: var(--focus-ring); }
+.availability-theme input:checked + .slider:before { transform: translateX(24px); }
+
+.availability-theme .time-input-wrap { position: relative; display: flex; align-items: center; }
+.availability-theme .time-input-wrap input {
+    font-family: var(--font-primary); font-size: 1.05rem; font-weight: 500; color: var(--text-heading);
+    border: 1px solid var(--gray-300); border-radius: 8px; padding: 0.75rem 3rem 0.75rem 1rem; width: 160px;
+    transition: all 0.15s ease-in-out; background-color: var(--bg-body);
+}
+.availability-theme .time-input-wrap input:hover { border-color: var(--primary); }
+.availability-theme .time-input-wrap input:focus { border-color: var(--primary); box-shadow: var(--focus-ring); }
+.availability-theme .time-input-wrap i { position: absolute; right: 1rem; color: var(--primary); pointer-events: none; }
+
+/* Schedule Rows */
+.availability-theme .schedule-row {
+    display: grid; grid-template-columns: 200px 1fr 50px; align-items: start; padding: 1.75rem 1.5rem;
+    border-bottom: 1px solid var(--gray-200); transition: all 0.15s ease-in-out; border-radius: 12px;
+}
+.availability-theme .schedule-row:last-child { border-bottom: none; margin-bottom: 2rem; }
+.availability-theme .schedule-row:hover { background-color: rgba(86, 90, 207, 0.03); transform: translateX(5px); border-bottom-color: transparent;}
+.availability-theme .day-label { display: flex; align-items: center; gap: 1rem; font-family: var(--font-secondary); font-weight: 600; color: var(--dark-brand); font-size: 1.15rem; transition: color 0.15s ease-in-out;}
+.availability-theme .day-label.off { color: var(--gray-400); }
+.availability-theme .time-blocks { display: flex; flex-direction: column; gap: 1rem; transition: all 0.15s ease-in-out;}
+.availability-theme .time-inputs { display: flex; align-items: center; gap: 1.5rem; }
+.availability-theme .time-inputs span { color: var(--gray-400); font-weight: 500; }
+.availability-theme .add-link { background: none; border: none; padding: 0; cursor: pointer; color: var(--primary); font-weight: 600; display: inline-block; margin-top: 0.5rem; font-size: 0.95rem; cursor: pointer; transition: all 0.15s ease-in-out; text-align: left; }
+.availability-theme .add-link:hover { color: var(--secondary); text-decoration: underline;}
+
+/* Overrides */
+.availability-theme .flex-between { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2.5rem; }
+.availability-theme .override-list { margin-top: 1.5rem; margin-bottom: 2.5rem; display: flex; flex-direction: column; gap: 1rem; }
+.availability-theme .override-item {
+    display: flex; align-items: center; justify-content: space-between; padding: 1.5rem 1.5rem;
+    border: 1px solid var(--gray-200); transition: all 0.15s ease-in-out; border-radius: 12px;
+    background-color: var(--bg-body);
+}
+.availability-theme .override-item:hover { box-shadow: var(--card-shadow); border-color: rgba(86, 90, 207, 0.2); transform: translateY(-3px); }
+.availability-theme .override-date { font-family: var(--font-secondary); font-weight: 700; color: var(--dark-brand); font-size: 1.1rem; width: 180px; }
+.availability-theme .badge { padding: 0.4rem 1rem; border-radius: 20px; font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; display: inline-block; margin-bottom: 0.25rem; }
+.availability-theme .badge-special { background-color: var(--primary); color: var(--bg-body); }
+.availability-theme .badge-leave { background-color: var(--danger); color: var(--bg-body); }
+
+/* Alert */
+.availability-theme .alert-box { background-color: rgba(86, 90, 207, 0.05); border-left: 4px solid var(--primary); padding: 1.5rem 2rem; border-radius: 0 12px 12px 0; display: flex; gap: 1rem; font-size: 1rem; align-items: flex-start; }
+.availability-theme .alert-box i { color: var(--primary); margin-top: 0.25rem; }
+
+/* Preview Grid */
+.availability-theme .preview-grid { display: grid; grid-template-columns: 1fr 1.2fr; gap: 3.5rem; }
+.availability-theme .preview-card { border: 1px solid var(--gray-200); border-radius: 16px; padding: 2rem; background-color: var(--bg-body); transition: all 0.15s ease-in-out; }
+.availability-theme .preview-card:hover { box-shadow: var(--card-shadow); border-color: rgba(86, 90, 207, 0.1); }
+
+.availability-theme .cal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; font-family: var(--font-secondary); font-weight: 600; color: var(--dark-brand); font-size: 1.15rem; }
+.availability-theme .cal-header button { background: none; border: none; cursor: pointer; color: var(--primary); padding: 0.5rem; transition: all 0.15s ease-in-out; border-radius: 50%; display: flex; align-items: center; justify-content: center; width: 40px; height: 40px;}
+.availability-theme .cal-header button:hover { background-color: rgba(86, 90, 207, 0.1); transform: scale(1.1); }
+
+.availability-theme .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); text-align: center; gap: 0.75rem; }
+.availability-theme .cal-day-name { font-size: 0.9rem; font-weight: 600; color: var(--gray-500); margin-bottom: 0.5rem; text-transform: uppercase;}
+.availability-theme .cal-date { width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; border-radius: 50%; margin: auto; font-weight: 600; color: var(--gray-400); cursor: pointer; transition: all 0.15s ease-in-out; font-size: 1.05rem; }
+.availability-theme .cal-date.active-month { color: var(--text-heading); }
+.availability-theme .cal-date.active-month:hover:not(.selected) { background-color: rgba(86, 90, 207, 0.1); color: var(--primary); transform: translateY(-2px); }
+.availability-theme .cal-date.selected { background-color: var(--primary); color: var(--bg-body); box-shadow: 0 4px 10px rgba(86, 90, 207, 0.3); transform: scale(1.05); }
+
+.availability-theme .slots-header { text-transform: uppercase; font-size: 0.9rem; font-weight: 700; color: var(--gray-400); margin-bottom: 0.5rem; letter-spacing: 1px;}
+.availability-theme .time-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(95px, 1fr)); gap: 1rem; }
+.availability-theme .time-pill {
+    background: transparent; border: 1px solid var(--primary); color: var(--primary); padding: 0.7rem; border-radius: 8px;
+    text-align: center; font-family: var(--font-secondary); font-weight: 600; font-size: 0.95rem; cursor: pointer; transition: all 0.15s ease-in-out;
+}
+.availability-theme .time-pill:hover { background-color: var(--primary); color: var(--bg-body); transform: translateY(-3px); box-shadow: 0 4px 10px rgba(86, 90, 207, 0.2); }
+.availability-theme .time-pill.booked { border-color: var(--gray-300); color: var(--gray-400); text-decoration: line-through; pointer-events: none; }
+
+/* ==========================================================================
+   7. MEDITRO EXACT THEME FOOTER
+   ========================================================================== */
+.availability-theme footer {
+    background-color: #f8f9ff;
+    position: relative;
+    padding-top: 150px;
+    padding-bottom: 2rem;
+    margin-top: auto;
+    overflow: hidden;
+}
+
+.availability-theme .footer-wave {
+    position: absolute; top: 0; left: 0; width: 100%; overflow: hidden; line-height: 0; transform: translateY(-1px);
+}
+.availability-theme .footer-wave svg { display: block; width: calc(100% + 1.3px); height: 180px; }
+
+.availability-theme .footer-bg-pattern {
+    position: absolute; top: 0; right: 0; bottom: 0; width: 50%;
+    background-image: radial-gradient(rgba(86, 90, 207, 0.15) 2px, transparent 2px); background-size: 20px 20px; z-index: 0;
+    mask-image: linear-gradient(to right, transparent 0%, black 50%);
+    -webkit-mask-image: linear-gradient(to right, transparent 0%, black 50%);
+}
+
+.availability-theme .ft-decor-zigzag-left { position: absolute; left: 5%; top: 30%; animation: at-left-right 6s infinite ease-in-out; z-index: 1; }
+.availability-theme .ft-decor-circle { position: absolute; left: 3%; bottom: 20%; width: 60px; height: 60px; border-radius: 50%; border: 2px dashed rgba(86, 90, 207, 0.4); animation: at-up-down 5s infinite ease-in-out; z-index: 1; }
+.availability-theme .ft-decor-cross { position: absolute; right: 5%; top: 40%; width: 40px; height: 40px; animation: at-rotation 15s infinite linear; z-index: 1; }
+.availability-theme .ft-decor-zigzag-right { position: absolute; right: 5%; bottom: 15%; animation: at-left-right 7s infinite ease-in-out reverse; z-index: 1; }
+
+.availability-theme .footer-content { max-width: 1200px; margin: 0 auto; padding: 0 1.5rem; display: grid; grid-template-columns: 1.5fr 1fr 1fr 1.5fr; gap: 3rem; position: relative; z-index: 10; }
+.availability-theme .footer-brand h2 { font-size: 2rem; color: var(--dark-brand); font-weight: 700; display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1.5rem; }
+.availability-theme .footer-brand h2 i { color: var(--primary); }
+.availability-theme .footer-brand p { color: var(--text-body); font-size: 1rem; margin-bottom: 2rem; line-height: 1.8; }
+.availability-theme .footer-contact { display: flex; align-items: center; gap: 1rem; }
+.availability-theme .footer-contact .icon-box { width: 50px; height: 50px; background-color: var(--secondary); color: var(--bg-body); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.25rem; animation: at-vibrate 3s infinite ease-in-out; }
+.availability-theme .footer-contact h4 { font-family: var(--font-primary); font-size: 0.9rem; color: var(--secondary); margin-bottom: 0; font-weight: 600;}
+.availability-theme .footer-contact p { font-family: var(--font-secondary); font-size: 1.2rem; font-weight: 700; color: var(--dark-brand); margin-bottom: 0; }
+
+.availability-theme .footer-col-title { font-size: 1.35rem; color: var(--dark-brand); margin-bottom: 1.5rem; position: relative; font-weight: 600; }
+.availability-theme .footer-col-title::after { content: "//////////"; position: absolute; left: 0; bottom: -10px; color: var(--primary); font-size: 0.6rem; letter-spacing: 2px; font-weight: 900; }
+.availability-theme .footer-links { list-style: none; padding: 0; margin-top: 2rem; }
+.availability-theme .footer-links li { margin-bottom: 1rem; }
+.availability-theme .footer-links a { color: var(--text-body); font-weight: 500; }
+.availability-theme .footer-links a:hover { color: var(--primary); padding-left: 5px; }
+
+.availability-theme .subscribe-form { margin-top: 2rem; }
+.availability-theme .subscribe-form input { width: 100%; padding: 1rem 1.5rem; border: none; border-radius: 8px; background-color: var(--bg-body); box-shadow: 0 5px 15px rgba(0,0,0,0.03); margin-bottom: 1rem; font-family: var(--font-primary); outline: none; transition: all 0.15s ease-in-out; }
+.availability-theme .subscribe-form input:focus { box-shadow: var(--focus-ring); }
+.availability-theme .subscribe-form button { width: 100%; background-color: var(--secondary); color: var(--bg-body); border: none; border-radius: 8px; padding: 1rem; font-family: var(--font-secondary); font-weight: 600; font-size: 1rem; cursor: pointer; transition: all 0.15s ease-in-out; margin-bottom: 1.5rem; }
+.availability-theme .subscribe-form button:hover { background-color: #d96829; transform: translateY(-2px); box-shadow: 0 4px 10px rgba(241, 119, 50, 0.3); }
+
+.availability-theme .social-icons { display: flex; gap: 1rem; }
+.availability-theme .social-icons a { width: 35px; height: 35px; display: flex; align-items: center; justify-content: center; border-radius: 4px; color: var(--primary); transition: all 0.15s ease-in-out; font-size: 1.1rem; }
+.availability-theme .social-icons a:hover { background-color: var(--primary); color: var(--bg-body); transform: translateY(-3px); }
+
+.availability-theme .footer-bottom { max-width: 1200px; margin: 3rem auto 0; padding-top: 1.5rem; border-top: 1px solid rgba(0,0,0,0.05); text-align: center; color: var(--text-body); position: relative; z-index: 10; font-size: 0.95rem; }
+.availability-theme .footer-bottom span { color: var(--secondary); font-weight: 600; }
+
+.availability-theme .scroll-top { position: absolute; right: 1.5rem; bottom: 0; width: 40px; height: 40px; background-color: var(--primary); color: var(--bg-body); display: flex; align-items: center; justify-content: center; border-radius: 6px; cursor: pointer; transition: all 0.15s ease-in-out; border: none; }
+.availability-theme .scroll-top:hover { transform: translateY(-5px); box-shadow: 0 5px 15px rgba(86, 90, 207, 0.4); }
+
+/* Media Queries */
+@media (max-width: 992px) {
+    .availability-theme .footer-content { grid-template-columns: 1fr 1fr; gap: 2rem; }
+    .availability-theme .preview-grid { grid-template-columns: 1fr; }
+    .availability-theme .tab-content { padding: 2.5rem; }
+}
+@media (max-width: 768px) {
+    .availability-theme .footer-content { grid-template-columns: 1fr; }
+    .availability-theme .schedule-row { grid-template-columns: 1fr; gap: 1rem; padding: 1.5rem 0;}
+    .availability-theme .tabs-header { flex-direction: column; }
+    .availability-theme .tab-btn.active::after { width: 4px; height: 100%; top: 0; left: 0; bottom: auto; }
+    .availability-theme .theme-background-layer { display: none; }
+    .availability-theme .ft-decor-zigzag-left, .availability-theme .ft-decor-circle, .availability-theme .ft-decor-cross, .availability-theme .ft-decor-zigzag-right { display: none; }
+}

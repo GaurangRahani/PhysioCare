@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { useLocation, useNavigate, useParams } from 'react-router-dom';
+import { useLocation, useNavigate, useParams, Link } from 'react-router-dom';
 import { useAuth } from '@clerk/clerk-react';
-import { ArrowLeft, CheckCircle2, Dumbbell, Plus, FileSignature, Loader2 } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import AddExerciseModal from '../components/AddExerciseModal';
 import EditExerciseModal from '../components/EditExerciseModal';
+import './ConsultationFlow.css';
 
 const TreatmentPlanBuilder = () => {
   const { appointmentId } = useParams();
@@ -17,18 +18,17 @@ const TreatmentPlanBuilder = () => {
 
   const { user, active_plan } = overviewData || {};
 
-  const [mode, setMode] = useState(active_plan ? 'modify' : 'new'); // 'modify' | 'new'
+  const [mode, setMode] = useState(active_plan ? 'modify' : 'new');
   
   // New Plan State
   const [newPlanTitle, setNewPlanTitle] = useState('');
-  const [newPlanStartDate, setNewPlanStartDate] = useState(new Date().toISOString().split('T')[0]);
+  const [newPlanStartDate, setNewPlanStartDate] = useState(new Date().toLocaleDateString('en-CA'));
   
-  // Set default end date to 4 weeks from today
   const defaultEnd = new Date();
   defaultEnd.setDate(defaultEnd.getDate() + 28);
   const [newPlanEndDate, setNewPlanEndDate] = useState(defaultEnd.toISOString().split('T')[0]);
   
-  const [newPlanExercises, setNewPlanExercises] = useState([]); // Exercises added locally before save
+  const [newPlanExercises, setNewPlanExercises] = useState([]);
   
   // Existing Plan State
   const [existingExercises, setExistingExercises] = useState([]);
@@ -39,6 +39,7 @@ const TreatmentPlanBuilder = () => {
   const [editingExercise, setEditingExercise] = useState(null);
 
   const [saving, setSaving] = useState(false);
+  const [activePlanIdToDiscontinue, setActivePlanIdToDiscontinue] = useState(null);
   const [error, setError] = useState('');
 
   useEffect(() => {
@@ -52,14 +53,18 @@ const TreatmentPlanBuilder = () => {
       setLoadingExisting(true);
       const token = await getToken();
       const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-      // We don't have a specific endpoint for just exercises of a plan, but we can fetch the plan details
-      // Wait, let's assume we can fetch it, or we need to add an endpoint.
-      // The API `GET /api/patients/:id/progress` or `history` might have it.
-      // For now, let's hit a mock or use `overviewData.active_plan.exercises` if the backend sends it.
-      // Wait, does the backend send active_plan exercises in overview?
-      // Yes, in `getPatientOverview` it joins treatmentPlanExercises.
-      if (active_plan.exercises) {
-        setExistingExercises(active_plan.exercises.filter(e => e.is_active));
+      
+      const res = await fetch(`${apiUrl}/api/treatment-plans/${active_plan.id}/exercises`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const data = await res.json();
+      
+      if (data.success) {
+        setExistingExercises(
+          data.data
+            .filter(e => e.is_active)
+            .map(e => ({ ...e, _localStatus: 'unchanged' }))
+        );
       }
     } catch (err) {
       console.error("Failed to load existing exercises:", err);
@@ -70,13 +75,16 @@ const TreatmentPlanBuilder = () => {
 
   if (!appointment || !overviewData || !consultation) {
     return (
-      <div className="p-8 text-center">
-        <div className="bg-red-50 text-danger p-4 rounded-xl border border-red-100 mb-4 inline-block">
-          Missing consultation context. Please start from the dashboard.
+      <div className="consultation-flow-theme" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '60vh' }}>
+        <div style={{ textAlign: 'center', padding: '2rem' }}>
+          <div className="alert-warning" style={{ justifyContent: 'center', marginBottom: '1rem', display: 'inline-flex' }}>
+            <i className="fa-solid fa-triangle-exclamation"></i> Missing consultation context. Please start from the dashboard.
+          </div>
+          <br/>
+          <Link to="/doctor-dashboard" className="btn-outline">
+            <i className="fa-solid fa-arrow-left"></i> Back to Dashboard
+          </Link>
         </div>
-        <button onClick={() => navigate('/doctor-dashboard')} className="text-primary font-semibold hover:underline flex items-center justify-center gap-2 w-full mt-4">
-          <ArrowLeft className="w-4 h-4" /> Back to Dashboard
-        </button>
       </div>
     );
   }
@@ -119,13 +127,46 @@ const TreatmentPlanBuilder = () => {
         
         const data = await res.json();
         if (!data.success) {
-          setError(data.message || "Failed to create plan.");
+          if (res.status === 409 && data.active_plan_id) {
+            setActivePlanIdToDiscontinue(data.active_plan_id);
+            setError(''); 
+          } else {
+            setError(data.message || "Failed to create plan.");
+          }
           setSaving(false);
           return;
         }
+      } else if (mode === 'modify') {
+        for (const ex of existingExercises) {
+          let res;
+          if (ex._localStatus === 'added') {
+            res = await fetch(`${apiUrl}/api/treatment-plans/${active_plan.id}/exercises`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+              body: JSON.stringify(ex)
+            });
+          } else if (ex._localStatus === 'modified') {
+            res = await fetch(`${apiUrl}/api/treatment-plans/assignments/${ex.id}/modify`, {
+              method: 'PATCH',
+              headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+              body: JSON.stringify(ex)
+            });
+          } else if (ex._localStatus === 'discontinued') {
+            res = await fetch(`${apiUrl}/api/treatment-plans/assignments/${ex.id}/discontinue`, {
+              method: 'PATCH',
+              headers: { Authorization: `Bearer ${token}` }
+            });
+          }
+          
+          if (res) {
+            const data = await res.json();
+            if (!data.success) {
+              throw new Error(`Failed to save exercise ${ex.name || ex.exercise?.name}: ${data.message}`);
+            }
+          }
+        }
       }
       
-      // Mark the appointment as completed
       const statusRes = await fetch(`${apiUrl}/api/appointments/${appointmentId}/status`, {
         method: 'PUT',
         headers: {
@@ -135,10 +176,7 @@ const TreatmentPlanBuilder = () => {
         body: JSON.stringify({ status: 'completed' })
       });
 
-      if (!statusRes.ok) {
-        console.warn("Could not mark appointment as completed.");
-      }
-
+      if (!statusRes.ok) console.warn("Could not mark appointment as completed.");
       navigate('/doctor-dashboard');
       
     } catch (err) {
@@ -149,64 +187,48 @@ const TreatmentPlanBuilder = () => {
     }
   };
 
-  const onAddExercise = async (exerciseConfig) => {
-    if (mode === 'new') {
-      // Add locally
-      setNewPlanExercises([...newPlanExercises, exerciseConfig]);
-      setIsAddModalOpen(false);
-    } else {
-      // Add immediately to active plan
-      try {
-        const token = await getToken();
-        const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-        
-        const res = await fetch(`${apiUrl}/api/treatment-plans/${active_plan.id}/exercises`, {
-          method: 'POST',
-          headers: {
-             'Content-Type': 'application/json',
-             Authorization: `Bearer ${token}`
-          },
-          body: JSON.stringify(exerciseConfig)
-        });
-        
-        const data = await res.json();
-        if (data.success) {
-          setExistingExercises([...existingExercises, data.exercise]);
-          setIsAddModalOpen(false);
-        } else {
-          alert(data.message || "Failed to add exercise.");
-        }
-      } catch (err) {
-         console.error(err);
-         alert("Network error.");
+  const handleDiscontinueAndRetry = async () => {
+    try {
+      setSaving(true);
+      const token = await getToken();
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      
+      const res = await fetch(`${apiUrl}/api/treatment-plans/${activePlanIdToDiscontinue}/discontinue`, {
+        method: 'PATCH',
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      const data = await res.json();
+      if (data.success) {
+        setActivePlanIdToDiscontinue(null);
+        await handleFinish();
+      } else {
+        setError(data.message || "Failed to discontinue old plan.");
+        setSaving(false);
       }
+    } catch (err) {
+      console.error(err);
+      setError("An error occurred while discontinuing the old plan.");
+      setSaving(false);
     }
   };
 
-  const handleDiscontinue = async (tpeId) => {
+  const onAddExercise = async (exerciseConfig) => {
     if (mode === 'new') {
-      setNewPlanExercises(newPlanExercises.filter((_, i) => i !== tpeId)); // Here tpeId is just the index for 'new'
+      setNewPlanExercises([...newPlanExercises, exerciseConfig]);
     } else {
-      if (!window.confirm("Are you sure you want to discontinue this exercise?")) return;
-      try {
-        const token = await getToken();
-        const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-        
-        const res = await fetch(`${apiUrl}/api/treatment-plans/assignments/${tpeId}`, {
-          method: 'DELETE',
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        
-        const data = await res.json();
-        if (data.success) {
-          setExistingExercises(existingExercises.filter(e => e.id !== tpeId));
-        } else {
-          alert(data.message || "Failed to remove exercise.");
-        }
-      } catch (err) {
-         console.error(err);
-         alert("Network error.");
-      }
+      setExistingExercises([...existingExercises, { ...exerciseConfig, _localStatus: 'added', id: Date.now() }]);
+    }
+    setIsAddModalOpen(false);
+  };
+
+  const handleDiscontinue = (tpeId) => {
+    if (mode === 'new') {
+      setNewPlanExercises(newPlanExercises.filter((_, i) => i !== tpeId)); 
+    } else {
+      setExistingExercises(existingExercises.map(e => 
+        e.id === tpeId ? { ...e, _localStatus: 'discontinued' } : e
+      ));
     }
   };
 
@@ -222,150 +244,200 @@ const TreatmentPlanBuilder = () => {
   const currentList = mode === 'new' ? newPlanExercises : existingExercises;
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6 animate-fade-in pb-12">
+    <div className="consultation-flow-theme">
       
-      {/* Header */}
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-bl-full -z-10" />
-        <div className="flex items-center gap-3 mb-1">
-          <FileSignature className="w-6 h-6 text-primary" />
-          <h1 className="text-2xl font-extrabold text-heading">Treatment Plan</h1>
-        </div>
-        <p className="text-gray-500 font-medium">Patient: {user?.name}</p>
+      {/* FIXED THEME BACKGROUND */}
+      <div className="theme-bg" style={{ backgroundImage: 'url(/images/banner/img1.jpg)' }}>
+        <img className="pt-img1" style={{ animation: 'left-right 8s infinite ease-in-out' }} src="/images/shap/wave-blue.png" alt=""/>
+        <img className="pt-img2" style={{ animation: 'up-down 6s infinite ease-in-out' }} src="/images/shap/circle-dots.png" alt=""/>
+        <img className="pt-img3" style={{ animation: 'rotation 20s infinite linear' }} src="/images/shap/plus-blue.png" alt=""/>
+        <div className="bg-shape-bottom"></div>
       </div>
 
-      {error && (
-        <div className="bg-red-50 text-danger p-4 rounded-xl border border-red-100 text-sm font-medium">
-          {error}
-        </div>
-      )}
+      <div className="flow-container">
+        <button className="back-nav" onClick={() => navigate(-1)}>
+          <i className="fa-solid fa-arrow-left"></i> Back
+        </button>
 
-      {/* Mode Toggle */}
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 space-y-4">
-        {active_plan && (
-          <label className="flex items-center gap-3 p-4 rounded-xl border cursor-pointer transition-colors hover:bg-gray-50 border-gray-200">
-            <input 
-              type="radio" 
-              name="mode" 
-              checked={mode === 'modify'} 
-              onChange={() => setMode('modify')}
-              className="w-5 h-5 text-primary focus:ring-primary"
-            />
-            <span className="font-bold text-dark">Modify existing plan: '{active_plan.title}'</span>
-          </label>
-        )}
-        
-        <label className="flex items-center gap-3 p-4 rounded-xl border cursor-pointer transition-colors hover:bg-gray-50 border-gray-200">
-          <input 
-            type="radio" 
-            name="mode" 
-            checked={mode === 'new'} 
-            onChange={() => setMode('new')}
-            className="w-5 h-5 text-primary focus:ring-primary"
-          />
-          <span className="font-bold text-dark">Create a new plan</span>
-        </label>
-      </div>
-
-      {/* New Plan Details */}
-      {mode === 'new' && (
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 space-y-5">
-           <div>
-              <label className="block text-sm font-bold text-heading mb-2">Plan Title <span className="text-danger">*</span></label>
-              <input 
-                type="text" 
-                value={newPlanTitle}
-                onChange={e => setNewPlanTitle(e.target.value)}
-                placeholder="e.g. Lower Back Recovery"
-                className="w-full border border-gray-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all font-medium"
-              />
-           </div>
-           <div className="grid grid-cols-2 gap-4">
-             <div>
-                <label className="block text-sm font-bold text-heading mb-2">Start Date</label>
-                <input 
-                  type="date" 
-                  value={newPlanStartDate}
-                  onChange={e => setNewPlanStartDate(e.target.value)}
-                  className="w-full border border-gray-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all font-medium text-gray-600"
-                />
-             </div>
-             <div>
-                <label className="block text-sm font-bold text-heading mb-2">End Date</label>
-                <input 
-                  type="date" 
-                  value={newPlanEndDate}
-                  onChange={e => setNewPlanEndDate(e.target.value)}
-                  className="w-full border border-gray-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all font-medium text-gray-600"
-                />
-             </div>
-           </div>
-        </div>
-      )}
-
-      {/* Exercises List */}
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-        <div className="bg-gray-50 px-6 py-4 border-b border-gray-100 flex justify-between items-center">
-          <h3 className="font-bold text-heading text-sm uppercase tracking-wide">Current Exercises</h3>
-        </div>
-        
-        <div className="p-0">
-          {loadingExisting ? (
-             <div className="p-12 text-center flex justify-center"><Loader2 className="w-6 h-6 animate-spin text-primary" /></div>
-          ) : currentList.length === 0 ? (
-             <div className="p-12 text-center">
-               <Dumbbell className="w-10 h-10 text-gray-300 mx-auto mb-3" />
-               <p className="text-gray-500 font-medium">No exercises added yet.</p>
-             </div>
-          ) : (
-            <div className="divide-y divide-gray-100">
-               {currentList.map((ex, index) => (
-                 <div key={ex.id || index} className="p-5 px-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                    <div>
-                       <h4 className="font-extrabold text-dark text-lg mb-1">{ex.exercise?.name || 'Exercise ' + (ex.exercise_id)}</h4>
-                       <div className="flex flex-wrap items-center gap-3 text-sm font-medium text-gray-500">
-                         <span className="bg-primary/10 text-primary px-2 py-0.5 rounded-md text-xs font-bold">{ex.sets} sets &times; {ex.reps} reps</span>
-                         <span>{formatFrequency(ex.frequency_type, ex.frequency_days)}</span>
-                         <span>{ex.sessions_per_day}x/day</span>
-                       </div>
-                    </div>
-                    <div className="flex items-center gap-3 shrink-0">
-                       <button onClick={() => setEditingExercise(mode === 'new' ? { ...ex, index } : ex)} className="text-sm font-bold text-gray-500 hover:text-dark transition-colors px-3 py-1.5 border border-gray-200 rounded-lg">Edit</button>
-                       <button onClick={() => handleDiscontinue(mode === 'new' ? index : ex.id)} className="text-sm font-bold text-danger hover:bg-red-50 transition-colors px-3 py-1.5 border border-red-100 rounded-lg">Discontinue</button>
-                    </div>
-                 </div>
-               ))}
+        <div className="step-container active">
+          
+          {error && (
+            <div className="alert-warning" style={{ backgroundColor: 'rgba(247, 43, 80, 0.08)', borderColor: 'rgba(247, 43, 80, 0.2)', color: 'var(--danger)', marginBottom: '1.5rem' }}>
+              <i className="fa-solid fa-triangle-exclamation" style={{ color: 'var(--danger)' }}></i> {error}
             </div>
           )}
-        </div>
-        
-        <div className="p-5 border-t border-gray-100 bg-gray-50/50">
-          <button 
-             onClick={() => setIsAddModalOpen(true)}
-             className="w-full border-2 border-dashed border-gray-300 hover:border-primary hover:text-primary hover:bg-primary/5 text-gray-500 font-bold py-3.5 rounded-xl transition-all flex items-center justify-center gap-2"
-          >
-            <Plus className="w-5 h-5" /> Add Exercise
-          </button>
-        </div>
-      </div>
 
-      <div className="flex justify-end pt-2">
-        <button
-          onClick={handleFinish}
-          disabled={saving}
-          className="bg-primary text-white font-bold px-10 py-4 rounded-xl hover:bg-dark transition-all shadow-md flex items-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
-        >
-          {saving ? <Loader2 className="w-5 h-5 animate-spin" /> : <CheckCircle2 className="w-5 h-5" />}
-          Save Plan & Finish Visit
-        </button>
+          {activePlanIdToDiscontinue && (
+            <div className="alert-warning" style={{ flexDirection: 'column', gap: '1rem' }}>
+              <div style={{ display: 'flex', gap: '0.8rem' }}>
+                <i className="fa-solid fa-triangle-exclamation"></i>
+                <div>
+                  <strong>Patient has an active plan</strong><br/>
+                  This patient already has an active treatment plan. Creating a new one will discontinue their old plan and remove any of its future scheduled exercises. Do you want to proceed?
+                </div>
+              </div>
+              <div style={{ display: 'flex', gap: '1rem', marginTop: '0.5rem' }}>
+                <button onClick={handleDiscontinueAndRetry} disabled={saving} className="btn-primary" style={{ backgroundColor: 'var(--danger)', padding: '0.5rem 1rem' }}>
+                  {saving ? 'Processing...' : 'Yes, Discontinue Old Plan'}
+                </button>
+                <button onClick={() => setActivePlanIdToDiscontinue(null)} disabled={saving} className="btn-outline">
+                  No, Cancel
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Header Card */}
+          <div className="card card-accent-top">
+              <h2 className="header-title"><i className="fa-solid fa-file-waveform"></i> Treatment Plan</h2>
+              <div className="header-meta">Patient: {user?.name}</div>
+          </div>
+
+          {/* Toggle Cards (Modify vs New) */}
+          <div className="card" style={{ paddingBottom: '1rem' }}>
+              {active_plan && (
+                <label className={`radio-card ${mode === 'modify' ? 'selected' : ''}`}>
+                    <input 
+                      type="radio" 
+                      name="planType" 
+                      value="modify" 
+                      checked={mode === 'modify'} 
+                      onChange={() => { setMode('modify'); setError(''); }} 
+                    />
+                    Modify existing plan: '{active_plan.title}'
+                </label>
+              )}
+              
+              <label className={`radio-card ${mode === 'new' ? 'selected' : ''}`}>
+                  <input 
+                    type="radio" 
+                    name="planType" 
+                    value="new" 
+                    checked={mode === 'new'} 
+                    onChange={() => { setMode('new'); setError(''); }} 
+                  />
+                  Create a new plan
+              </label>
+          </div>
+
+          {/* DYNAMIC VIEW: Modify Existing Plan or New Plan Details */}
+          <div className="card">
+              {mode === 'new' && (
+                <>
+                  <div className="form-group">
+                      <label className="form-label">Plan Title <span className="req">*</span></label>
+                      <input 
+                        type="text" 
+                        className="form-control" 
+                        placeholder="e.g. Lower Back Recovery"
+                        value={newPlanTitle}
+                        onChange={e => setNewPlanTitle(e.target.value)}
+                      />
+                  </div>
+
+                  <div className="dates-row form-group">
+                      <div>
+                          <label className="form-label">Start Date</label>
+                          <input 
+                            type="date" 
+                            className="form-control" 
+                            value={newPlanStartDate}
+                            onChange={e => setNewPlanStartDate(e.target.value)}
+                          />
+                      </div>
+                      <div>
+                          <label className="form-label">End Date</label>
+                          <input 
+                            type="date" 
+                            className="form-control" 
+                            value={newPlanEndDate}
+                            onChange={e => setNewPlanEndDate(e.target.value)}
+                          />
+                      </div>
+                  </div>
+                </>
+              )}
+
+              <div className="exercise-list-header" style={{ marginTop: mode === 'new' ? '2.5rem' : '0' }}>
+                Current Exercises
+              </div>
+              
+              {loadingExisting ? (
+                 <div className="empty-state">
+                   <Loader2 className="fa-spin" style={{ width: '2.5rem', height: '2.5rem', margin: '0 auto', opacity: 0.5, color: 'var(--primary)' }} />
+                 </div>
+              ) : currentList.length === 0 ? (
+                <div className="empty-state">
+                    <i className="fa-solid fa-dumbbell"></i>
+                    <div>No exercises added yet.</div>
+                </div>
+              ) : (
+                <div className="exercise-list">
+                  {currentList.map((ex, index) => {
+                    const isDiscontinued = ex._localStatus === 'discontinued';
+                    const isModified = ex._localStatus === 'modified';
+                    const isAdded = ex._localStatus === 'added';
+                    
+                    return (
+                      <div key={ex.id || index} className="exercise-item" style={isDiscontinued ? { opacity: 0.5, backgroundColor: 'var(--gray-50)', paddingLeft: '0.5rem', paddingRight: '0.5rem', borderRadius: '8px' } : {}}>
+                          <div style={isDiscontinued ? { textDecoration: 'line-through' } : {}}>
+                              <div className="ex-name">
+                                {ex.exercise?.name || ex.name || 'Exercise ' + (ex.exercise_id)}
+                                {isModified && <span style={{ marginLeft: '10px', fontSize: '0.7rem', backgroundColor: '#fef3c7', color: '#92400e', padding: '2px 6px', borderRadius: '4px', textDecoration: 'none', display: 'inline-block', verticalAlign: 'middle' }}>MODIFIED</span>}
+                                {isAdded && <span style={{ marginLeft: '10px', fontSize: '0.7rem', backgroundColor: '#dcfce7', color: '#166534', padding: '2px 6px', borderRadius: '4px', textDecoration: 'none', display: 'inline-block', verticalAlign: 'middle' }}>ADDED</span>}
+                              </div>
+                              <div className="ex-meta">
+                                  <span className="badge-purple">{ex.sets} sets &times; {ex.reps} reps</span>
+                                  <span>{formatFrequency(ex.frequency_type, ex.frequency_days)}</span>
+                                  <span>{ex.sessions_per_day}x/day</span>
+                              </div>
+                          </div>
+                          {!isDiscontinued ? (
+                            <div className="ex-actions">
+                                <button className="btn-text-primary" onClick={() => setEditingExercise(mode === 'new' ? { ...ex, index } : ex)}>Edit</button>
+                                <button className="btn-text-danger" onClick={() => handleDiscontinue(mode === 'new' ? index : ex.id)}>Discontinue</button>
+                            </div>
+                          ) : (
+                            <div className="ex-actions" style={{ opacity: 0.8, color: 'var(--gray-400)' }}>
+                              <i className="fa-solid fa-circle-exclamation"></i> Discontinued
+                            </div>
+                          )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+
+              <button className="add-exercise-btn" onClick={() => setIsAddModalOpen(true)}>
+                  + Add Exercise
+              </button>
+          </div>
+
+          <div className="flex-end">
+              <button className="btn-primary" onClick={handleFinish} disabled={saving}>
+                  {saving ? <Loader2 className="fa-spin" style={{ width: '1.2rem', height: '1.2rem' }} /> : <i className="fa-regular fa-circle-check"></i>} 
+                  {saving ? 'Saving...' : 'Save Plan & Finish Visit'}
+              </button>
+          </div>
+        </div>
+
       </div>
 
       {/* Modals */}
+      {/* We keep the same modal components but they need their internal CSS updated too. */}
       <AddExerciseModal 
         isOpen={isAddModalOpen} 
         onClose={() => setIsAddModalOpen(false)} 
         onAdd={onAddExercise} 
-        defaultDates={{ start: newPlanStartDate, end: newPlanEndDate }}
+        defaultDates={
+          mode === 'modify' && active_plan 
+            ? { start: newPlanStartDate, end: active_plan.end_date } 
+            : { start: newPlanStartDate, end: newPlanEndDate }
+        }
+        currentExercises={currentList}
+        onEditExisting={(ex) => {
+          setEditingExercise(mode === 'new' ? { ...ex, index: currentList.indexOf(ex) } : ex);
+        }}
       />
       
       {editingExercise && (
@@ -380,8 +452,11 @@ const TreatmentPlanBuilder = () => {
                newList[editingExercise.index] = updatedData;
                setNewPlanExercises(newList);
              } else {
-               // Update locally after successful PATCH
-               setExistingExercises(existingExercises.map(e => e.id === updatedData.id ? updatedData : e));
+               setExistingExercises(existingExercises.map(e => 
+                 e.id === updatedData.id 
+                 ? { ...e, ...updatedData, _localStatus: e._localStatus === 'added' ? 'added' : 'modified' } 
+                 : e
+               ));
              }
              setEditingExercise(null);
           }}

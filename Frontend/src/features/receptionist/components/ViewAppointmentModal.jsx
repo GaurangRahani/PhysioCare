@@ -107,6 +107,7 @@ const ViewAppointmentModal = ({ isOpen, onClose, appointment, onCancelled }) => 
               <div>
                 <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Reason / Notes</p>
                 <p className="font-medium text-dark text-sm mt-1">{appointment.visit_reason || 'No reason provided.'}</p>
+
                 {appointment.notes && (
                   <p className="text-sm text-gray-500 mt-2 p-2 bg-white rounded border border-gray-100 italic">
                     "{appointment.notes}"
@@ -131,14 +132,30 @@ const ViewAppointmentModal = ({ isOpen, onClose, appointment, onCancelled }) => 
 
         {/* Footer */}
         <div className="p-6 border-t border-gray-100 bg-gray-50 flex justify-between items-center">
-           <button
-             onClick={handleCancel}
-             disabled={loading}
-             className="flex items-center gap-2 px-4 py-2 text-danger hover:bg-red-50 rounded-lg text-sm font-bold transition-colors disabled:opacity-50"
-           >
-             {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Ban className="w-4 h-4" />}
-             Cancel Appointment
-           </button>
+           {appointment.status === 'completed' ? (
+              <span className="flex items-center gap-2 px-4 py-2 text-green-600 bg-green-50 rounded-lg text-sm font-bold">
+                <i className="fa-solid fa-check"></i> Completed
+              </span>
+           ) : appointment.status !== 'cancelled' ? (
+             <button
+               onClick={() => {
+                 const apptDateTime = new Date(`${appointment.appointment_date}T${appointment.start_time}`);
+                 const diffInMinutes = (apptDateTime - new Date()) / (1000 * 60);
+                 if (diffInMinutes <= 60) {
+                   alert("You cannot cancel an appointment within 60 minutes of the scheduled time.");
+                 } else {
+                   handleCancel();
+                 }
+               }}
+               disabled={loading}
+               className="flex items-center gap-2 px-4 py-2 text-danger hover:bg-red-50 rounded-lg text-sm font-bold transition-colors disabled:opacity-50"
+             >
+               {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Ban className="w-4 h-4" />}
+               Cancel Appointment
+             </button>
+           ) : (
+             <div></div>
+           )}
            <button
              onClick={onClose}
              className="px-6 py-2 bg-gray-200 text-gray-700 font-bold rounded-lg hover:bg-gray-300 transition-colors"

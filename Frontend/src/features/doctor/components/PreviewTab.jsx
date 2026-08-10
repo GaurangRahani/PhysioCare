@@ -5,7 +5,7 @@ import { Loader2, ChevronLeft, ChevronRight, Info } from 'lucide-react';
 const PreviewTab = ({ getToken }) => {
   const { user } = useUser();
   const [currentMonth, setCurrentMonth] = useState(new Date());
-  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
+  const [selectedDate, setSelectedDate] = useState(new Date().toLocaleDateString('en-CA'));
   const [slots, setSlots] = useState([]);
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
@@ -79,117 +79,103 @@ const PreviewTab = ({ getToken }) => {
   };
 
   return (
-    <div className="flex flex-col md:flex-row gap-8 animate-fade-in">
+    <div className="animate-fade-in">
       
-      {/* Left: Calendar */}
-      <div className="w-full md:w-1/2">
-        <h3 className="text-lg font-semibold text-heading mb-4">Select Date</h3>
+      <div className="preview-grid">
         
-        <div className="bg-white border border-gray-100 rounded-xl p-5 shadow-sm">
-          {/* Calendar Header */}
-          <div className="flex items-center justify-between mb-4">
-            <button onClick={prevMonth} className="p-1 hover:bg-gray-50 rounded transition-colors">
-              <ChevronLeft className="w-5 h-5 text-gray-500" />
-            </button>
-            <h4 className="font-medium text-dark">
-              {currentMonth.toLocaleString('default', { month: 'long', year: 'numeric' })}
-            </h4>
-            <button onClick={nextMonth} className="p-1 hover:bg-gray-50 rounded transition-colors">
-              <ChevronRight className="w-5 h-5 text-gray-500" />
-            </button>
-          </div>
-
-          {/* Days of Week */}
-          <div className="grid grid-cols-7 gap-1 mb-2">
-            {['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'].map(d => (
-              <div key={d} className="text-center text-xs font-semibold text-gray-400">
-                {d}
-              </div>
-            ))}
-          </div>
-
-          {/* Calendar Grid */}
-          <div className="grid grid-cols-7 gap-1">
-            {calendarDays.map((day, idx) => {
-              if (!day) return <div key={idx} className="h-10"></div>;
-              
-              const dateObj = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), day);
-              const yyyy = dateObj.getFullYear();
-              const mm = String(dateObj.getMonth() + 1).padStart(2, '0');
-              const dd = String(dateObj.getDate()).padStart(2, '0');
-              const dateStr = `${yyyy}-${mm}-${dd}`;
-              
-              const isSelected = selectedDate === dateStr;
-              const isPast = dateStr < new Date().toISOString().split('T')[0];
-
-              return (
-                <button
-                  key={idx}
-                  onClick={() => handleDateClick(day)}
-                  className={`h-10 rounded-lg flex items-center justify-center text-sm transition-colors ${
-                    isSelected 
-                      ? 'bg-primary text-white font-medium shadow-sm' 
-                      : isPast
-                        ? 'text-gray-300 hover:bg-gray-50'
-                        : 'text-dark hover:bg-primary/5 hover:text-primary'
-                  }`}
-                >
-                  {day}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-        
-        <div className="mt-4 flex items-start gap-2 text-xs text-body bg-gray-50 p-3 rounded-lg border border-gray-100">
-          <Info className="w-4 h-4 shrink-0 text-primary" />
-          <p>
-            This preview calls the live production endpoint. What you see here is exactly the times patients and receptionists will be offered.
-          </p>
-        </div>
-      </div>
-
-      {/* Right: Slots Display */}
-      <div className="w-full md:w-1/2">
-        <h3 className="text-lg font-semibold text-heading mb-4">Availability Preview</h3>
-        
-        <div className="bg-gray-50 border border-gray-100 rounded-xl p-5 min-h-[300px]">
-          <p className="text-sm font-medium text-gray-500 uppercase tracking-wider mb-4">
-            {formatDateDisplay(selectedDate)}
-          </p>
-
-          {loading ? (
-            <div className="flex justify-center items-center h-40">
-              <Loader2 className="w-8 h-8 text-primary animate-spin" />
+        {/* Calendar Side */}
+        <div>
+          <h3 style={{ marginBottom: '1rem' }}>Select Date</h3>
+          <div className="preview-card">
+            <div className="cal-header">
+              <button onClick={prevMonth} aria-label="Previous Month">
+                <i className="fa-solid fa-chevron-left"></i>
+              </button>
+              <span>{currentMonth.toLocaleString('default', { month: 'long', year: 'numeric' })}</span>
+              <button onClick={nextMonth} aria-label="Next Month">
+                <i className="fa-solid fa-chevron-right"></i>
+              </button>
             </div>
-          ) : errorMsg ? (
-            <div className="text-sm text-danger p-3 bg-red-50 rounded-lg">{errorMsg}</div>
-          ) : slots.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-40 text-center">
-              <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mb-3">
-                <span className="text-gray-400 font-bold">--</span>
-              </div>
-              <p className="text-dark font-medium">No Slots Available</p>
-              <p className="text-sm text-body mt-1">You are marked as off or on leave.</p>
-            </div>
-          ) : (
-            <div>
-              <p className="text-sm text-body mb-4">
-                <span className="font-semibold text-dark">{slots.length}</span> slots available today:
-              </p>
-              <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
-                {slots.map((time, idx) => (
-                  <div 
+            
+            <div className="cal-grid">
+              {['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'].map(d => (
+                <div key={d} className="cal-day-name">{d}</div>
+              ))}
+              
+              {calendarDays.map((day, idx) => {
+                if (!day) return <div key={idx} className="cal-date"></div>;
+                
+                const dateObj = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), day);
+                const yyyy = dateObj.getFullYear();
+                const mm = String(dateObj.getMonth() + 1).padStart(2, '0');
+                const dd = String(dateObj.getDate()).padStart(2, '0');
+                const dateStr = `${yyyy}-${mm}-${dd}`;
+                
+                const isSelected = selectedDate === dateStr;
+                const isPast = dateStr < new Date().toLocaleDateString('en-CA');
+
+                return (
+                  <div
                     key={idx}
-                    className="py-2 text-center bg-white border border-primary/20 text-primary font-medium text-sm rounded-lg shadow-sm"
+                    onClick={() => handleDateClick(day)}
+                    className={`cal-date ${!isPast ? 'active-month' : ''} ${isSelected ? 'selected' : ''}`}
+                    style={{ opacity: isPast ? 0.5 : 1 }}
                   >
-                    {time}
+                    {day}
                   </div>
-                ))}
-              </div>
+                );
+              })}
             </div>
-          )}
+          </div>
+          
+          <div className="alert-box" style={{ marginTop: '1.5rem', backgroundColor: 'var(--gray-100)', borderLeftColor: 'var(--gray-300)' }}>
+            <i className="fa-solid fa-circle-info" style={{ color: 'var(--gray-400)' }}></i>
+            <div style={{ fontSize: '0.85rem', color: 'var(--gray-800)' }}>
+              This preview calls the live production endpoint. What you see here is exactly the times patients and receptionists will be offered.
+            </div>
+          </div>
         </div>
+
+        {/* Slots Side */}
+        <div>
+          <h3 style={{ marginBottom: '1rem' }}>Availability Preview</h3>
+          <div className="preview-card" style={{ borderTop: '4px solid var(--primary)', minHeight: '350px' }}>
+            <div className="slots-header">{formatDateDisplay(selectedDate)}</div>
+            
+            {loading ? (
+              <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '200px' }}>
+                <Loader2 className="w-8 h-8 animate-spin" style={{ color: 'var(--primary)' }} />
+              </div>
+            ) : errorMsg ? (
+              <div style={{ color: 'var(--danger)', padding: '1rem', backgroundColor: 'rgba(247, 43, 80, 0.1)', borderRadius: '0.5rem', marginTop: '1rem' }}>
+                {errorMsg}
+              </div>
+            ) : slots.length === 0 ? (
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '200px', textAlign: 'center' }}>
+                <div style={{ width: '3rem', height: '3rem', backgroundColor: 'var(--gray-100)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '1rem' }}>
+                  <span style={{ color: 'var(--gray-400)', fontWeight: 700 }}>--</span>
+                </div>
+                <p style={{ color: 'var(--text-heading)', fontWeight: 600 }}>No Slots Available</p>
+                <p style={{ fontSize: '0.9rem', color: 'var(--text-body)', marginTop: '0.25rem' }}>You are marked as off or on leave.</p>
+              </div>
+            ) : (
+              <>
+                <h4 style={{ marginBottom: '1.5rem', fontSize: '1.1rem' }}>
+                  <span style={{ color: 'var(--primary)', fontSize: '1.5rem', fontWeight: 700 }}>{slots.length}</span> slots available today:
+                </h4>
+                
+                <div className="time-grid">
+                  {slots.map((time, idx) => (
+                    <button key={idx} className="time-pill">
+                      {time}
+                    </button>
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+
       </div>
 
     </div>

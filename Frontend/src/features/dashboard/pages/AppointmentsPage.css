@@ -1,0 +1,402 @@
+/* =========================================================
+   Appointments Page Styles
+   ========================================================= */
+
+.appointments-page-wrapper {
+    /* Color Palette */
+    --primary-color: #565acf;
+    --secondary-color: #f17732;
+    --dark-brand-color: #1f2278;
+    --body-text-color: #444444;
+    --heading-text-color: #14181d;
+    --body-bg: #ffffff;
+    
+    /* State Colors */
+    --success-color: #209f84;
+    --info-color: #2754e6;
+    --warning-color: #fe970e;
+    --danger-color: #f72b50;
+    
+    /* Grays */
+    --gray-100: #f8f9fa;
+    --gray-200: #e9ecef;
+    --gray-300: #dee2e6;
+    --gray-400: #ced4da;
+    --gray-500: #adb5bd;
+    --gray-800: #343a40;
+    --gray-900: #212529;
+    
+    /* Transitions */
+    --transition-standard: all 0.15s ease-in-out;
+    --transition-transform: transform 0.2s ease-in-out;
+    
+    /* Focus Ring */
+    --focus-ring: 0 0 0 0.25rem rgba(86, 90, 207, 0.25);
+
+    background-color: var(--body-bg);
+    min-height: 100vh;
+    
+    /* Break out of DashboardLayout constraints */
+    width: 100vw;
+    margin-left: calc(50% - 50vw);
+    margin-top: -3rem; /* Negate DashboardLayout top padding */
+    margin-bottom: -3rem; /* Negate DashboardLayout bottom padding */
+}
+
+/* =========================================================
+   Header Section (Theme Background)
+   ========================================================= */
+.appointments-page-wrapper .page-header {
+    position: relative;
+    padding: 3rem 5% 15rem 5%;
+    background-color: #fcfcfd;
+    background-image: radial-gradient(var(--gray-300) 1.5px, transparent 1.5px);
+    background-size: 25px 25px;
+    overflow: hidden;
+    text-align: center;
+}
+
+.appointments-page-wrapper .page-header-content {
+    position: relative;
+    z-index: 10;
+}
+
+.appointments-page-wrapper .page-header h1 {
+    font-size: calc(1.4375rem + 2.25vw);
+    color: var(--dark-brand-color);
+    font-weight: 600;
+}
+
+.appointments-page-wrapper .page-header p {
+    color: var(--body-text-color);
+    font-size: 1.1rem;
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+/* Floating Theme Shapes */
+.appointments-page-wrapper .shape {
+    position: absolute;
+    z-index: 1;
+}
+
+.appointments-page-wrapper .shape-circle {
+    width: 60px;
+    height: 60px;
+    border: 2px dashed var(--primary-color);
+    border-radius: 50%;
+    top: 20%;
+    left: 15%;
+    opacity: 0.4;
+    animation: up-down 4s infinite alternate ease-in-out;
+}
+
+.appointments-page-wrapper .shape-plus {
+    width: 40px;
+    height: 40px;
+    top: 30%;
+    right: 15%;
+    opacity: 0.3;
+    animation: rotate-infinite 20s infinite linear;
+}
+
+.appointments-page-wrapper .shape-plus::before, 
+.appointments-page-wrapper .shape-plus::after {
+    content: '';
+    position: absolute;
+    background-color: var(--primary-color);
+    border-radius: 4px;
+}
+.appointments-page-wrapper .shape-plus::before { top: 16px; left: 0; width: 40px; height: 8px; }
+.appointments-page-wrapper .shape-plus::after { top: 0; left: 16px; width: 8px; height: 40px; }
+
+@keyframes up-down {
+    0% { transform: translateY(0); }
+    100% { transform: translateY(-15px); }
+}
+
+@keyframes rotate-infinite {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Wave Bottom SVG */
+.appointments-page-wrapper .wave-bottom {
+    position: absolute;
+    bottom: -1px;
+    left: 0;
+    width: 100%;
+    overflow: hidden;
+    line-height: 0;
+    pointer-events: none;
+}
+
+.appointments-page-wrapper .wave-bottom svg {
+    display: block;
+    width: calc(100% + 1.3px);
+    height: 100px; 
+}
+
+.appointments-page-wrapper .wave-bottom path {
+    fill: var(--body-bg);
+}
+
+/* =========================================================
+   Main Content Container
+   ========================================================= */
+.appointments-page-wrapper .main-container {
+    width: 70%; 
+    max-width: 1400px;
+    margin: -10rem auto 4rem auto;
+    padding: 0;
+    position: relative;
+    z-index: 20;
+}
+
+/* Buttons */
+.appointments-page-wrapper .btn-primary {
+    background-color: var(--primary-color);
+    color: white;
+    padding: 1rem 2rem;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    width: 100%;
+    margin-bottom: 3rem;
+    box-shadow: 0 4px 10px rgba(86, 90, 207, 0.15);
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+}
+
+.appointments-page-wrapper .btn-primary:hover {
+    background-color: var(--secondary-color);
+    box-shadow: 0 6px 15px rgba(241, 119, 50, 0.25);
+    transform: translateY(-2px);
+}
+
+.appointments-page-wrapper .btn-pay-now {
+    background-color: var(--primary-color);
+    color: white;
+    padding: 0.5rem 1.25rem;
+    border-radius: 6px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+    box-shadow: 0 4px 10px rgba(86, 90, 207, 0.15);
+}
+
+.appointments-page-wrapper .btn-pay-now:hover {
+    background-color: var(--secondary-color);
+    box-shadow: 0 6px 15px rgba(241, 119, 50, 0.25);
+    transform: translateY(-2px);
+}
+
+.appointments-page-wrapper .btn-outline-danger {
+    background: transparent;
+    color: var(--danger-color);
+    border: 1px solid var(--danger-color);
+    padding: 0.5rem 1.25rem;
+    border-radius: 6px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+}
+
+.appointments-page-wrapper .btn-outline-danger:hover {
+    background: var(--danger-color);
+    color: white;
+}
+
+/* Section Titles */
+.appointments-page-wrapper .section-subtitle {
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--gray-500);
+    font-weight: 700;
+    margin-bottom: 1rem;
+    border-bottom: 1px solid var(--gray-200);
+    padding-bottom: 0.5rem;
+    font-family: 'Poppins', sans-serif;
+    margin-top: 1rem;
+}
+
+/* Appointment Cards */
+.appointments-page-wrapper .appt-card {
+    background: var(--body-bg);
+    border: 1px solid var(--gray-200);
+    border-left: 4px solid var(--gray-200);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: transform 0.2s ease-in-out, border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+}
+
+.appointments-page-wrapper .appt-card:hover {
+    transform: translateY(-4px);
+    border-color: var(--gray-200);
+    border-left-color: var(--warning-color);
+    box-shadow: 0 10px 25px rgba(86, 90, 207, 0.1);
+}
+
+
+
+.appointments-page-wrapper .appt-info h3 {
+    font-size: 1.15rem;
+    margin-bottom: 0.25rem;
+    color: var(--heading-text-color);
+    font-family: 'Poppins', sans-serif;
+}
+
+
+
+.appointments-page-wrapper .appt-details {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    font-size: 0.9rem;
+    color: var(--body-text-color);
+}
+
+.appointments-page-wrapper .appt-details svg {
+    color: var(--primary-color);
+    width: 14px; height: 14px;
+}
+
+.appointments-page-wrapper .appt-actions {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 1rem;
+}
+
+.appointments-page-wrapper .appt-actions-row {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+/* Badges */
+.appointments-page-wrapper .badge {
+    padding: 0.4rem 0.8rem;
+    border-radius: 50px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    white-space: nowrap;
+}
+
+.appointments-page-wrapper .badge-success {
+    background-color: rgba(32, 159, 132, 0.1);
+    color: var(--success-color);
+}
+.appointments-page-wrapper .badge-warning {
+    background-color: rgba(254, 151, 14, 0.1);
+    color: var(--warning-color);
+}
+
+.appointments-page-wrapper .badge-danger {
+    background-color: rgba(247, 43, 80, 0.1);
+    color: var(--danger-color);
+}
+
+.appointments-page-wrapper .badge-gray {
+    background-color: var(--gray-200);
+    color: var(--gray-500);
+}
+
+.appointments-page-wrapper .badge-gray.completed {
+    background-color: transparent;
+    color: var(--success-color);
+    padding: 0;
+}
+
+/* Pagination */
+.appointments-page-wrapper .pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 2rem;
+    list-style: none;
+    padding: 0;
+}
+
+.appointments-page-wrapper .page-item {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 6px;
+    border: 1px solid var(--gray-200);
+    background: var(--body-bg);
+    color: var(--body-text-color);
+    font-weight: 600;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+}
+
+.appointments-page-wrapper .page-item:hover {
+    background: var(--gray-100);
+    border-color: var(--gray-300);
+}
+
+.appointments-page-wrapper .page-item.active {
+    background: var(--primary-color);
+    color: white;
+    border-color: var(--primary-color);
+}
+
+.appointments-page-wrapper .page-item.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+.appointments-page-wrapper .page-item.nav-icon {
+    border: none;
+    background: transparent;
+    color: var(--gray-500);
+    width: auto;
+    padding: 0 0.5rem;
+}
+.appointments-page-wrapper .page-item.nav-icon:hover {
+    color: var(--primary-color);
+    background: transparent;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .appointments-page-wrapper .appt-card {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1.5rem;
+    }
+    .appointments-page-wrapper .appt-actions, 
+    .appointments-page-wrapper .appt-actions-row {
+        width: 100%;
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .appointments-page-wrapper .main-container {
+        width: 90%;
+    }
+}

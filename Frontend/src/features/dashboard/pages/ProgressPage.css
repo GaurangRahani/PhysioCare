@@ -1,0 +1,369 @@
+/* =========================================================
+   1. DESIGN SYSTEM & CSS VARIABLES (Progress Page Scope)
+   ========================================================= */
+.progress-page-wrapper {
+    /* Color Palette */
+    --primary-color: #565acf;
+    --primary-light: rgba(86, 90, 207, 0.1);
+    --secondary-color: #f17732;
+    --secondary-light: rgba(241, 119, 50, 0.1);
+    --dark-brand-color: #1f2278;
+    --body-text-color: #444444;
+    --heading-text-color: #14181d;
+    --body-bg: #ffffff;
+    
+    /* State Colors */
+    --success-color: #209f84;
+    --info-color: #2754e6;
+    --warning-color: #fe970e;
+    --danger-color: #f72b50;
+    --danger-light: rgba(247, 43, 80, 0.1);
+    
+    /* Grays */
+    --gray-100: #f8f9fa;
+    --gray-200: #e9ecef;
+    --gray-300: #dee2e6;
+    --gray-400: #ced4da;
+    --gray-500: #adb5bd;
+    --gray-800: #343a40;
+    
+    /* Transitions */
+    --transition-standard: all 0.15s ease-in-out;
+    --transition-transform: transform 0.2s ease-in-out;
+
+    background-color: #fcfcfd; 
+    background-image: radial-gradient(var(--gray-300) 1.5px, transparent 1.5px);
+    background-size: 30px 30px;
+    
+    width: 100%;
+    /* Removed 100vw hack to fix padding on left side */
+    margin-top: -3rem; /* Negate DashboardLayout top padding */
+    margin-bottom: -3rem; /* Negate DashboardLayout bottom padding */
+    min-height: 100vh;
+    padding-bottom: 4rem;
+}
+
+/* =========================================================
+   4. LAYOUT COMPONENTS
+   ========================================================= */
+.progress-page-wrapper .dashboard-layout-inner {
+    display: flex;
+    flex: 1;
+    width: 100%;
+    margin: 1.5rem auto 4rem auto;
+    padding: 0 2.5rem; /* Force exactly equal padding on left and right */
+    gap: 2.5rem;
+    align-items: flex-start;
+    position: relative;
+    max-width: 1600px; /* Standardize max width */
+    box-sizing: border-box; /* Ensure padding doesn't overflow width */
+    z-index: 10;
+    z-index: 10;
+}
+
+/* Animated Background Shapes */
+.progress-page-wrapper .shape { position: absolute; pointer-events: none; z-index: 0; }
+.progress-page-wrapper .shape-circle {
+    width: 80px; height: 80px; border: 2px dashed var(--primary-color); border-radius: 50%;
+    top: 5rem; left: -2%; opacity: 0.3; animation: progress-up-down 4s infinite alternate ease-in-out;
+}
+.progress-page-wrapper .shape-plus {
+    width: 40px; height: 40px; top: 40%; left: -3%; opacity: 0.2; animation: progress-rotate-infinite 20s infinite linear;
+}
+.progress-page-wrapper .shape-plus::before, .progress-page-wrapper .shape-plus::after { content: ''; position: absolute; background-color: var(--secondary-color); border-radius: 4px; }
+.progress-page-wrapper .shape-plus::before { top: 16px; left: 0; width: 40px; height: 8px; }
+.progress-page-wrapper .shape-plus::after { top: 0; left: 16px; width: 8px; height: 40px; }
+
+/* Left Column: Analytics & History */
+.progress-page-wrapper .main-content {
+    flex: 1; position: relative; display: flex; flex-direction: column; gap: 2.5rem; z-index: 1; min-width: 0;
+}
+
+.progress-page-wrapper .page-header h1 { 
+    font-size: calc(1.4375rem + 1vw); 
+    color: var(--dark-brand-color); 
+    margin-bottom: 0.5rem; 
+    font-family: 'Poppins', sans-serif;
+    font-weight: 600;
+}
+.progress-page-wrapper .page-header p { color: var(--gray-500); line-height: 1.6; max-width: 650px; }
+
+/* Right Column: Sticky Widget */
+.progress-page-wrapper .right-sidebar {
+    width: 100%;
+    flex-shrink: 0;
+    position: sticky;
+    top: 6.5rem; /* Offsets from sticky navbar */
+    align-self: flex-start; /* Forces sticky behavior in flexbox */
+    z-index: 10;
+}
+
+.progress-page-wrapper .widget-panel {
+    background: var(--body-bg);
+    display: flex;
+    flex-direction: column;
+    max-height: calc(100vh - 8rem);
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.06);
+    border: 1px solid var(--gray-200);
+}
+
+.progress-page-wrapper .widget-header {
+    padding: 1.5rem; background: var(--body-bg); border-bottom: 1px solid var(--gray-200);
+    display: flex; justify-content: space-between; align-items: center; z-index: 2;
+}
+
+.progress-page-wrapper .widget-header h2 {
+    font-family: 'Poppins', sans-serif;
+    font-weight: 600;
+    margin: 0;
+    font-size: 1.2rem;
+    color: var(--heading-text-color);
+}
+
+.progress-page-wrapper .widget-scroll-area {
+    flex: 1; overflow-y: auto; padding: 1.5rem; background: var(--gray-100);
+}
+
+/* =========================================================
+   5. SHARED UI ELEMENTS (Cards, Badges, Progress)
+   ========================================================= */
+.progress-page-wrapper .section-label {
+    font-size: 0.9rem; text-transform: uppercase; letter-spacing: 2px;
+    color: var(--primary-color); font-weight: 800; margin-bottom: 1rem; 
+    display: flex; align-items: center; gap: 0.6rem;
+}
+.progress-page-wrapper .section-label::before {
+    content: '';
+    display: block;
+    width: 6px;
+    height: 6px;
+    background-color: var(--secondary-color);
+    border-radius: 50%;
+    box-shadow: 0 0 8px var(--secondary-light);
+}
+.progress-page-wrapper .widget-scroll-area .section-label { margin-top: 1.5rem; }
+.progress-page-wrapper .widget-scroll-area .section-label:first-child { margin-top: 0; }
+
+.progress-page-wrapper .data-card {
+    background: var(--body-bg); border: 1px solid var(--gray-200); border-radius: 12px;
+    padding: 1.5rem; transition: var(--transition-transform); box-shadow: 0 4px 15px rgba(0,0,0,0.02);
+}
+.progress-page-wrapper .widget-scroll-area .data-card { margin-bottom: 1rem; box-shadow: none; }
+.progress-page-wrapper .data-card:hover { transform: translateY(-4px); border-color: var(--primary-color); box-shadow: 0 12px 30px rgba(86, 90, 207, 0.1); }
+
+.progress-page-wrapper .card-header-row { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1.25rem; }
+.progress-page-wrapper .card-title { font-size: 1.15rem; margin-bottom: 0.2rem; font-family: 'Poppins', sans-serif; font-weight: 700; color: var(--heading-text-color);}
+.progress-page-wrapper .card-subtitle { font-size: 0.85rem; color: var(--gray-500); }
+
+.progress-page-wrapper .badge { padding: 0.4rem 0.8rem; border-radius: 50px; font-size: 0.75rem; font-weight: 700; white-space: nowrap; }
+.progress-page-wrapper .badge-primary { background: var(--primary-light); color: var(--primary-color); }
+.progress-page-wrapper .badge-danger { background: var(--danger-light); color: var(--danger-color); }
+.progress-page-wrapper .badge-outline { border: 1px solid var(--primary-color); color: var(--primary-color); }
+.progress-page-wrapper .tag-secondary { background: var(--secondary-light); color: var(--secondary-color); padding: 0.2rem 0.6rem; border-radius: 4px; font-size: 0.75rem; font-weight: 600; display: inline-block; margin-bottom: 1rem;}
+
+.progress-page-wrapper .progress-group { margin-bottom: 1.25rem; }
+.progress-page-wrapper .progress-group:last-child { margin-bottom: 0; }
+.progress-page-wrapper .progress-label-row { display: flex; justify-content: space-between; font-size: 0.85rem; font-weight: 600; margin-bottom: 0.5rem; }
+.progress-page-wrapper .progress-track { width: 100%; height: 6px; background: var(--gray-200); border-radius: 10px; overflow: hidden; }
+.progress-page-wrapper .progress-fill { height: 100%; border-radius: 10px; transition: width 1s ease-in-out;}
+.progress-page-wrapper .fill-primary { background: var(--primary-color); }
+.progress-page-wrapper .fill-danger { background: var(--danger-color); }
+.progress-page-wrapper .fill-warning { background: var(--warning-color); }
+.progress-page-wrapper .fill-success { background: var(--success-color); }
+
+/* Chart Specifics (Left Side) */
+.progress-page-wrapper .chart-container {
+    width: 100%;
+    height: 250px;
+    margin-top: 1rem;
+    position: relative;
+}
+.progress-page-wrapper .chart-legend {
+    display: flex; justify-content: center; gap: 1.5rem; font-size: 0.75rem; font-weight: 600; color: var(--gray-500); margin-top: 1rem;
+}
+.progress-page-wrapper .chart-legend-item { display: flex; align-items: center; gap: 0.4rem; }
+.progress-page-wrapper .legend-color { width: 12px; height: 12px; border-radius: 3px; }
+
+.progress-page-wrapper .trend-box {
+    background: var(--gray-100); border-radius: 8px; padding: 1rem; margin-top: 1.5rem;
+    font-size: 0.9rem; color: var(--body-text-color); display: flex; align-items: center; gap: 0.75rem;
+}
+
+/* Calendar Specifics (Left Side) */
+.progress-page-wrapper .calendar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; font-weight: 600; color: var(--heading-text-color); font-size: 1.1rem; }
+.progress-page-wrapper .calendar-header i { color: var(--gray-500); cursor: pointer; transition: var(--transition-standard); padding: 0.5rem; border-radius: 50%; }
+.progress-page-wrapper .calendar-header i:hover { color: var(--primary-color); background: var(--primary-light); }
+        
+.progress-page-wrapper .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 0.5rem; text-align: center; }
+.progress-page-wrapper .cal-day-name { font-size: 0.8rem; font-weight: 700; color: var(--gray-500); margin-bottom: 0.5rem; }
+.progress-page-wrapper .cal-date { 
+    padding: 0.75rem 0; font-size: 0.95rem; font-weight: 600; color: var(--heading-text-color);
+    position: relative; border-radius: 8px; transition: var(--transition-standard);
+}
+
+/* Dynamic Hover State for Calendar */
+.progress-page-wrapper .cal-date:hover:not(.empty):not(.muted):not(.future) { 
+    background: var(--primary-light); 
+    color: var(--primary-color); 
+    cursor: pointer; 
+    transform: scale(1.1); 
+    box-shadow: 0 4px 10px rgba(86, 90, 207, 0.15);
+}
+.progress-page-wrapper .cal-date.active { background: var(--primary-color); color: white; }
+.progress-page-wrapper .cal-date.empty { color: transparent; pointer-events: none; }
+.progress-page-wrapper .cal-date.muted { color: var(--gray-400); }
+.progress-page-wrapper .cal-date.future { color: var(--gray-400); pointer-events: none; }
+
+.progress-page-wrapper .dot { width: 6px; height: 6px; border-radius: 50%; position: absolute; bottom: 2px; left: 50%; transform: translateX(-50%); }
+.progress-page-wrapper .cal-date.active .dot { background: white !important; } /* White dot on active blue background */
+.progress-page-wrapper .dot-complete { background: var(--success-color); }
+.progress-page-wrapper .dot-partial { background: var(--warning-color); }
+.progress-page-wrapper .dot-missed { background: var(--danger-color); }
+
+.progress-page-wrapper .calendar-legend {
+    display: flex; justify-content: center; gap: 1.5rem; margin-top: 2rem; padding: 1.25rem; background: var(--gray-100); border-radius: 8px;
+}
+.progress-page-wrapper .legend-item { display: flex; align-items: center; gap: 0.5rem; font-size: 0.8rem; font-weight: 600; color: var(--body-text-color); }
+.progress-page-wrapper .legend-dot { width: 10px; height: 10px; border-radius: 50%; }
+
+/* Reported Concerns Specifics */
+.progress-page-wrapper .concern-text { background: var(--gray-100); padding: 1.25rem; border-radius: 8px; font-size: 0.95rem; font-style: italic; color: var(--body-text-color); margin-bottom: 1rem; }
+.progress-page-wrapper .concern-text:last-child { margin-bottom: 0; }
+
+/* Past Plans Empty State with Animation */
+.progress-page-wrapper .empty-state {
+    text-align: center; padding: 1.5rem; background: var(--body-bg); border-radius: 12px; border: 2px dashed var(--gray-300);
+    color: var(--gray-500); font-weight: 500; font-size: 1rem; transition: var(--transition-standard);
+}
+.progress-page-wrapper .empty-state:hover { border-color: var(--primary-color); background: var(--primary-light); color: var(--primary-color); }
+.progress-page-wrapper .empty-state i { 
+    font-size: 2.5rem; margin-bottom: 1rem; color: var(--primary-color); display: block;
+    animation: progress-pulse-soft 3s infinite ease-in-out;
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+    .progress-page-wrapper .dashboard-layout-inner { flex-direction: column-reverse; padding: 1.5rem; }
+    .progress-page-wrapper .right-sidebar { width: 100%; position: static; }
+    .progress-page-wrapper .widget-panel { max-height: 600px; }
+}
+
+/* Accordions for Logs */
+.progress-page-wrapper .accordion-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
+}
+.progress-page-wrapper .accordion-item {
+    background: transparent;
+    border: none;
+    border-radius: 8px;
+    margin-bottom: 0.8rem;
+    overflow: hidden;
+    transition: all 0.15s ease-in-out;
+}
+.progress-page-wrapper .accordion-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(86, 90, 207, 0.15);
+}
+.progress-page-wrapper .accordion-item.open {
+    box-shadow: 0 8px 25px rgba(241, 119, 50, 0.2);
+}
+
+.progress-page-wrapper .accordion-header {
+    padding: 1.1rem 1.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    transition: background 0.15s ease-in-out;
+    width: 100%;
+    background: var(--primary-color);
+    color: #ffffff;
+    border-radius: 8px;
+    border: none;
+    font-family: 'Poppins', sans-serif;
+}
+.progress-page-wrapper .accordion-header:hover { background: #4548a8; }
+.progress-page-wrapper .accordion-item.open .accordion-header { 
+    background: var(--secondary-color); 
+    border-radius: 8px 8px 0 0;
+}
+.progress-page-wrapper .accordion-header:focus { outline: none; box-shadow: 0 0 0 3px rgba(86, 90, 207, 0.3); }
+
+.progress-page-wrapper .acc-title {
+    font-family: 'Poppins', sans-serif;
+    font-weight: 600;
+    color: #ffffff;
+    font-size: 0.95rem;
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+}
+.progress-page-wrapper .acc-title span {
+    color: rgba(255, 255, 255, 0.8);
+    font-weight: 500;
+    font-size: 0.85rem;
+}
+.progress-page-wrapper .acc-icon {
+    color: #ffffff;
+    transition: transform 0.3s ease-out;
+}
+.progress-page-wrapper .accordion-item.open .acc-icon { transform: rotate(180deg); }
+
+.progress-page-wrapper .accordion-body {
+    display: none;
+    background: var(--gray-50);
+    border: 1px solid var(--gray-200);
+    border-top: none;
+    border-radius: 0 0 8px 8px;
+    padding: 1.5rem;
+}
+.progress-page-wrapper .accordion-item.open .accordion-body {
+    display: block;
+    animation: progress-pulse-soft 0.3s ease-out;
+}
+
+/* Log Table Styles */
+.progress-page-wrapper .log-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+    font-family: 'Poppins', sans-serif;
+    background: #ffffff;
+    border-radius: 8px;
+    overflow: hidden;
+}
+.progress-page-wrapper .log-table th {
+    background: var(--gray-50);
+    color: var(--gray-600);
+    font-weight: 600;
+    text-align: left;
+    padding: 0.8rem 1.25rem;
+    border-bottom: 2px solid var(--gray-200);
+    white-space: nowrap;
+}
+.progress-page-wrapper .log-table td {
+    padding: 1rem 1.25rem;
+    color: var(--body-text-color);
+    border-bottom: 1px solid var(--gray-100);
+    vertical-align: middle;
+}
+.progress-page-wrapper .log-table tr:last-child td {
+    border-bottom: none;
+}
+.progress-page-wrapper .log-table tr:hover td {
+    background: var(--primary-light);
+}
+.progress-page-wrapper .pain-pill {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.35rem 0.85rem;
+    border-radius: 20px;
+    font-weight: 700;
+    font-size: 0.8rem;
+    background: rgba(86, 90, 207, 0.1);
+    color: var(--primary-color);
+}

@@ -1,0 +1,622 @@
+@import url('./Calendar.css');
+
+/* ==========================================================================
+   1. STRICT DESIGN SYSTEM VARIABLES
+   ========================================================================== */
+:root {
+    /* Core Palette */
+    --primary: #565acf;
+    --secondary: #f17732;
+    --dark-brand: #1f2278;
+    --text-body: #444444;
+    --text-heading: #14181d;
+    --bg-body: #ffffff;
+    
+    /* State Colors */
+    --success: #209f84;
+    --info: #2754e6;
+    --warning: #fe970e;
+    --danger: #f72b50;
+    
+    /* Grays */
+    --gray-100: #f8f9fa;
+    --gray-200: #e9ecef;
+    --gray-300: #dee2e6;
+    --gray-400: #ced4da;
+    --gray-500: #adb5bd;
+    --gray-800: #343a40;
+    --gray-900: #212529;
+
+    /* Interactive Shadows */
+    --focus-ring: 0 0 0 0.25rem rgba(86, 90, 207, 0.25);
+    --card-shadow: 0 10px 40px rgba(31, 34, 120, 0.05);
+    --hover-shadow: 0 15px 35px rgba(86, 90, 207, 0.15);
+    
+    /* Typography */
+    --font-primary: 'Montserrat', sans-serif;
+    --font-secondary: 'Poppins', sans-serif;
+}
+
+/* ==========================================================================
+   2. GLOBAL RESET & BEHAVIORS
+   ========================================================================== */
+.receptionist-theme *, .receptionist-theme *::before, .receptionist-theme *::after {
+    box-sizing: border-box;
+}
+
+.receptionist-theme {
+    font-family: var(--font-primary);
+    font-size: 1rem;
+    font-weight: 500;
+    line-height: 1.5;
+    color: var(--text-body);
+    background-color: var(--gray-100);
+    position: relative;
+    overflow-x: hidden;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.receptionist-theme h1, .receptionist-theme h2, .receptionist-theme h3, .receptionist-theme h4, .receptionist-theme h5, .receptionist-theme h6 {
+    font-family: var(--font-secondary);
+    font-weight: 600;
+    line-height: 1.2;
+    color: var(--text-heading);
+    margin-bottom: 0.5rem;
+}
+
+.receptionist-theme h1 {
+    font-size: calc(1.4375rem + 2.25vw);
+    color: var(--dark-brand);
+    font-weight: 700;
+}
+
+.receptionist-theme a { text-decoration: none; color: var(--primary); transition: all 0.15s ease-in-out; }
+.receptionist-theme a:hover { color: var(--secondary); }
+
+/* ==========================================================================
+   3. THEME ANIMATIONS & BACKGROUND GRAPHICS
+   ========================================================================== */
+@keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Theme Background Container */
+.receptionist-theme .theme-background {
+    position: absolute; top: 0; left: 0; width: 100vw; height: 600px;
+    overflow: hidden; z-index: 0; pointer-events: none;
+}
+
+/* Top Left Soft Wave Overlay */
+.receptionist-theme .bg-wave-top {
+    position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+    background: linear-gradient(135deg, rgba(86, 90, 207, 0.08) 0%, rgba(255,255,255,0) 100%);
+}
+.receptionist-theme .bg-wave-top svg { position: absolute; bottom: 0; left: 0; width: 100%; height: auto; opacity: 0.7;}
+
+/* Dot Matrix Pattern */
+.receptionist-theme .bg-dot-matrix {
+    position: absolute; top: 0; right: -5%; width: 50vw; height: 100%;
+    background-image: radial-gradient(rgba(86, 90, 207, 0.15) 2px, transparent 2px);
+    background-size: 25px 25px;
+    mask-image: linear-gradient(to left, black 0%, transparent 100%);
+    -webkit-mask-image: linear-gradient(to left, black 0%, transparent 100%);
+}
+
+/* Floating Shapes */
+.receptionist-theme .shape-zigzag {
+    position: absolute; top: 25%; left: 3%; width: 80px; height: 60px;
+    animation: left-right 7s infinite ease-in-out;
+}
+.receptionist-theme .shape-cross {
+    position: absolute; top: 60%; right: 5%; width: 40px; height: 40px;
+    animation: rotation 20s infinite linear;
+}
+.receptionist-theme .shape-circle {
+    position: absolute; top: 15%; right: 15%; width: 100px; height: 100px;
+    border-radius: 50%; border: 2px dashed rgba(86, 90, 207, 0.4);
+    animation: up-down 6s infinite ease-in-out;
+}
+
+/* ==========================================================================
+   4. NAVIGATION BAR
+   ========================================================================== */
+.receptionist-theme .navbar {
+    background-color: var(--bg-body);
+    padding: 1rem 2.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 2px 15px rgba(0,0,0,0.03);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+.receptionist-theme .navbar-brand {
+    display: flex; align-items: center; gap: 0.75rem;
+    font-family: var(--font-secondary); font-weight: 800;
+    font-size: 1.5rem; color: var(--dark-brand);
+}
+.receptionist-theme .navbar-brand i { color: var(--primary); font-size: 1.75rem; }
+.receptionist-theme .navbar-brand span { font-weight: 400; font-size: 0.9rem; color: var(--primary); letter-spacing: 1px;}
+
+.receptionist-theme .navbar-nav { display: flex; gap: 2.5rem; list-style: none; margin: 0; padding: 0;}
+.receptionist-theme .nav-link {
+    display: flex; align-items: center; gap: 0.5rem; font-family: var(--font-secondary);
+    font-weight: 600; color: var(--gray-800); font-size: 0.95rem; transition: all 0.15s ease-in-out;
+}
+.receptionist-theme .nav-link:hover, .receptionist-theme .nav-link.active { color: var(--primary); }
+
+.receptionist-theme .user-profile { display: flex; align-items: center; gap: 1rem; }
+.receptionist-theme .user-name { font-family: var(--font-secondary); font-weight: 600; color: var(--dark-brand); text-transform: lowercase; }
+.receptionist-theme .avatar {
+    width: 40px; height: 40px; background-color: var(--primary); color: var(--bg-body);
+    border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.1rem;
+    box-shadow: 0 4px 10px rgba(86, 90, 207, 0.3);
+}
+
+/* ==========================================================================
+   5. MAIN LAYOUT & OVERVIEW HEADER
+   ========================================================================== */
+.receptionist-theme main { flex: 1 0 auto; position: relative; padding: 3rem 1.5rem 6rem 1.5rem; z-index: 10; }
+.receptionist-theme .container { max-width: 1200px; margin: 0 auto; animation: fadeUp 0.5s ease-out forwards; }
+
+.receptionist-theme .overview-header {
+    display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 2.5rem;
+}
+
+.receptionist-theme .date-badge {
+    display: inline-flex; align-items: center; gap: 0.5rem; font-family: var(--font-secondary);
+    color: var(--primary); font-weight: 600; font-size: 0.9rem; margin-bottom: 0.5rem;
+    background: rgba(86, 90, 207, 0.1); padding: 0.4rem 1rem; border-radius: 20px;
+}
+
+.receptionist-theme .header-actions { display: flex; gap: 1rem; }
+
+.receptionist-theme .btn {
+    font-family: var(--font-secondary); display: inline-flex; align-items: center; justify-content: center;
+    gap: 0.5rem; padding: 0.8rem 1.75rem; border-radius: 8px; font-weight: 600; cursor: pointer; border: none;
+    transition: all 0.15s ease-in-out; font-size: 0.95rem;
+}
+.receptionist-theme .btn-primary { background-color: var(--primary); color: var(--bg-body); box-shadow: 0 4px 15px rgba(86, 90, 207, 0.2); }
+.receptionist-theme .btn-primary:hover { background-color: var(--dark-brand); transform: translateY(-3px); box-shadow: var(--hover-shadow); }
+
+.receptionist-theme .btn-outline { background-color: var(--bg-body); border: 2px solid var(--gray-200); color: var(--primary); }
+.receptionist-theme .btn-outline:hover { border-color: var(--primary); color: var(--primary); transform: translateY(-2px); box-shadow: var(--hover-shadow); }
+
+.receptionist-theme .btn:focus { outline: none; box-shadow: var(--focus-ring); }
+
+/* ==========================================================================
+   6. STATS GRID (Tab Triggers)
+   ========================================================================== */
+.receptionist-theme .summary-cards-wrapper {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+    max-width: 1200px;
+    margin: 0 auto 2rem auto;
+}
+
+.receptionist-theme .summary-card {
+    background-color: var(--body-bg);
+    border-radius: 1rem;
+    padding: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+    cursor: pointer;
+    box-shadow: var(--card-shadow);
+    border: 2px solid transparent;
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out, border-color 0.2s ease-in-out;
+}
+
+.receptionist-theme .summary-card:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--hover-shadow);
+}
+
+.receptionist-theme .summary-card.active-tab[data-target="appointmentsView"] {
+    border-color: var(--primary);
+    background-color: rgba(86, 90, 207, 0.02);
+}
+
+.receptionist-theme .summary-card.active-tab[data-target="pendingView"] {
+    border-color: var(--warning);
+    background-color: rgba(254, 151, 14, 0.02);
+}
+
+.receptionist-theme .icon-box {
+    width: 60px;
+    height: 60px;
+    border-radius: 0.75rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.receptionist-theme .icon-box.purple { background-color: rgba(86, 90, 207, 0.1); color: var(--primary); }
+.receptionist-theme .icon-box.orange { background-color: rgba(254, 151, 14, 0.1); color: var(--warning); }
+.receptionist-theme .icon-box.teal { background-color: rgba(32, 159, 132, 0.1); color: var(--success); }
+
+.receptionist-theme .summary-info p {
+    font-family: var(--font-primary);
+    font-size: 0.875rem;
+    color: var(--gray-500);
+    margin-bottom: 0.25rem;
+    font-weight: 600;
+}
+
+.receptionist-theme .summary-info h3 {
+    font-family: var(--font-secondary);
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: var(--dark-brand);
+    margin-bottom: 0;
+    line-height: 1;
+}
+
+/* ==========================================================================
+   7. LIST CONTAINER & VIEWS
+   ========================================================================== */
+.receptionist-theme .list-container {
+    background-color: var(--body-bg);
+    border-radius: 1rem;
+    padding: 2.25rem;
+    box-shadow: var(--card-shadow);
+    max-width: 1200px;
+    margin: 0 auto;
+    width: 100%;
+}
+
+.receptionist-theme .view-section {
+    display: none;
+    animation: fadeIn 0.3s ease-in-out;
+}
+
+.receptionist-theme .view-section.active {
+    display: block;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(5px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.receptionist-theme .section-title {
+    font-family: var(--font-secondary);
+    font-size: 0.875rem;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    font-weight: 700;
+    color: var(--dark-brand);
+    margin-bottom: 1.75rem;
+    border-left: 3px solid var(--primary);
+    padding-left: 0.75rem;
+}
+
+.receptionist-theme #pendingView .section-title {
+    color: var(--warning);
+    border-left-color: var(--warning);
+}
+
+/* =========================================
+   8. Horizontal Full-Width Cards Stack
+   ========================================= */
+.receptionist-theme .cards-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    margin-bottom: 2.5rem;
+    width: 100%;
+}
+
+.receptionist-theme .appointment-horizontal-card {
+    background-color: var(--gray-100); 
+    border: 1px solid var(--gray-200);
+    border-left: 4px solid var(--gray-300);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
+    
+    border-radius: 0.75rem;
+    padding: 1.25rem 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    transition: all 0.2s ease-in-out, transform 0.2s ease-in-out;
+}
+
+.receptionist-theme .card-theme-primary:hover {
+    transform: translateX(4px);
+    background-color: var(--body-bg);
+    border-left-color: var(--primary);
+    border-top-color: rgba(86, 90, 207, 0.15);
+    border-right-color: rgba(86, 90, 207, 0.15);
+    border-bottom-color: rgba(86, 90, 207, 0.15);
+    box-shadow: var(--hover-shadow);
+}
+
+.receptionist-theme .card-theme-warning:hover {
+    transform: translateX(4px);
+    background-color: var(--body-bg);
+    border-left-color: var(--warning);
+    border-top-color: rgba(254, 151, 14, 0.15);
+    border-right-color: rgba(254, 151, 14, 0.15);
+    border-bottom-color: rgba(254, 151, 14, 0.15);
+    box-shadow: 0 8px 24px rgba(254, 151, 14, 0.12);
+}
+
+.receptionist-theme .card-time-block {
+    flex: 0 0 160px;
+    display: flex;
+    flex-direction: column;
+}
+
+.receptionist-theme .appointment-time {
+    font-family: var(--font-secondary);
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--dark-brand);
+}
+
+.receptionist-theme .appointment-date {
+    font-size: 0.875rem;
+    color: var(--gray-500);
+    margin-top: 0.15rem;
+}
+
+.receptionist-theme .card-status-block {
+    flex: 0 0 140px;
+    display: flex;
+    align-items: center;
+}
+
+.receptionist-theme .status-badge {
+    font-family: var(--font-secondary);
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 0.4rem 0.85rem;
+    border-radius: 2rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.receptionist-theme .status-badge.scheduled {
+    background-color: rgba(32, 159, 132, 0.1);
+    color: var(--success);
+}
+
+.receptionist-theme .status-badge.in-progress,
+.receptionist-theme .status-badge.pending {
+    background-color: rgba(39, 84, 230, 0.1);
+    color: var(--info);
+}
+
+.receptionist-theme .status-badge.blocked {
+    background-color: rgba(247, 43, 80, 0.15);
+    color: var(--danger);
+}
+
+.receptionist-theme .card-details-block {
+    flex: 1;
+    padding-left: 1rem;
+    padding-right: 2rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.receptionist-theme .patient-heading {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: var(--text-heading);
+    margin-bottom: 0.25rem;
+    text-transform: capitalize;
+}
+
+.receptionist-theme .practitioner-info {
+    font-size: 0.875rem;
+    color: var(--gray-500);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.receptionist-theme .practitioner-info i,
+.receptionist-theme .practitioner-info svg {
+    color: var(--secondary);
+    flex-shrink: 0;
+}
+
+.receptionist-theme .card-actions-block {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.5rem;
+}
+
+/* Buttons */
+.receptionist-theme .btn-action {
+    background-color: var(--body-bg);
+    font-family: var(--font-secondary);
+    font-size: 0.875rem;
+    font-weight: 500;
+    padding: 0.5rem 1.25rem;
+    border-radius: 0.5rem;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.15s ease-in-out;
+}
+
+.receptionist-theme .btn-cancel {
+    color: var(--danger);
+    border: 1px solid var(--danger);
+}
+.receptionist-theme .btn-cancel:hover { background-color: var(--danger); color: var(--body-bg); }
+.receptionist-theme .btn-cancel:focus { outline: none; box-shadow: var(--focus-ring); }
+
+.receptionist-theme .btn-resend {
+    color: var(--warning);
+    border: 1px solid var(--warning);
+}
+.receptionist-theme .btn-resend:hover { background-color: var(--warning); color: var(--body-bg); }
+.receptionist-theme .btn-resend:focus { outline: none; box-shadow: 0 0 0 0.25rem rgba(254, 151, 14, 0.25); }
+
+/* =========================================
+   9. Perfectly Centered Balanced Pagination
+   ========================================= */
+.receptionist-theme .pagination-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-top: 1px solid var(--gray-200);
+    padding-top: 1.75rem;
+    width: 100%;
+}
+
+.receptionist-theme .pagination-left-panel {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 0.75rem;
+    font-size: 0.875rem;
+    color: var(--gray-500);
+}
+
+.receptionist-theme .rows-select-wrapper {
+    position: relative;
+    display: inline-block;
+}
+
+.receptionist-theme .rows-dropdown {
+    padding: 0.4rem 2rem 0.4rem 0.75rem;
+    border: 1px solid var(--gray-300);
+    border-radius: 0.375rem;
+    font-family: var(--font-primary);
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--text-body);
+    background-color: var(--body-bg);
+    cursor: pointer;
+    outline: none;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%23444444' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+    background-size: 10px;
+    transition: all 0.15s ease-in-out;
+}
+
+.receptionist-theme .rows-dropdown:focus {
+    border-color: var(--primary);
+    box-shadow: var(--focus-ring);
+}
+
+.receptionist-theme .pagination-center-panel {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.receptionist-theme .pagination-numbers-nav {
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+}
+
+.receptionist-theme .page-item-btn {
+    width: 38px;
+    height: 38px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 0.375rem;
+    border: 1px solid var(--gray-200);
+    background: var(--body-bg);
+    color: var(--text-body);
+    font-family: var(--font-secondary);
+    font-weight: 500;
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition: all 0.15s ease-in-out;
+    text-decoration: none;
+}
+
+.receptionist-theme .page-item-btn:hover:not(:disabled) {
+    background-color: var(--gray-100);
+    color: var(--primary);
+    border-color: var(--primary);
+}
+
+.receptionist-theme .page-item-btn.active {
+    background-color: var(--primary);
+    color: var(--body-bg);
+    border-color: var(--primary);
+    font-weight: 600;
+}
+
+.receptionist-theme .page-item-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.receptionist-theme .page-item-spacer {
+    padding: 0 0.25rem;
+    color: var(--gray-500);
+    font-size: 0.875rem;
+}
+
+.receptionist-theme .pagination-right-panel {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    font-size: 0.875rem;
+    color: var(--gray-500);
+    font-weight: 500;
+}
+
+/* =========================================
+   10. Responsive Media Queries
+   ========================================= */
+@media (max-width: 992px) {
+    .receptionist-theme .appointment-horizontal-card { padding: 1.25rem; }
+    .receptionist-theme .card-time-block { flex: 0 0 130px; }
+    .receptionist-theme .card-status-block { flex: 0 0 110px; }
+}
+
+@media (max-width: 768px) {
+    .receptionist-theme .navbar-nav { display: none; }
+    .receptionist-theme .overview-header { flex-direction: column; align-items: flex-start; gap: 1.5rem; }
+    .receptionist-theme .header-actions { flex-direction: column; width: 100%; }
+    .receptionist-theme .header-actions .btn { width: 100%; }
+    
+    .receptionist-theme .appointment-horizontal-card {
+        flex-direction: column; align-items: flex-start; gap: 1rem; padding: 1.5rem;
+    }
+    .receptionist-theme .appointment-horizontal-card:hover { transform: translateY(-2px); }
+    .receptionist-theme .card-time-block, 
+    .receptionist-theme .card-status-block, 
+    .receptionist-theme .card-details-block, 
+    .receptionist-theme .card-actions-block {
+        flex: none; width: 100%; padding: 0;
+    }
+    .receptionist-theme .card-actions-block {
+        justify-content: flex-start; border-top: 1px dashed var(--gray-200); padding-top: 1rem; margin-top: 0.25rem;
+    }
+    .receptionist-theme .pagination-bar { flex-direction: column; gap: 1.25rem; }
+    .receptionist-theme .pagination-left-panel, 
+    .receptionist-theme .pagination-center-panel, 
+    .receptionist-theme .pagination-right-panel {
+        justify-content: center; text-align: center; width: 100%;
+    }
+}
