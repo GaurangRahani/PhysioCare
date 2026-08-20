@@ -367,27 +367,34 @@ const BookAppointmentModal = ({ isOpen, onClose, onBooked, onSuccess }) => {
 
               <div style={{ marginBottom: '1.5rem' }}>
                 <label className="section-label" style={{ marginBottom: '0.75rem' }}>Available Times</label>
-                {loading ? (
-                  <div style={{ display: 'flex', justifyContent: 'center', padding: '2rem 0' }}><Loader2 className="w-6 h-6 animate-spin" style={{ color: 'var(--primary-color)' }} /></div>
-                ) : slots.length === 0 ? (
-                  <div style={{ padding: '1.5rem', background: 'var(--gray-50)', color: 'var(--gray-500)', borderRadius: '1rem', textAlign: 'center', fontSize: '0.9rem', fontWeight: 500, border: '1px solid var(--gray-200)' }}>
-                    No slots available on this date.
-                  </div>
-                ) : (
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
-                    {slots
-                      .filter(slot => {
-                        if (slot.status !== 'available') return false;
-                        if (selectedDate && isSameDay(selectedDate, new Date())) {
-                           const [hours, minutes] = slot.time.split(':').map(Number);
-                           const now = new Date();
-                           const slotTime = new Date();
-                           slotTime.setHours(hours, minutes, 0, 0);
-                           if (slotTime < now) return false;
-                        }
-                        return true;
-                      })
-                      .map(slot => {
+                {(() => {
+                  if (loading) {
+                    return <div style={{ display: 'flex', justifyContent: 'center', padding: '2rem 0' }}><Loader2 className="w-6 h-6 animate-spin" style={{ color: 'var(--primary-color)' }} /></div>;
+                  }
+                  
+                  const availableSlots = slots.filter(slot => {
+                    if (slot.status !== 'available') return false;
+                    if (selectedDate && isSameDay(selectedDate, new Date())) {
+                       const [hours, minutes] = slot.time.split(':').map(Number);
+                       const now = new Date();
+                       const slotTime = new Date();
+                       slotTime.setHours(hours, minutes, 0, 0);
+                       if (slotTime < now) return false;
+                    }
+                    return true;
+                  });
+
+                  if (availableSlots.length === 0) {
+                    return (
+                      <div style={{ padding: '1.5rem', background: 'var(--gray-50)', color: 'var(--gray-500)', borderRadius: '1rem', textAlign: 'center', fontSize: '0.9rem', fontWeight: 500, border: '1px solid var(--gray-200)' }}>
+                        No available slots remaining for this date.
+                      </div>
+                    );
+                  }
+
+                  return (
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+                      {availableSlots.map(slot => {
                         const isSelected = selectedTime === slot.time;
                         return (
                           <button
@@ -405,8 +412,9 @@ const BookAppointmentModal = ({ isOpen, onClose, onBooked, onSuccess }) => {
                           </button>
                         );
                       })}
-                  </div>
-                )}
+                    </div>
+                  );
+                })()}
               </div>
 
               <div style={{ marginBottom: '2rem' }}>
