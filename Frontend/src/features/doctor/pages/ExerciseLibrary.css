@@ -385,6 +385,7 @@
   animation: at-slideUp 0.3s ease-out forwards;
   max-height: 90vh; display: flex; flex-direction: column; width: 95%; max-width: 700px;
 }
+.library-theme .modal-content * { box-sizing: border-box; }
 @keyframes at-slideUp { from { transform: translateY(20px); } to { transform: translateY(0); } }
 
 .library-theme .modal-scrollable-body { padding: 2rem; overflow-y: auto; flex-grow: 1; }
@@ -443,6 +444,7 @@
 .library-theme .form-control {
   width: 100%; padding: 0.8rem 1rem; border: 1px solid var(--gray-border); border-radius: 8px;
   font-family: var(--font-primary); font-size: 0.95rem; color: var(--dark-brand); font-weight: 500; transition: all 0.2s ease-in-out; background-color: var(--bg-color);
+  box-sizing: border-box;
 }
 .library-theme .form-control:focus { border-color: var(--primary); box-shadow: var(--focus-ring); outline: none; background-color: var(--bg-color); }
 .library-theme textarea.form-control { resize: vertical; min-height: 100px; }

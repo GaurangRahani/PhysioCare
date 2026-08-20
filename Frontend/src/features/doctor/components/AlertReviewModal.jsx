@@ -106,22 +106,22 @@ const AlertReviewModal = ({ isOpen, onClose, alert, onResolved }) => {
         </div>
 
         {/* Footer Actions */}
-        <div className="px-6 py-4 bg-gray-50 border-t flex items-center gap-3 w-full">
+        <div className="px-6 py-4 bg-gray-50 border-t flex flex-col sm:flex-row items-stretch gap-3 w-full">
           {isRed ? (
             <>
               <button
                 disabled={isSubmitting}
                 onClick={() => handleResolve('acknowledge')}
-                className="flex-1 flex items-center justify-center gap-1.5 px-2 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 font-medium transition shadow-sm text-xs sm:text-sm"
+                className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 bg-red-600 text-white rounded-lg hover:bg-red-700 font-medium transition shadow-sm text-sm"
               >
-                <CheckCircle2 className="w-4 h-4 shrink-0" /> <span className="truncate">Acknowledge & Clear</span>
+                <CheckCircle2 className="w-4 h-4 shrink-0" /> <span className="whitespace-normal text-center leading-tight">Acknowledge & Clear</span>
               </button>
               <button
                 disabled={isSubmitting}
                 onClick={() => handleResolve('urgent_booking')}
-                className="flex-1 flex items-center justify-center gap-1.5 px-2 py-2 border border-red-200 bg-white text-red-600 rounded-lg hover:bg-red-50 font-medium transition shadow-sm text-xs sm:text-sm"
+                className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 border border-red-200 bg-white text-red-600 rounded-lg hover:bg-red-50 font-medium transition shadow-sm text-sm"
               >
-                <Calendar className="w-4 h-4 shrink-0" /> <span className="truncate">Request Urgent Booking</span>
+                <Calendar className="w-4 h-4 shrink-0" /> <span className="whitespace-normal text-center leading-tight">Request Urgent Booking</span>
               </button>
             </>
           ) : (
@@ -129,9 +129,9 @@ const AlertReviewModal = ({ isOpen, onClose, alert, onResolved }) => {
               <button
                 disabled={isSubmitting}
                 onClick={() => handleResolve('acknowledge')}
-                className="flex-1 flex items-center justify-center gap-1.5 px-2 py-2 bg-primary text-white rounded-lg hover:bg-indigo-700 font-medium transition shadow-sm text-xs sm:text-sm"
+                className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 bg-primary text-white rounded-lg hover:bg-indigo-700 font-medium transition shadow-sm text-sm"
               >
-                <CheckCircle2 className="w-4 h-4 shrink-0" /> <span className="truncate">Acknowledge & Clear</span>
+                <CheckCircle2 className="w-4 h-4 shrink-0" /> <span className="whitespace-normal text-center leading-tight">Acknowledge & Clear</span>
               </button>
             </>
           )}

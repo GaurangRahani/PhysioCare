@@ -37,8 +37,16 @@ const ProgressPage = () => {
       const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/patients/${patientId}/progress`, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      if (!res.ok) throw new Error('Failed to fetch progress');
+      
       const json = await res.json();
+      if (!res.ok) {
+        if (res.status === 404) {
+          setData(null);
+          return;
+        }
+        throw new Error(json.message || 'Failed to fetch progress');
+      }
+      
       setData(json);
 
       // Auto-select today if there's any data

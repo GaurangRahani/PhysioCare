@@ -48,7 +48,7 @@
    ========================================================= */
 .appointments-page-wrapper .page-header {
     position: relative;
-    padding: 3rem 5% 15rem 5%;
+    padding: 3rem 5% 10rem 5%;
     background-color: #fcfcfd;
     background-image: radial-gradient(var(--gray-300) 1.5px, transparent 1.5px);
     background-size: 25px 25px;
@@ -145,9 +145,9 @@
    Main Content Container
    ========================================================= */
 .appointments-page-wrapper .main-container {
-    width: 70%; 
-    max-width: 1400px;
-    margin: -10rem auto 4rem auto;
+    width: 90%; 
+    max-width: 950px;
+    margin: -7rem auto 2rem auto;
     padding: 0;
     position: relative;
     z-index: 20;
@@ -166,7 +166,7 @@
     justify-content: center;
     gap: 0.5rem;
     width: 100%;
-    margin-bottom: 3rem;
+    margin-bottom: 1.5rem;
     box-shadow: 0 4px 10px rgba(86, 90, 207, 0.15);
     border: none;
     cursor: pointer;
@@ -229,33 +229,66 @@
     margin-top: 1rem;
 }
 
-/* Appointment Cards */
+/* Appointment Cards (Patient Card Style) */
 .appointments-page-wrapper .appt-card {
     background: var(--body-bg);
     border: 1px solid var(--gray-200);
-    border-left: 4px solid var(--gray-200);
-    border-radius: 12px;
-    padding: 1.5rem;
-    margin-bottom: 1rem;
+    border-radius: 8px;
+    padding: 1.15rem 1.5rem;
+    margin-bottom: 0.5rem;
     display: flex;
-    justify-content: space-between;
+    justify-content: flex-start;
     align-items: center;
-    transition: transform 0.2s ease-in-out, border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+    gap: 1.5rem;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+    position: relative;
+    overflow: hidden;
+}
+
+.appointments-page-wrapper .upcoming-card {
+    border-left: 4px solid var(--primary-color);
+    background: linear-gradient(90deg, rgba(86, 90, 207, 0.05) 0%, rgba(255,255,255,0) 250px), var(--body-bg);
+}
+
+.appointments-page-wrapper .past-card {
+    border-left: 4px solid var(--gray-300);
+    opacity: 0.8;
 }
 
 .appointments-page-wrapper .appt-card:hover {
-    transform: translateY(-4px);
-    border-color: var(--gray-200);
-    border-left-color: var(--warning-color);
-    box-shadow: 0 10px 25px rgba(86, 90, 207, 0.1);
+    box-shadow: 0 4px 15px rgba(86, 90, 207, 0.08);
+    transform: translateY(-2px);
 }
 
+.appointments-page-wrapper .appt-avatar {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background-color: var(--primary-color);
+    color: white;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-weight: 700;
+    font-size: 1.15rem;
+    font-family: 'Poppins', sans-serif;
+    flex-shrink: 0;
+}
 
+.appointments-page-wrapper .past-card .appt-avatar {
+    background-color: var(--gray-400);
+}
+
+.appointments-page-wrapper .appt-info {
+    flex: 1;
+}
 
 .appointments-page-wrapper .appt-info h3 {
-    font-size: 1.15rem;
-    margin-bottom: 0.25rem;
+    font-size: 1.05rem;
+    margin-top: 0;
+    margin-bottom: 0.1rem;
+    font-weight: 600;
     color: var(--heading-text-color);
     font-family: 'Poppins', sans-serif;
 }
@@ -265,27 +298,33 @@
 .appointments-page-wrapper .appt-details {
     display: flex;
     align-items: center;
-    gap: 1rem;
-    font-size: 0.9rem;
+    gap: 1.5rem;
+    font-size: 0.85rem;
     color: var(--body-text-color);
 }
 
-.appointments-page-wrapper .appt-details svg {
-    color: var(--primary-color);
-    width: 14px; height: 14px;
+.appointments-page-wrapper .appt-details span {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
 }
 
-.appointments-page-wrapper .appt-actions {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-    gap: 1rem;
+.appointments-page-wrapper .appt-details svg,
+.appointments-page-wrapper .appt-details i {
+    color: var(--primary-color);
+    font-size: 0.9rem;
+}
+
+.appointments-page-wrapper .past-card .appt-details svg,
+.appointments-page-wrapper .past-card .appt-details i {
+    color: var(--gray-500);
 }
 
 .appointments-page-wrapper .appt-actions-row {
     display: flex;
     align-items: center;
     gap: 1rem;
+    margin-left: auto;
 }
 
 /* Badges */

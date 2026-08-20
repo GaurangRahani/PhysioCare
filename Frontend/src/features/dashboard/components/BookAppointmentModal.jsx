@@ -376,7 +376,17 @@ const BookAppointmentModal = ({ isOpen, onClose, onBooked, onSuccess }) => {
                 ) : (
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
                     {slots
-                      .filter(slot => slot.status === 'available')
+                      .filter(slot => {
+                        if (slot.status !== 'available') return false;
+                        if (selectedDate && isSameDay(selectedDate, new Date())) {
+                           const [hours, minutes] = slot.time.split(':').map(Number);
+                           const now = new Date();
+                           const slotTime = new Date();
+                           slotTime.setHours(hours, minutes, 0, 0);
+                           if (slotTime < now) return false;
+                        }
+                        return true;
+                      })
                       .map(slot => {
                         const isSelected = selectedTime === slot.time;
                         return (

@@ -101,7 +101,7 @@
 /* Main Profile Container */
 .profile-page-wrapper .main-container {
     width: 100%;
-    max-width: 1400px;
+    max-width: 950px;
     margin: 0 auto;
     padding: 2rem 1.5rem;
     position: relative;
@@ -110,6 +110,18 @@
     flex-direction: column;
     gap: 1.5rem;
 }
+
+/* Interactive Invoice Cards */
+.profile-page-wrapper .invoice-card {
+    transition: all 0.25s ease;
+    cursor: default;
+}
+.profile-page-wrapper .invoice-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 10px 25px rgba(86, 90, 207, 0.1);
+    border-color: rgba(86, 90, 207, 0.3) !important;
+}
+
 
 /* Page Header Row */
 .profile-page-wrapper .page-header {
@@ -156,21 +168,20 @@
    PROFILE CARDS UI
    ========================================================= */
 .profile-page-wrapper .profile-card {
-    background: #ffffff;
-    border: 1px solid rgba(86, 90, 207, 0.15);
-    border-left: 4px solid var(--primary-color);
-    border-radius: 12px;
-    padding: 2rem;
+    background: linear-gradient(135deg, rgba(86, 90, 207, 0.02) 0%, rgba(241, 119, 50, 0.01) 100%), var(--body-bg);
+    border: 1px solid var(--gray-200);
+    border-top: 4px solid var(--primary-color);
+    border-radius: 16px;
+    padding: 2.5rem;
     position: relative;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    box-shadow: 0 4px 15px rgba(31, 34, 120, 0.04);
+    box-shadow: 0 10px 30px rgba(31, 34, 120, 0.04);
 }
 
 .profile-page-wrapper .profile-card:hover {
     transform: translateY(-4px);
-    border-color: rgba(86, 90, 207, 0.3);
-    border-left-width: 6px;
-    box-shadow: 0 12px 25px rgba(86, 90, 207, 0.15);
+    border-color: rgba(86, 90, 207, 0.2);
+    box-shadow: 0 15px 35px rgba(86, 90, 207, 0.1);
 }
 
 .profile-page-wrapper .card-header-row {
@@ -205,9 +216,9 @@
 
 /* Personal Info Rows */
 .profile-page-wrapper .info-grid {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
 }
 
 .profile-page-wrapper .info-row {
@@ -378,4 +389,58 @@
     .profile-page-wrapper .bill-row { flex-direction: column; align-items: flex-start; gap: 1rem; }
     .profile-page-wrapper .bill-meta { align-items: flex-start; width: 100%; }
     .profile-page-wrapper .bill-price-row { width: 100%; justify-content: space-between; }
+}
+
+/* =========================================================
+   PAGINATION
+   ========================================================= */
+.profile-page-wrapper .pagination {
+    display: flex;
+    list-style: none;
+    gap: 0.5rem;
+    align-items: center;
+    padding: 0;
+}
+
+.profile-page-wrapper .page-item {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 6px;
+    border: 1px solid var(--gray-200);
+    background: #ffffff;
+    color: var(--heading-text-color);
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.profile-page-wrapper .page-item:hover:not(.disabled) {
+    border-color: var(--primary-color);
+    color: var(--primary-color);
+}
+
+.profile-page-wrapper .page-item.active {
+    background-color: var(--primary-color);
+    color: white;
+    border-color: var(--primary-color);
+}
+
+.profile-page-wrapper .page-item.nav-icon {
+    border: none;
+    background: transparent;
+    color: var(--gray-400);
+    font-size: 0.9rem;
+}
+
+.profile-page-wrapper .page-item.nav-icon:hover:not(.disabled) {
+    color: var(--primary-color);
+}
+
+.profile-page-wrapper .page-item.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
 }

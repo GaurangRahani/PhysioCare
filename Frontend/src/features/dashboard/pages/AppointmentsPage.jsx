@@ -208,14 +208,17 @@ const AppointmentsPage = () => {
                }
 
                return (
-                 <div key={appt.id} className="appt-card">
+                 <div key={appt.id} className="appt-card upcoming-card">
+                     <div className="appt-avatar">
+                         {format(apptDate, 'dd')}
+                     </div>
                      <div className="appt-info">
-                         <h3>{format(apptDate, 'EEEE, d MMMM yyyy')}</h3>
+                         <h3>{format(apptDate, 'EEEE, MMM yyyy')}</h3>
                          <div className="appt-details">
                              <span><i className="fa-regular fa-clock"></i> {appt.start_time.substring(0,5)}</span>
                              <span><i className="fa-regular fa-user-doctor"></i> Dr. {appt.doctor_name || 'Assigned'}</span>
                          </div>
-                         {appt.visit_reason && <p style={{ fontSize: '0.8rem', color: 'var(--gray-500)', marginTop: '0.5rem', fontStyle: 'italic' }}>"{appt.visit_reason}"</p>}
+                         {appt.visit_reason && <p style={{ fontSize: '0.8rem', color: 'var(--gray-500)', marginTop: '0.2rem', fontStyle: 'italic', marginBottom: 0 }}>"{appt.visit_reason}"</p>}
                      </div>
                      <div className="appt-actions-row">
                          {appt.status === 'scheduled' ? (
@@ -254,23 +257,27 @@ const AppointmentsPage = () => {
           )}
 
           {/* Past Appointments Section */}
-          <h2 className="section-subtitle" style={{ marginTop: '3rem' }}>Past Appointments</h2>
+          <h2 className="section-subtitle" style={{ marginTop: '1.5rem' }}>Past Appointments</h2>
           
           {pastAppointments.length === 0 ? (
              <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--gray-500)' }}>No past appointments found.</div>
           ) : (
              currentPastAppointments.map(appt => {
                  const isCancelled = appt.status === 'cancelled' || appt.status === 'no_show';
+                 const apptDate = new Date(appt.appointment_date);
                  return (
                    <div key={appt.id} className="appt-card past-card">
-                       <div className={`appt-info ${isCancelled ? 'cancelled' : ''}`}>
-                           <h3>{format(new Date(appt.appointment_date), 'MMM do, yyyy')}</h3>
+                       <div className="appt-avatar">
+                           {format(apptDate, 'dd')}
+                       </div>
+                       <div className="appt-info">
+                           <h3>{format(apptDate, 'MMM do, yyyy')}</h3>
                            <div className="appt-details">
-                               <span>{appt.start_time.substring(0,5)}</span>
-                               <span>Dr. {appt.doctor_name || 'Assigned'}</span>
+                               <span><i className="fa-regular fa-clock"></i> {appt.start_time.substring(0,5)}</span>
+                               <span><i className="fa-regular fa-user-doctor"></i> Dr. {appt.doctor_name || 'Assigned'}</span>
                            </div>
                        </div>
-                       <div className="appt-actions">
+                       <div className="appt-actions-row">
                            {appt.status === 'completed' && (
                                <span className="badge badge-gray completed">
                                    <i className="fa-solid fa-check"></i> Completed

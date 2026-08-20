@@ -26,9 +26,8 @@ const getRazorpayInstance = () => {
 // ─── HELPER: Generate next invoice number ─────────────────────────────────────
 const generateInvoiceNumber = async () => {
   const year = new Date().getFullYear();
-  const count = await db.$count(invoices); // Total invoice count
-  const seq = String(count + 1).padStart(5, "0");
-  return `INV-${year}-${seq}`;
+  const hex = crypto.randomBytes(4).toString("hex").toUpperCase();
+  return `INV-${year}-${hex}`;
 };
 
 // ─── 1. POST /api/appointments/book-at-desk ───────────────────────────────────

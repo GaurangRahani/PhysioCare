@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useUser, useAuth } from '@clerk/clerk-react';
 import { Activity, UserRound, Phone, MapPin, Calendar, HeartPulse, Loader2 } from 'lucide-react';
+import './PatientOnboarding.css';
 
 const PatientOnboarding = ({ onComplete }) => {
   const { user } = useUser();
@@ -63,43 +64,45 @@ const PatientOnboarding = ({ onComplete }) => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4 py-12">
-      <div className="max-w-2xl w-full">
+    <div className="patient-onboarding-wrapper">
+      {/* Floating Background Shapes */}
+      <div className="shape shape-circle"></div>
+      <div className="shape shape-plus"></div>
+
+      <div className="main-container">
         {/* Header */}
-        <div className="flex flex-col items-center text-center mb-8">
-          <div className="bg-primary p-3 rounded-2xl shadow-sm mb-6">
-            <Activity className="h-10 w-10 text-light" />
+        <div className="onboarding-header">
+          <div className="header-icon">
+            <Activity className="h-10 w-10" />
           </div>
-          <h1 className="text-4xl font-bold text-heading tracking-tight mb-3">
+          <h1>
             Welcome to PhysioCare, {user?.firstName || 'Patient'}!
           </h1>
-          <p className="text-body text-lg max-w-lg">
+          <p>
             Let's get your account set up. Please provide some basic information to complete your patient profile.
           </p>
         </div>
 
         {/* Form Card */}
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-          <div className="bg-primary/5 p-6 border-b border-primary/10">
-            <div className="flex items-center gap-3">
-              <UserRound className="h-6 w-6 text-primary" />
-              <h2 className="text-xl font-bold text-heading">Personal Details</h2>
-            </div>
+        <div className="onboarding-card">
+          <div className="card-header">
+            <UserRound className="h-6 w-6" />
+            <h2>Personal Details</h2>
           </div>
           
-          <form onSubmit={handleSubmit} className="p-6 md:p-8 space-y-6">
+          <form onSubmit={handleSubmit} className="onboarding-form">
             
             {error && (
-              <div className="p-4 bg-red-50 text-danger text-sm font-medium rounded-[8px] border border-red-100">
+              <div className="error-message">
                 {error}
               </div>
             )}
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="form-grid">
               {/* DOB */}
-              <div>
-                <label className="block text-sm font-semibold text-heading mb-2 flex items-center gap-2">
-                  <Calendar className="h-4 w-4 text-gray-400" />
+              <div className="form-group">
+                <label className="form-label">
+                  <Calendar className="h-4 w-4" />
                   Date of Birth *
                 </label>
                 <input
@@ -107,22 +110,22 @@ const PatientOnboarding = ({ onComplete }) => {
                   name="date_of_birth"
                   value={formData.date_of_birth}
                   onChange={handleChange}
-                  className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-[8px] focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-dark"
+                  className="form-input"
                   required
                 />
               </div>
 
               {/* Gender */}
-              <div>
-                <label className="block text-sm font-semibold text-heading mb-2 flex items-center gap-2">
-                  <UserRound className="h-4 w-4 text-gray-400" />
+              <div className="form-group">
+                <label className="form-label">
+                  <UserRound className="h-4 w-4" />
                   Gender *
                 </label>
                 <select
                   name="gender"
                   value={formData.gender}
                   onChange={handleChange}
-                  className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-[8px] focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-dark"
+                  className="form-select"
                 >
                   <option value="male">Male</option>
                   <option value="female">Female</option>
@@ -131,9 +134,9 @@ const PatientOnboarding = ({ onComplete }) => {
               </div>
 
               {/* Phone */}
-              <div className="md:col-span-2">
-                <label className="block text-sm font-semibold text-heading mb-2 flex items-center gap-2">
-                  <Phone className="h-4 w-4 text-gray-400" />
+              <div className="form-group full-width">
+                <label className="form-label">
+                  <Phone className="h-4 w-4" />
                   Phone Number
                 </label>
                 <input
@@ -142,14 +145,14 @@ const PatientOnboarding = ({ onComplete }) => {
                   value={formData.phone}
                   onChange={handleChange}
                   placeholder="+91 98765 43210"
-                  className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-[8px] focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-dark"
+                  className="form-input"
                 />
               </div>
 
               {/* Address */}
-              <div className="md:col-span-2">
-                <label className="block text-sm font-semibold text-heading mb-2 flex items-center gap-2">
-                  <MapPin className="h-4 w-4 text-gray-400" />
+              <div className="form-group full-width">
+                <label className="form-label">
+                  <MapPin className="h-4 w-4" />
                   Full Address
                 </label>
                 <textarea
@@ -158,22 +161,22 @@ const PatientOnboarding = ({ onComplete }) => {
                   onChange={handleChange}
                   placeholder="123 Health Ave, Mumbai, India"
                   rows={2}
-                  className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-[8px] focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-dark resize-none"
+                  className="form-textarea"
                 />
               </div>
             </div>
 
-            <hr className="border-gray-100 my-6" />
+            <hr className="section-divider" />
 
-            <div className="space-y-4">
-              <h3 className="text-lg font-bold text-heading flex items-center gap-2">
-                <HeartPulse className="h-5 w-5 text-danger" />
+            <div>
+              <h3 className="section-title">
+                <HeartPulse className="h-5 w-5" />
                 Emergency Contact
               </h3>
               
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-sm font-medium text-body mb-2">
+              <div className="form-grid">
+                <div className="form-group">
+                  <label className="form-label">
                     Contact Name
                   </label>
                   <input
@@ -182,11 +185,11 @@ const PatientOnboarding = ({ onComplete }) => {
                     value={formData.emergency_contact_name}
                     onChange={handleChange}
                     placeholder="John Doe"
-                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-[8px] focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-dark"
+                    className="form-input"
                   />
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-body mb-2">
+                <div className="form-group">
+                  <label className="form-label">
                     Contact Phone
                   </label>
                   <input
@@ -195,18 +198,18 @@ const PatientOnboarding = ({ onComplete }) => {
                     value={formData.emergency_contact_phone}
                     onChange={handleChange}
                     placeholder="+91 98765 43210"
-                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-[8px] focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-dark"
+                    className="form-input"
                   />
                 </div>
               </div>
             </div>
 
             {/* Submit Button */}
-            <div className="pt-4">
+            <div>
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full bg-primary hover:bg-dark text-light font-bold py-3.5 px-4 rounded-[8px] transition-colors duration-300 shadow-sm flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
+                className="btn-submit"
               >
                 {loading ? (
                   <>

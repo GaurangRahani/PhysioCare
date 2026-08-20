@@ -1,0 +1,274 @@
+/* =========================================================
+   CSS VARIABLES & ANIMATIONS
+   ========================================================= */
+@keyframes onboarding-up-down {
+    0% { transform: translateY(0); }
+    100% { transform: translateY(-20px); }
+}
+
+@keyframes onboarding-rotate-infinite {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* =========================================================
+   ONBOARDING WRAPPER & GLOBAL STYLES
+   ========================================================= */
+.patient-onboarding-wrapper {
+    font-family: var(--font-primary);
+    font-size: 1rem;
+    font-weight: 500;
+    line-height: 1.5;
+    color: var(--body-text-color);
+    background-color: #fcfcfd; 
+    background-image: radial-gradient(var(--gray-300) 1.5px, transparent 1.5px);
+    background-size: 30px 30px;
+    position: relative;
+    overflow-x: hidden;
+    min-height: calc(100vh - 73px);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    margin: -3rem -1.5rem; /* Break out of DashboardLayout padding */
+    padding: 3rem 1.5rem;
+}
+
+.patient-onboarding-wrapper h1, 
+.patient-onboarding-wrapper h2, 
+.patient-onboarding-wrapper h3 {
+    font-family: var(--font-secondary);
+    font-weight: 600;
+    line-height: 1.2;
+    color: var(--heading-text-color);
+}
+
+/* Animated Background Shapes */
+.patient-onboarding-wrapper .shape { position: absolute; pointer-events: none; z-index: 0; }
+.patient-onboarding-wrapper .shape-circle {
+    width: 80px; height: 80px; border: 2px dashed var(--primary-color); border-radius: 50%;
+    top: 10%; left: 10%; opacity: 0.3; animation: onboarding-up-down 4s infinite alternate ease-in-out;
+}
+.patient-onboarding-wrapper .shape-plus {
+    width: 40px; height: 40px; top: 15%; right: 10%; opacity: 0.2; animation: onboarding-rotate-infinite 20s infinite linear;
+}
+.patient-onboarding-wrapper .shape-plus::before, .patient-onboarding-wrapper .shape-plus::after { content: ''; position: absolute; background-color: var(--secondary-color); border-radius: 4px; }
+.patient-onboarding-wrapper .shape-plus::before { top: 16px; left: 0; width: 40px; height: 8px; }
+.patient-onboarding-wrapper .shape-plus::after { top: 0; left: 16px; width: 8px; height: 40px; }
+
+/* Main Container */
+.patient-onboarding-wrapper .main-container {
+    width: 100%;
+    max-width: 800px;
+    position: relative;
+    z-index: 10;
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+
+/* Header */
+.patient-onboarding-wrapper .onboarding-header {
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+}
+
+.patient-onboarding-wrapper .header-icon {
+    background: var(--primary-color);
+    color: white;
+    width: 60px;
+    height: 60px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 16px;
+    box-shadow: 0 4px 15px rgba(86, 90, 207, 0.3);
+}
+
+.patient-onboarding-wrapper .onboarding-header h1 {
+    font-size: calc(1.5rem + 1vw);
+    color: var(--dark-brand-color);
+}
+
+.patient-onboarding-wrapper .onboarding-header p {
+    color: var(--gray-500);
+    font-size: 1.05rem;
+    max-width: 600px;
+}
+
+/* Form Card */
+.patient-onboarding-wrapper .onboarding-card {
+    background: linear-gradient(135deg, rgba(86, 90, 207, 0.02) 0%, rgba(241, 119, 50, 0.01) 100%), var(--body-bg);
+    border: 1px solid var(--gray-200);
+    border-top: 4px solid var(--primary-color);
+    border-radius: 16px;
+    position: relative;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 10px 30px rgba(31, 34, 120, 0.04);
+    overflow: hidden;
+}
+
+.patient-onboarding-wrapper .card-header {
+    background: var(--primary-light);
+    border-bottom: 1px solid rgba(86, 90, 207, 0.1);
+    padding: 1.5rem 2rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.patient-onboarding-wrapper .card-header h2 {
+    font-size: 1.25rem;
+    color: var(--dark-brand-color);
+    margin: 0;
+}
+
+.patient-onboarding-wrapper .card-header svg {
+    color: var(--primary-color);
+}
+
+.patient-onboarding-wrapper .onboarding-form {
+    padding: 2rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+/* Error Message */
+.patient-onboarding-wrapper .error-message {
+    background: var(--danger-light);
+    color: var(--danger-color);
+    border: 1px solid rgba(247, 43, 80, 0.2);
+    padding: 1rem;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    font-weight: 600;
+}
+
+/* Form Groups */
+.patient-onboarding-wrapper .form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+}
+
+.patient-onboarding-wrapper .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.patient-onboarding-wrapper .form-group.full-width {
+    grid-column: 1 / -1;
+}
+
+.patient-onboarding-wrapper .form-label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--heading-text-color);
+}
+
+.patient-onboarding-wrapper .form-label svg {
+    color: var(--gray-500);
+}
+
+.patient-onboarding-wrapper .form-input,
+.patient-onboarding-wrapper .form-select,
+.patient-onboarding-wrapper .form-textarea {
+    width: 100%;
+    border: 2px solid var(--gray-200);
+    border-radius: 8px;
+    padding: 0.75rem 1rem;
+    font-family: var(--font-primary);
+    font-size: 0.95rem;
+    color: var(--body-text-color);
+    background-color: var(--gray-100);
+    transition: var(--transition-standard);
+    outline: none;
+}
+
+.patient-onboarding-wrapper .form-input:focus,
+.patient-onboarding-wrapper .form-select:focus,
+.patient-onboarding-wrapper .form-textarea:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px var(--primary-light);
+    background-color: #fff;
+}
+
+.patient-onboarding-wrapper .form-textarea {
+    resize: vertical;
+    min-height: 80px;
+}
+
+/* Section Divider */
+.patient-onboarding-wrapper .section-divider {
+    border: 0;
+    height: 1px;
+    background: var(--gray-200);
+    margin: 1rem 0;
+}
+
+.patient-onboarding-wrapper .section-title {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 1.15rem;
+    color: var(--heading-text-color);
+    margin-bottom: 0.5rem;
+}
+
+.patient-onboarding-wrapper .section-title svg {
+    color: var(--danger-color);
+}
+
+/* Submit Button */
+.patient-onboarding-wrapper .btn-submit {
+    background: var(--primary-color);
+    color: #fff;
+    padding: 1rem;
+    border-radius: 8px;
+    font-weight: 700;
+    font-size: 1.05rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 0.75rem;
+    border: none;
+    cursor: pointer;
+    transition: var(--transition-standard);
+    margin-top: 1rem;
+}
+
+.patient-onboarding-wrapper .btn-submit:hover:not(:disabled) {
+    background: var(--dark-brand-color);
+    box-shadow: 0 4px 15px rgba(86, 90, 207, 0.3);
+    transform: translateY(-2px);
+}
+
+.patient-onboarding-wrapper .btn-submit:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+/* Loader Animation */
+.patient-onboarding-wrapper .animate-spin {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .patient-onboarding-wrapper .form-grid {
+        grid-template-columns: 1fr;
+    }
+}

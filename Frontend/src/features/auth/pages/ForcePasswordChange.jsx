@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { useUser, useAuth } from '@clerk/clerk-react';
-import { useNavigate } from 'react-router-dom';
-import { Loader2, ShieldAlert } from 'lucide-react';
+import { useNavigate, Link } from 'react-router-dom';
+import { Loader2, ShieldAlert, Activity } from 'lucide-react';
+import './ForcePasswordChange.css';
 
 const ForcePasswordChange = () => {
   const { isLoaded, user } = useUser();
@@ -58,58 +59,75 @@ const ForcePasswordChange = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center py-12 px-4 sm:px-6 lg:px-8 bg-primary/5">
-      <div className="bg-white shadow-[0_8px_30px_-4px_rgba(0,0,0,0.1)] rounded-[12px] border border-gray-100 p-8 w-full max-w-md">
+    <div className="fpc-page-wrapper">
+      
+      {/* Floating Animated Shapes */}
+      <div className="fpc-shape fpc-shape-1"></div>
+      <div className="fpc-shape fpc-shape-2"></div>
+
+      <div className="fpc-content-container">
         
-        <div className="flex flex-col items-center mb-6 text-center">
-          <div className="bg-orange-100 p-3 rounded-full mb-3 text-orange-600">
-            <ShieldAlert size={28} />
+        {/* Logo Header */}
+        <Link to="/" className="fpc-logo-header">
+          <div className="fpc-logo-icon">
+            <Activity className="h-8 w-8" />
           </div>
-          <h2 className="text-2xl font-bold text-dark tracking-tight">Security Update</h2>
-          <p className="text-gray-500 mt-2 text-sm">
-            You logged in with a temporary password. Please set a new secure password to continue.
-          </p>
-        </div>
+          <span className="fpc-logo-text">PhysioCare</span>
+        </Link>
 
-        <form onSubmit={handleUpdatePassword} className="space-y-5">
-          {error && (
-            <div className="p-3 text-sm text-danger bg-red-50 border border-red-100 rounded-lg">
-              {error}
+        {/* Card */}
+        <div className="fpc-card">
+          <div className="fpc-card-header">
+            <div className="fpc-alert-icon">
+              <ShieldAlert size={30} />
             </div>
-          )}
-
-          <div>
-            <label className="block text-sm font-bold text-gray-700 mb-1">New Password</label>
-            <input
-              type="password"
-              required
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary text-dark font-medium transition-all"
-              placeholder="••••••••"
-            />
+            <h2 className="fpc-card-title">Security Update</h2>
+            <p className="fpc-card-subtitle">
+              You logged in with a temporary password. Please set a new secure password to continue.
+            </p>
           </div>
 
-          <div>
-            <label className="block text-sm font-bold text-gray-700 mb-1">Confirm Password</label>
-            <input
-              type="password"
-              required
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary text-dark font-medium transition-all"
-              placeholder="••••••••"
-            />
-          </div>
+          <form onSubmit={handleUpdatePassword} className="fpc-form">
+            {error && (
+              <div className="fpc-error-box">
+                <ShieldAlert size={18} />
+                {error}
+              </div>
+            )}
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full py-3 px-4 bg-gradient-to-r from-primary to-[#7074e8] hover:opacity-90 transition-all text-white font-bold rounded-lg shadow-md mt-4 flex items-center justify-center disabled:opacity-70 disabled:cursor-not-allowed"
-          >
-            {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : 'Set New Password'}
-          </button>
-        </form>
+            <div className="fpc-form-group">
+              <label className="fpc-label">New Password</label>
+              <input
+                type="password"
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="fpc-input"
+                placeholder="••••••••"
+              />
+            </div>
+
+            <div className="fpc-form-group">
+              <label className="fpc-label">Confirm Password</label>
+              <input
+                type="password"
+                required
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                className="fpc-input"
+                placeholder="••••••••"
+              />
+            </div>
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="fpc-submit-btn"
+            >
+              {loading ? <Loader2 size={20} className="animate-spin" style={{ marginRight: '8px' }} /> : 'Set New Password'}
+            </button>
+          </form>
+        </div>
       </div>
     </div>
   );

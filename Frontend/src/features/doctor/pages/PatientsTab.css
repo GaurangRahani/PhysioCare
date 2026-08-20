@@ -281,16 +281,17 @@
 
 /* Details Section */
 .pt-details-container {
-    width: 75%; /* Controls how wide the details block is */
-    margin: 0 auto 30px auto; /* Centers the block itself */
+    width: 100%;
+    margin: 0 0 20px 0;
 }
 
 .pt-detail-row {
     display: flex;
-    justify-content: space-between; /* Pushes label left, value right */
-    align-items: center;
+    justify-content: space-between;
+    align-items: flex-start;
     padding: 10px 0;
     border-bottom: 1px solid #f1f3f6;
+    gap: 16px;
 }
 
 /* Remove border from last item */
@@ -303,6 +304,8 @@
     color: var(--gray-muted);
     font-weight: 600;
     text-transform: uppercase;
+    flex-shrink: 0;
+    padding-top: 2px;
 }
 
 .pt-value {
@@ -310,6 +313,7 @@
     color: var(--heading-text);
     font-weight: 700;
     text-align: right;
+    word-break: break-word;
 }
 
 /* Action Button */
@@ -323,14 +327,14 @@
     padding: 14px 0;
     border-radius: 8px;
     color: var(--primary);
-    background-color: transparent;
+    background-color: #f1f3fa;
     border: none;
     cursor: pointer;
     transition: all 0.3s ease;
 }
 
-/* Button Hover State (Triggered when hovering over the card) */
-.pt-card:hover .pt-action-btn {
+/* Button Hover State */
+.pt-action-btn:hover {
     background-color: var(--primary);
     color: white;
 }
