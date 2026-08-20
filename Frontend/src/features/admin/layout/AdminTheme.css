@@ -649,7 +649,7 @@
 
 .admin-theme .modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:400; display:flex; align-items:center; justify-content:center; padding:1rem; }
 .admin-theme .modal-panel { background:#fff; border-radius:1rem; box-shadow:0 20px 60px rgba(0,0,0,0.2); width:100%; max-width:500px; padding:2.5rem; }
-.admin-theme .modal-input { width:100%; border:1px solid var(--gray-200); border-radius:0.5rem; padding:0.875rem 1rem; font-size:0.95rem; font-family:var(--font); color:var(--body-text-color); background:#fff; outline:none; transition:all 0.15s; }
+.admin-theme .modal-input { box-sizing: border-box; width:100%; border:1px solid var(--gray-200); border-radius:0.5rem; padding:0.875rem 1rem; font-size:0.95rem; font-family:var(--font); color:var(--body-text-color); background:#fff; outline:none; transition:all 0.15s; }
 .admin-theme .modal-input:focus { border-color:var(--primary-color); box-shadow:0 0 0 3px rgba(86,90,207,0.12); }
 
 .admin-theme .settings-card { background:#fff; border:1px solid var(--gray-200); border-radius:1rem; box-shadow:var(--card-shadow); padding:2.5rem; max-width:600px; }
