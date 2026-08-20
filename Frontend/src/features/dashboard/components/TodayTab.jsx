@@ -242,7 +242,7 @@ const TodayTab = ({ patientId, onBookAppointment }) => {
           {/* Progress Section */}
           <div className="progress-section">
               <div className="progress-header">
-                  <span>Weekly Progress</span>
+                  <span>Today's Progress</span>
                   <span className="percent">{pct}%</span>
               </div>
               <div className="progress-bar-bg">
