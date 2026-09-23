@@ -21,3 +21,6 @@ Thumbs.db
 # IDE
 .vscode/
 .idea/
+Backend/inspect-users.js
+Backend/query-users.js
+Backend/test-pool.js
