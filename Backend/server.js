@@ -51,7 +51,7 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/clinic', clinicRoutes); // Public — no auth
 
 app.get('/', (req, res) => {
-  res.send('PhysioCare API is running!');
+  res.send('AlignCare API is running!');
 });
 app.get('/api/protected', (req, res) => {
   if (!req.auth || !req.auth.userId) {

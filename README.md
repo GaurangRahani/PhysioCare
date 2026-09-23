@@ -1,7 +1,7 @@
 <div align="center">
-  <img src="https://via.placeholder.com/150x150/565ACF/FFFFFF?text=PhysioCare" alt="PhysioCare Logo" width="120" height="120" style="border-radius: 20px;" />
+  <img src="https://via.placeholder.com/150x150/565ACF/FFFFFF?text=AlignCare" alt="AlignCare Logo" width="120" height="120" style="border-radius: 20px;" />
   
-  <h1>PhysioCare</h1>
+  <h1>AlignCare</h1>
   <p><strong>The modern physiotherapy management platform for clinics and patients.</strong></p>
   
   <p>
@@ -24,7 +24,7 @@
 
 ## 🚀 Overview
 
-**PhysioCare** is a full-stack, production-ready physiotherapy clinic management system designed to bridge the gap between healthcare professionals and patients during the rehabilitation process. 
+**AlignCare** is a full-stack, production-ready physiotherapy clinic management system designed to bridge the gap between healthcare professionals and patients during the rehabilitation process. 
 
 It replaces traditional paper-based exercise sheets with an interactive, gamified patient portal while giving clinic staff powerful tools to construct customized treatment plans, process payments, and monitor patient adherence in real-time.
 
@@ -70,7 +70,7 @@ It replaces traditional paper-based exercise sheets with an interactive, gamifie
 
 ## 🏗 Architecture & Infrastructure
 
-PhysioCare operates on a decoupled architecture:
+AlignCare operates on a decoupled architecture:
 
 1. **Vite SPA (Vercel):** The frontend strictly serves static assets and communicates via REST APIs. Vercel `rewrites` are configured to handle client-side routing for Clerk's nested authentication flows.
 2. **Express API (Render):** A stateless Node.js backend handles complex business logic, Razorpay signature verification, and secure database transactions.
@@ -88,8 +88,8 @@ PhysioCare operates on a decoupled architecture:
 
 ### 1. Clone the repository
 ```bash
-git clone https://github.com/GaurangRahani/PhysioCare.git
-cd PhysioCare
+git clone https://github.com/GaurangRahani/AlignCare.git
+cd AlignCare
 ```
 
 ### 2. Setup the Backend

@@ -58,7 +58,7 @@ const Footer = () => {
               <div className="bg-primary !p-2 rounded-lg text-white">
                 <Activity className="h-6 w-6" />
               </div>
-              <span className="text-2xl font-bold text-dark-brand tracking-tight">PhysioCare</span>
+              <span className="text-2xl font-bold text-dark-brand tracking-tight">AlignCare</span>
             </Link>
 
             <p className="text-sm text-slate-500 max-w-xs leading-relaxed !mb-6">
@@ -149,7 +149,7 @@ const Footer = () => {
         {/* BOTTOM COPYRIGHT */}
         <div className="border-t border-slate-200 !pt-8 text-center">
           <p className="text-xs text-slate-500 font-medium">
-            Copyright © {new Date().getFullYear()} Design & Developed by <a href="#" className="text-secondary hover:underline">Physiocare</a>
+            Copyright © {new Date().getFullYear()} Design & Developed by <a href="#" className="text-secondary hover:underline">Aligncare</a>
           </p>
         </div>
       </div>

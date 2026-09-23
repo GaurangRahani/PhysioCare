@@ -61,7 +61,7 @@ const Navbar = () => {
             <div className="bg-primary/10 p-1.5 rounded-lg text-primary">
               <Activity className="h-6 w-6" />
             </div>
-            <span className="flex items-center gap-2">PhysioCare</span>
+            <span className="flex items-center gap-2">AlignCare</span>
           </Link>
           
           {/* Desktop Nav - Center */}

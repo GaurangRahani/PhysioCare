@@ -72,7 +72,7 @@ const ForcePasswordChange = () => {
           <div className="fpc-logo-icon">
             <Activity className="h-8 w-8" />
           </div>
-          <span className="fpc-logo-text">PhysioCare</span>
+          <span className="fpc-logo-text">AlignCare</span>
         </Link>
 
         {/* Card */}

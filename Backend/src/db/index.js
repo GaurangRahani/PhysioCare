@@ -15,4 +15,4 @@ await client.connect();
 // 3. Wrap the connection in Drizzle and export it
 export const db = drizzle(client);
 
-console.log("✅ Successfully connected to the PhysioCare database!");
+console.log("✅ Successfully connected to the AlignCare database!");

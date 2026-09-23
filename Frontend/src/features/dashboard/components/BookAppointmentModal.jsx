@@ -194,7 +194,7 @@ const BookAppointmentModal = ({ isOpen, onClose, onBooked, onSuccess }) => {
       amount: bookingData.razorpay_order.amount,
       currency: bookingData.razorpay_order.currency,
       order_id: bookingData.razorpay_order.id,
-      name: 'PhysioCare',
+      name: 'AlignCare',
       description: 'Consultation Booking',
       theme: { color: '#9333ea' }, // purple-600
       handler: async function (response) {

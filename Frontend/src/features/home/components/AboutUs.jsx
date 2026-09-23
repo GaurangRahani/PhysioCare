@@ -17,7 +17,7 @@ const AboutUs = () => {
             <div className="relative rounded-3xl overflow-hidden shadow-2xl border-4 border-white transform rotate-[-2deg] transition-transform hover:rotate-0 duration-500 z-10">
               <img 
                 src="/images/main-banner/bg1.jpg" 
-                alt="PhysioCare About Us" 
+                alt="AlignCare About Us" 
                 className="w-full h-auto object-cover md:min-h-[450px]"
                 style={{ objectPosition: 'left center' }}
               />
@@ -41,7 +41,7 @@ const AboutUs = () => {
           <div className="w-full lg:w-1/2 mt-12 lg:mt-0">
             {/* Section Badge */}
             <h6 className="text-secondary font-bold text-sm md:text-base mb-4 inline-flex items-center gap-2 bg-secondary/10 py-1.5 px-4 rounded-full uppercase tracking-wider">
-              <ActivitySquare className="w-4 h-4" /> About PhysioCare
+              <ActivitySquare className="w-4 h-4" /> About AlignCare
             </h6>
             
             <h2 className="text-4xl md:text-5xl font-extrabold text-dark-brand mb-6 leading-tight">
@@ -49,7 +49,7 @@ const AboutUs = () => {
             </h2>
             
             <p className="text-lg text-slate-600 mb-6 leading-relaxed">
-              PhysioCare was founded on a simple premise: physical therapy doesn't stop when you leave the clinic. We provide a state-of-the-art platform that empowers doctors to prescribe, track, and manage patient recovery remotely.
+              AlignCare was founded on a simple premise: physical therapy doesn't stop when you leave the clinic. We provide a state-of-the-art platform that empowers doctors to prescribe, track, and manage patient recovery remotely.
             </p>
             
             <p className="text-lg text-slate-600 mb-8 leading-relaxed">

@@ -428,7 +428,7 @@ export const getClinicInfo = async (req, res) => {
       .limit(1);
 
     return res.json({
-      clinic_name: process.env.CLINIC_NAME || "PhysioCare",
+      clinic_name: process.env.CLINIC_NAME || "AlignCare",
       contact_phone: admin?.phone || "+91 98765 43210",
       contact_email: admin?.email || null,
     });

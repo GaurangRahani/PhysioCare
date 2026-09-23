@@ -39,7 +39,7 @@ const Hero = () => {
             
             {/* Body */}
             <p className="text-lg text-slate-600 max-w-lg mb-8 leading-relaxed">
-              PhysioCare gives doctors a live window into patient recovery between visits — and gives patients a simple daily exercise program they can actually follow.
+              AlignCare gives doctors a live window into patient recovery between visits — and gives patients a simple daily exercise program they can actually follow.
             </p>
             
             {/* CTA Button */}
@@ -78,7 +78,7 @@ const Hero = () => {
                   <div className="w-3 h-3 rounded-full bg-amber-400"></div>
                   <div className="w-3 h-3 rounded-full bg-green-400"></div>
                 </div>
-                <span className="text-xs text-slate-400 font-medium ml-2">PhysioCare — Doctor Dashboard</span>
+                <span className="text-xs text-slate-400 font-medium ml-2">AlignCare — Doctor Dashboard</span>
               </div>
               
               {/* PATIENT ROW */}

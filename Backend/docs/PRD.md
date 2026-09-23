@@ -1,9 +1,9 @@
-# PhysioCare - Product Requirements Document (PRD)
+# AlignCare - Product Requirements Document (PRD)
 **Version 2.0 (Final Production Version)**
 
 ## 1. Overview
 ### 1.1 Purpose
-PhysioCare is a full-stack, cloud-hosted platform designed to digitize physical rehabilitation. It replaces fragmented paper-based clinic management with a centralized ecosystem that gamifies patient recovery at home, manages online and offline bookings, processes payments, and provides doctors with data-driven, real-time insights into patient adherence.
+AlignCare is a full-stack, cloud-hosted platform designed to digitize physical rehabilitation. It replaces fragmented paper-based clinic management with a centralized ecosystem that gamifies patient recovery at home, manages online and offline bookings, processes payments, and provides doctors with data-driven, real-time insights into patient adherence.
 
 ### 1.2 Problem Statement
 Traditional physiotherapy relies on paper exercise sheets and manual tracking. 
@@ -21,7 +21,7 @@ Traditional physiotherapy relies on paper exercise sheets and manual tracking.
 ---
 
 ## 2. System Architecture & Tech Stack
-PhysioCare operates on a highly scalable, decoupled Serverless/PaaS architecture.
+AlignCare operates on a highly scalable, decoupled Serverless/PaaS architecture.
 
 - **Frontend (Client):** React 18, Vite, React Router v6, Tailwind CSS. Hosted as a Single Page Application (SPA) on **Vercel**.
 - **Backend (API):** Node.js, Express.js REST API. Hosted on **Render**.
@@ -33,7 +33,7 @@ PhysioCare operates on a highly scalable, decoupled Serverless/PaaS architecture
 ---
 
 ## 3. User Roles & Permissions
-PhysioCare utilizes strict Role-Based Access Control (RBAC). A backend middleware layer (`requireRole`) ensures routes are completely secure.
+AlignCare utilizes strict Role-Based Access Control (RBAC). A backend middleware layer (`requireRole`) ensures routes are completely secure.
 
 ### 3.1 Patient
 - Books appointments online via the Self-Booking calendar.

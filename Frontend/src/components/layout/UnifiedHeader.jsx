@@ -44,7 +44,7 @@ const UnifiedHeader = ({ brandLink, roleName, navigation, userName }) => {
             <Activity className="h-6 w-6" />
           </div>
           <span className="flex items-center gap-2">
-            PhysioCare
+            AlignCare
             {roleName && (
               <span className="text-sm font-medium px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 mt-1">
                 {roleName}

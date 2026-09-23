@@ -17,7 +17,7 @@ const storage = new CloudinaryStorage({
         console.log(`[DEBUG] Cloudinary uploading file: ${file.originalname} (Field: ${file.fieldname})`);
         configureCloudinary(); // Refresh config in case it was just added
         
-        let folder = 'physiocare/exercises';
+        let folder = 'aligncare/exercises';
         let resource_type = 'auto'; // Auto detects if it's image or video
 
         // Allowed formats

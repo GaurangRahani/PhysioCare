@@ -59,7 +59,7 @@ const FAQ = () => {
     },
     {
       q: "Is my medical data secure?",
-      a: "All data is stored in a secured PostgreSQL database. Authentication is handled by Clerk, a production-grade identity provider. Payments are processed via Razorpay — PhysioCare never stores any card or payment information."
+      a: "All data is stored in a secured PostgreSQL database. Authentication is handled by Clerk, a production-grade identity provider. Payments are processed via Razorpay — AlignCare never stores any card or payment information."
     },
     {
       q: "Can the doctor change my exercise plan mid-recovery?",
@@ -67,7 +67,7 @@ const FAQ = () => {
     },
     {
       q: "What devices can I use this on?",
-      a: "PhysioCare is a web app that works on any modern browser on desktop, tablet, or mobile. A dedicated mobile app may be available in a future version."
+      a: "AlignCare is a web app that works on any modern browser on desktop, tablet, or mobile. A dedicated mobile app may be available in a future version."
     },
     {
       q: "How does the receptionist handle payments?",

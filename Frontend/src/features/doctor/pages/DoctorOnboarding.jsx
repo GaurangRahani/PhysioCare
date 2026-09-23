@@ -67,7 +67,7 @@ const DoctorOnboarding = ({ onComplete }) => {
             <Activity className="h-10 w-10 text-light" />
           </div>
           <h1 className="text-4xl font-bold text-heading tracking-tight mb-3">
-            Welcome to PhysioCare, Dr. {user?.lastName || user?.firstName || ''}!
+            Welcome to AlignCare, Dr. {user?.lastName || user?.firstName || ''}!
           </h1>
           <p className="text-body text-lg max-w-lg">
             We're thrilled to have you on board. Please complete your medical profile before accessing your dashboard.

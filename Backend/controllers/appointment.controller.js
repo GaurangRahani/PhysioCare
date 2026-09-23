@@ -205,7 +205,7 @@ export const bookByPhone = async (req, res) => {
     const paymentLink = await razorpay.paymentLink.create({
       amount: Math.round(amount * 100), // Razorpay works in paise
       currency: "INR",
-      description: visit_reason || "PhysioCare Consultation",
+      description: visit_reason || "AlignCare Consultation",
       expire_by: Math.floor(expiresAt.getTime() / 1000), // Unix timestamp
       reminder_enable: false,
       notes: {
@@ -901,7 +901,7 @@ export const resendPaymentLink = async (req, res) => {
       const paymentLink = await razorpay.paymentLink.create({
         amount: Math.round(amount * 100),
         currency: "INR",
-        description: appointment.visit_reason || "PhysioCare Consultation",
+        description: appointment.visit_reason || "AlignCare Consultation",
         expire_by: Math.floor(newExpiresAt.getTime() / 1000),
         reminder_enable: false,
         notes: { appointment_id: appointment.id },

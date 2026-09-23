@@ -19,7 +19,7 @@ const Login = () => {
           <div className="bg-primary/10 p-2 rounded-xl text-primary shadow-sm">
             <Activity className="h-8 w-8" />
           </div>
-          <span className="text-3xl font-bold tracking-tight" style={{ fontFamily: "'Poppins', sans-serif", color: 'var(--dark-brand-color)' }}>PhysioCare</span>
+          <span className="text-3xl font-bold tracking-tight" style={{ fontFamily: "'Poppins', sans-serif", color: 'var(--dark-brand-color)' }}>AlignCare</span>
         </Link>
 
         {/* Clerk Drop-in SignIn UI */}

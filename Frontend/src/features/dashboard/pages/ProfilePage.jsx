@@ -195,13 +195,13 @@ const ProfilePage = () => {
       doc.setFontSize(24);
       doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
       doc.setFont('helvetica', 'bold');
-      doc.text("PhysioCare", 14, 22);
+      doc.text("AlignCare", 14, 22);
       
       doc.setFontSize(10);
       doc.setTextColor(textColor[0], textColor[1], textColor[2]);
       doc.setFont('helvetica', 'normal');
       doc.text("123 Healing Way, Medical District", 14, 30);
-      doc.text("contact@physiocare.com | +91 9999999999", 14, 35);
+      doc.text("contact@aligncare.com | +91 9999999999", 14, 35);
       
       // 2. Title
       doc.setFontSize(20);
@@ -262,10 +262,10 @@ const ProfilePage = () => {
       doc.setTextColor(150, 150, 150);
       doc.setFontSize(10);
       doc.setFont('helvetica', 'normal');
-      doc.text("Thank you for choosing PhysioCare.", 105, 280, { align: "center" });
+      doc.text("Thank you for choosing AlignCare.", 105, 280, { align: "center" });
       
       // 8. Save
-      doc.save(`PhysioCare_Receipt_INV-${invoiceNum}.pdf`);
+      doc.save(`AlignCare_Receipt_INV-${invoiceNum}.pdf`);
       
       showToast("Receipt downloaded successfully!");
     } catch (err) {

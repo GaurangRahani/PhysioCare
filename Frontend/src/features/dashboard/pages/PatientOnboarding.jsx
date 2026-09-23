@@ -76,7 +76,7 @@ const PatientOnboarding = ({ onComplete }) => {
             <Activity className="h-10 w-10" />
           </div>
           <h1>
-            Welcome to PhysioCare, {user?.firstName || 'Patient'}!
+            Welcome to AlignCare, {user?.firstName || 'Patient'}!
           </h1>
           <p>
             Let's get your account set up. Please provide some basic information to complete your patient profile.

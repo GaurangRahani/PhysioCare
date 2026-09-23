@@ -1,6 +1,6 @@
 import nodemailer from 'nodemailer';
 
-const FROM = `"PhysioCare" <${process.env.EMAIL_USER}>`;
+const FROM = `"AlignCare" <${process.env.EMAIL_USER}>`;
 
 // Lazy initialization — transporter is only created when first email is sent
 let _transporter = null;
@@ -32,10 +32,10 @@ const sendEmail = ({ to, subject, html }) => {
 export const sendWelcomeEmail = ({ to, first_name, email, tempPassword }) => {
     sendEmail({
         to,
-        subject: 'Your PhysioCare Account is Ready',
+        subject: 'Your AlignCare Account is Ready',
         html: `
             <div style="font-family: Arial, sans-serif; max-width: 500px; margin: 0 auto;">
-                <h2 style="color: #2563eb;">Welcome to PhysioCare!</h2>
+                <h2 style="color: #2563eb;">Welcome to AlignCare!</h2>
                 <p>Hello ${first_name},</p>
                 <p>Your account has been created by our team. Here are your login details:</p>
                 <div style="background: #f3f4f6; padding: 16px; border-radius: 8px; margin: 16px 0;">
@@ -45,7 +45,7 @@ export const sendWelcomeEmail = ({ to, first_name, email, tempPassword }) => {
                 <p>Please log in and change your password from your profile settings.</p>
                 <p>You can access your appointment history, exercise plans, and health records from your dashboard.</p>
                 <br/>
-                <p>The PhysioCare Team</p>
+                <p>The AlignCare Team</p>
             </div>
         `
     });
@@ -55,7 +55,7 @@ export const sendWelcomeEmail = ({ to, first_name, email, tempPassword }) => {
 export const sendAppointmentConfirmationEmail = ({ to, first_name, doctor_name, appointment_date, start_time }) => {
     sendEmail({
         to,
-        subject: 'Your Appointment is Confirmed — PhysioCare',
+        subject: 'Your Appointment is Confirmed — AlignCare',
         html: `
             <div style="font-family: Arial, sans-serif; max-width: 500px; margin: 0 auto;">
                 <h2 style="color: #16a34a;">Appointment Confirmed ✅</h2>
@@ -68,7 +68,7 @@ export const sendAppointmentConfirmationEmail = ({ to, first_name, doctor_name, 
                 </div>
                 <p>Please arrive 10 minutes early. If you need to cancel or reschedule, please contact the clinic.</p>
                 <br/>
-                <p>The PhysioCare Team</p>
+                <p>The AlignCare Team</p>
             </div>
         `
     });
@@ -78,7 +78,7 @@ export const sendAppointmentConfirmationEmail = ({ to, first_name, doctor_name, 
 export const sendPaymentLinkEmail = ({ to, first_name, payment_link, expires_in_minutes }) => {
     sendEmail({
         to,
-        subject: 'Complete Your PhysioCare Booking Payment',
+        subject: 'Complete Your AlignCare Booking Payment',
         html: `
             <div style="font-family: Arial, sans-serif; max-width: 500px; margin: 0 auto;">
                 <h2 style="color: #2563eb;">Complete Your Payment</h2>
@@ -93,7 +93,7 @@ export const sendPaymentLinkEmail = ({ to, first_name, payment_link, expires_in_
                 <p style="color: #6b7280; font-size: 14px;">If the button doesn't work, copy this link: ${payment_link}</p>
                 <p style="color: #ef4444; font-size: 14px;">⚠️ This link expires in ${expires_in_minutes} minutes. Unpaid slots will be released automatically.</p>
                 <br/>
-                <p>The PhysioCare Team</p>
+                <p>The AlignCare Team</p>
             </div>
         `
     });
@@ -103,11 +103,11 @@ export const sendPaymentLinkEmail = ({ to, first_name, payment_link, expires_in_
 export const sendInvoiceEmail = ({ to, first_name, invoice_number, amount, description, issued_date }) => {
     sendEmail({
         to,
-        subject: `Your PhysioCare Receipt — ${invoice_number}`,
+        subject: `Your AlignCare Receipt — ${invoice_number}`,
         html: `
             <div style="font-family: Arial, sans-serif; max-width: 520px; margin: 0 auto; border: 1px solid #e5e7eb; border-radius: 12px; overflow: hidden;">
                 <div style="background: #6d28d9; padding: 24px;">
-                    <h2 style="color: white; margin: 0;">PhysioCare</h2>
+                    <h2 style="color: white; margin: 0;">AlignCare</h2>
                     <p style="color: #ddd6fe; margin: 4px 0 0;">Payment Receipt</p>
                 </div>
                 <div style="padding: 24px;">
@@ -121,8 +121,8 @@ export const sendInvoiceEmail = ({ to, first_name, invoice_number, amount, descr
                             <tr style="border-top: 1px solid #e5e7eb;"><td style="padding: 10px 0; font-weight: bold;">Amount Paid</td><td style="padding: 10px 0; font-weight: bold; font-size: 18px; text-align: right; color: #16a34a;">₹${amount}</td></tr>
                         </table>
                     </div>
-                    <p style="color: #6b7280; font-size: 13px;">Please keep this email for your records. For any queries, contact the PhysioCare clinic.</p>
-                    <p>The PhysioCare Team</p>
+                    <p style="color: #6b7280; font-size: 13px;">Please keep this email for your records. For any queries, contact the AlignCare clinic.</p>
+                    <p>The AlignCare Team</p>
                 </div>
             </div>
         `
@@ -134,11 +134,11 @@ export const sendInvoiceEmail = ({ to, first_name, invoice_number, amount, descr
 export const sendUrgentBookingEmail = ({ to, first_name }) => {
     sendEmail({
         to,
-        subject: 'Urgent: Please Book a Follow-Up Appointment — PhysioCare',
+        subject: 'Urgent: Please Book a Follow-Up Appointment — AlignCare',
         html: `
             <div style="font-family: Arial, sans-serif; max-width: 500px; margin: 0 auto; border: 1px solid #fee2e2; border-radius: 12px; overflow: hidden;">
                 <div style="background: #ef4444; padding: 24px;">
-                    <h2 style="color: white; margin: 0;">PhysioCare</h2>
+                    <h2 style="color: white; margin: 0;">AlignCare</h2>
                     <p style="color: #fecaca; margin: 4px 0 0;">Urgent Action Required</p>
                 </div>
                 <div style="padding: 24px;">
@@ -152,7 +152,7 @@ export const sendUrgentBookingEmail = ({ to, first_name }) => {
                     </div>
                     <p>Please contact the clinic or use your dashboard to book your follow-up.</p>
                     <br/>
-                    <p>The PhysioCare Team</p>
+                    <p>The AlignCare Team</p>
                 </div>
             </div>
         `

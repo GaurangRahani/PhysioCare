@@ -103,7 +103,7 @@ const AppointmentsPage = () => {
         amount: data.razorpay_order.amount,
         currency: data.razorpay_order.currency,
         order_id: data.razorpay_order.id,
-        name: 'PhysioCare',
+        name: 'AlignCare',
         description: 'Consultation Booking',
         theme: { color: '#9333ea' },
         handler: async function (response) {

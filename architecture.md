@@ -1,6 +1,6 @@
-# PhysioCare - Project Architecture Document
+# AlignCare - Project Architecture Document
 
-PhysioCare is a modern, full-stack web application designed for physiotherapy clinics. It enables doctors to manage patients, prescribe exercise treatment plans, handle appointments, and track patient progress, while allowing patients to log their daily exercises, book appointments, and pay online.
+AlignCare is a modern, full-stack web application designed for physiotherapy clinics. It enables doctors to manage patients, prescribe exercise treatment plans, handle appointments, and track patient progress, while allowing patients to log their daily exercises, book appointments, and pay online.
 
 ---
 
@@ -78,7 +78,7 @@ The database heavily utilizes Drizzle ORM for schema definitions. Key entities i
 ## 4. Key Architectural Patterns
 
 ### Authentication & User Syncing
-PhysioCare uses Clerk as the Source of Truth for identity and passwords. When a user signs up, Clerk sends a webhook (via Svix). The `webhook.controller.js` catches this, verifies the cryptographic signature, and provisions a shadow user in the PostgreSQL `users` table so foreign keys can be safely established.
+AlignCare uses Clerk as the Source of Truth for identity and passwords. When a user signs up, Clerk sends a webhook (via Svix). The `webhook.controller.js` catches this, verifies the cryptographic signature, and provisions a shadow user in the PostgreSQL `users` table so foreign keys can be safely established.
 
 ### The Schedule Generator
 When a doctor assigns an exercise to a patient, the system mathematically calculates the `start_date` and `end_date` and bulk-inserts rows into `patient_schedule`. This allows the frontend to simply query `getTodaySchedule` to give patients a simple daily to-do list.
