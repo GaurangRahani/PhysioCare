@@ -1,30 +1,178 @@
 @import "tailwindcss";
 
 @theme {
-  --color-primary: #565acf;
-  --color-secondary: #f17732;
-  --color-dark: #1f2278;
-  --color-success: #209f84;
-  --color-info: #2754e6;
-  --color-warning: #fe970e;
-  --color-danger: #f72b50;
-  --color-light: #ffffff;
-  --color-body: #444444;
-  --color-heading: #14181d;
+  --color-deep-black: #0A0A0A;
+  --color-near-black: #111111;
+  --color-dark-grey: #202223;
+  --color-charcoal: #292929;
+  --color-medium-grey: #616161;
+  --color-muted-grey: #8A8A8A;
+  --color-light-grey: #F0F0F0;
+  --color-off-white: #F7F7F7;
+  --color-pure-white: #FFFFFF;
+  --color-border-grey: #E5E5E5;
+  --color-divider-grey: #EAEAEA;
+
+  --color-success-green: #A3F56C;
+  --color-info-blue: #4088F8;
+  --color-link-blue: #2C5E91;
+  --color-warning-amber: #F5C451;
+  --color-error-red: #E5484D;
+
+  --font-sans: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   
-  --font-sans: "Montserrat", sans-serif;
-  
+  --radius-sm: 6px;
   --radius-DEFAULT: 8px;
+  --radius-md: 10px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+}
+
+:root {
+  /* Minimalist Enterprise SaaS Design System Tokens */
+  --deep-black: #0A0A0A;
+  --near-black: #111111;
+  --dark-grey: #202223;
+  --charcoal: #292929;
+  --medium-grey: #616161;
+  --muted-grey: #8A8A8A;
+  --light-grey: #F0F0F0;
+  --off-white: #F7F7F7;
+  --pure-white: #FFFFFF;
+  --border-grey: #E5E5E5;
+  --divider-grey: #EAEAEA;
+
+  --success-green: #A3F56C;
+  --info-blue: #4088F8;
+  --link-blue: #2C5E91;
+  --warning-amber: #F5C451;
+  --error-red: #E5484D;
+
+  /* Semantic status colors */
+  --status-success-bg: #D9F7C3;
+  --status-success-text: #245B19;
+  --status-warning-bg: #FFF2CC;
+  --status-warning-text: #805B00;
+  --status-error-bg: #FCE4E4;
+  --status-error-text: #B42318;
+  --status-neutral-bg: #EEEEEE;
+  --status-neutral-text: #555555;
+
+  /* Typography */
+  --font-inter: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 }
 
 body {
-  color: var(--color-body);
-  font-family: var(--font-sans);
-  background-color: var(--color-light);
+  color: var(--dark-grey);
+  font-family: var(--font-inter);
+  background-color: var(--pure-white);
+  margin: 0;
+  padding: 0;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 h1, h2, h3, h4, h5, h6 {
-  color: var(--color-heading);
+  color: var(--dark-grey);
+  font-family: var(--font-inter);
+  font-weight: 600;
+  line-height: 1.25;
+}
+
+/* Common Minimalist UI Component Utility Classes */
+.badge-semantic-success {
+  background-color: var(--status-success-bg);
+  color: var(--status-success-text);
+  font-size: 11px;
   font-weight: 500;
-  line-height: 1.2;
+  padding: 2px 8px;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.badge-semantic-warning {
+  background-color: var(--status-warning-bg);
+  color: var(--status-warning-text);
+  font-size: 11px;
+  font-weight: 500;
+  padding: 2px 8px;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.badge-semantic-error {
+  background-color: var(--status-error-bg);
+  color: var(--status-error-text);
+  font-size: 11px;
+  font-weight: 500;
+  padding: 2px 8px;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.badge-semantic-neutral {
+  background-color: var(--status-neutral-bg);
+  color: var(--status-neutral-text);
+  font-size: 11px;
+  font-weight: 500;
+  padding: 2px 8px;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.btn-primary-saas {
+  background-color: var(--near-black);
+  color: var(--pure-white);
+  font-size: 13px;
+  font-weight: 500;
+  padding: 8px 14px;
+  border-radius: 8px;
+  border: 1px solid var(--near-black);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: background-color 0.15s ease, transform 0.05s ease;
+}
+.btn-primary-saas:hover {
+  background-color: #222222;
+}
+
+.btn-secondary-saas {
+  background-color: var(--pure-white);
+  color: #303030;
+  font-size: 13px;
+  font-weight: 500;
+  padding: 8px 14px;
+  border-radius: 8px;
+  border: 1px solid var(--border-grey);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+.btn-secondary-saas:hover {
+  background-color: var(--light-grey);
+  border-color: #DCDCDC;
+}
+
+.saas-card {
+  background-color: var(--pure-white);
+  border: 1px solid var(--border-grey);
+  border-radius: 14px;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.saas-card:hover {
+  border-color: #D5D5D5;
 }
