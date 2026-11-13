@@ -1,65 +1,117 @@
-import React, { useState, useEffect } from 'react';
-import { useAuth, useUser } from '@clerk/clerk-react';
-import { Calendar, Users, Loader2, Dumbbell, CalendarRange, Clock, ChevronRight, Stethoscope } from 'lucide-react';
-import { Link, useNavigate } from 'react-router-dom';
-import ViewAppointmentModal from '../../receptionist/components/ViewAppointmentModal';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { useAuth } from '@clerk/clerk-react';
+import { 
+  Calendar, 
+  Loader2, 
+  Clock, 
+  ChevronRight, 
+  ChevronLeft, 
+  Stethoscope, 
+  Search, 
+  Sparkles, 
+  CheckCircle2
+} from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import AlertReviewModal from '../components/AlertReviewModal';
 import './DoctorDashboard.css';
 
 const DoctorDashboard = () => {
   const { getToken } = useAuth();
-  const { user } = useUser();
   const navigate = useNavigate();
+
   const [appointments, setAppointments] = useState([]);
+  const [alerts, setAlerts] = useState([]);
+  const [selectedAlert, setSelectedAlert] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   
-  // Pagination State
+  // Search & Filter state
+  const [searchQuery, setSearchQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all'); // 'all', 'scheduled', 'completed'
+
+  // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(5);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
 
-  useEffect(() => {
-    fetchAppointments();
-  }, [getToken]);
-
-  const fetchAppointments = async () => {
+  const fetchDashboardData = useCallback(async () => {
     try {
       setLoading(true);
       setError('');
       const token = await getToken();
       const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
       
-      const res = await fetch(`${apiUrl}/api/appointments?date=today`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      const data = await res.json();
-      
-      if (data.success) {
-        const activeAppts = data.appointments.filter(a => 
-          !['cancelled', 'no_show', 'pending_payment', 'completed'].includes(a.status) &&
-          a.payment_status !== 'pending'
-        );
-        setAppointments(activeAppts);
+      const [apptsRes, alertsRes] = await Promise.all([
+        fetch(`${apiUrl}/api/appointments?date=today`, {
+          headers: { Authorization: `Bearer ${token}` }
+        }),
+        fetch(`${apiUrl}/api/alerts`, {
+          headers: { Authorization: `Bearer ${token}` }
+        })
+      ]);
+
+      const apptsData = await apptsRes.json();
+      const alertsData = await alertsRes.json();
+
+      if (apptsData.success) {
+        setAppointments(apptsData.appointments || []);
       } else {
-        setError(data.message || 'Failed to fetch appointments.');
+        setError(apptsData.message || 'Failed to fetch appointments.');
+      }
+
+      if (alertsData.success) {
+        setAlerts(alertsData.alerts || []);
       }
     } catch (err) {
-      console.error(err);
-      setError('A network error occurred.');
+      console.error("DoctorDashboard error:", err);
+      setError('A network error occurred while loading your schedule.');
     } finally {
       setLoading(false);
     }
-  };
+  }, [getToken]);
 
-  const handleCancelled = () => {
-    fetchAppointments();
-  };
+  useEffect(() => {
+    fetchDashboardData();
+  }, [fetchDashboardData]);
 
-  // Metrics
-  const todayAppointments = appointments.length;
-  
-  // A simplistic way to count "Upcoming" for today is appointments whose start_time is in the future.
-  // We'll just display a total for now as a static "Today's load".
-  const uniquePatients = new Set(appointments.map(a => a.patient_id)).size;
+  // Dynamic greeting based on current local hour
+  const greeting = useMemo(() => {
+    const hour = new Date().getHours();
+    if (hour < 12) return 'Good morning';
+    if (hour < 17) return 'Good afternoon';
+    return 'Good evening';
+  }, []);
+
+  // Filtered appointments
+  const filteredAppointments = useMemo(() => {
+    return appointments.filter(a => {
+      // Exclude cancelled and no_show unless specifically asked
+      if (['cancelled', 'no_show'].includes(a.status)) return false;
+
+      // Status filter
+      if (statusFilter === 'scheduled' && a.status !== 'scheduled') return false;
+      if (statusFilter === 'completed' && a.status !== 'completed') return false;
+
+      // Search query filter
+      if (searchQuery.trim()) {
+        const query = searchQuery.toLowerCase();
+        const patientMatch = (a.patient_name || '').toLowerCase().includes(query);
+        const reasonMatch = (a.visit_reason || '').toLowerCase().includes(query);
+        const diagnosisMatch = (a.diagnosis || '').toLowerCase().includes(query);
+        return patientMatch || reasonMatch || diagnosisMatch;
+      }
+      return true;
+    });
+  }, [appointments, statusFilter, searchQuery]);
+
+  // Derived metrics
+  const todayCount = appointments.filter(a => !['cancelled', 'no_show'].includes(a.status)).length;
+  const completedCount = appointments.filter(a => a.status === 'completed').length;
+  const pendingAlertsCount = alerts.length;
+
+  // Pagination logic
+  const totalPages = Math.ceil(filteredAppointments.length / itemsPerPage) || 1;
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const paginatedAppointments = filteredAppointments.slice(startIndex, startIndex + itemsPerPage);
 
   const formatTime = (timeStr) => {
     if (!timeStr) return '';
@@ -70,228 +122,431 @@ const DoctorDashboard = () => {
     return `${String(h).padStart(2, '0')}:${minutes} ${ampm}`;
   };
 
-  const formatDate = (dateString) => {
-      if (!dateString) return '';
-      const date = new Date(dateString);
-      return date.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
+  const getStatusBadge = (appt) => {
+    if (appt.status === 'completed') {
+      return (
+        <span className="badge-semantic-success">
+          <CheckCircle2 size={11} /> Completed
+        </span>
+      );
+    }
+    if (appt.status === 'blocked') {
+      return (
+        <span className="badge-semantic-error">
+          Blocked
+        </span>
+      );
+    }
+    if (appt.payment_status === 'pending') {
+      return (
+        <span className="badge-semantic-warning">
+          Payment Pending
+        </span>
+      );
+    }
+    return (
+      <span className="badge-semantic-neutral">
+        Scheduled
+      </span>
+    );
   };
 
-  const totalPages = Math.ceil(appointments.length / itemsPerPage);
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const currentAppointments = appointments.slice(startIndex, startIndex + itemsPerPage);
-
   return (
-    <div className="doctor-theme animate-fade-in">
+    <div className="flex flex-col gap-9 pb-16 font-['Inter',system-ui,sans-serif]">
       
-      {/* FULL PAGE BANNER */}
-      <div className="page-banner" style={{ backgroundImage: 'url(/images/banner/img1.jpg)' }}>
-        <div className="container">
-          <div className="page-banner-entry text-center">
-            <h1>Welcome back, Dr. {user?.firstName || 'Doctor'}! 👋</h1>
-            
-            <nav aria-label="breadcrumb" className="breadcrumb-row">
-              <ul className="breadcrumb">
-                <li className="breadcrumb-item active" aria-current="page">
-                  <i className="fa-regular fa-calendar" style={{ marginRight: '0.5rem' }}></i>
-                  {new Date().toLocaleDateString('en-GB', { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' })}
-                </li>
-              </ul>
-            </nav>
-            <p style={{ color: 'var(--text-body)', marginTop: '1.5rem', fontSize: '1.1rem', fontWeight: '500' }}>
-              Here's an overview of your schedule today.
-            </p>
+      {/* ── 1. HERO GREETING SECTION (Matches Screenshot Hero) ─────────── */}
+      <section className="flex flex-col items-center justify-center text-center pt-6 pb-2">
+        <h1 className="text-[26px] md:text-[30px] font-semibold text-[#202223] tracking-tight m-0">
+          {greeting}!
+        </h1>
+        <p className="text-[15px] md:text-[16px] text-[#616161] font-normal mt-1.5 max-w-xl">
+          Let’s continue advancing your patients’ physical recovery.
+        </p>
+      </section>
+
+      {/* ── 2. CENTRAL QUICK-ACTION WIDGET ("Work with Sidekick" Style) ─── */}
+      <div className="w-full max-w-2xl mx-auto">
+        <div className="bg-[#FFFFFF] border border-[#E5E5E5] rounded-[16px] p-3.5 shadow-[0_2px_8px_rgba(0,0,0,0.02)] hover:border-[#D5D5D5] transition-all">
+          <div className="flex items-center gap-2.5 px-2">
+            <Search size={15} className="text-[#8A8A8A] shrink-0" />
+            <input 
+              id="clinical-quick-search"
+              type="text"
+              placeholder="Search patients by name, condition, or jump to treatment plan..."
+              value={searchQuery}
+              onChange={(e) => {
+                setSearchQuery(e.target.value);
+                setCurrentPage(1);
+              }}
+              className="w-full text-[13px] text-[#202223] placeholder-[#8A8A8A] bg-transparent border-none outline-none focus:ring-0"
+            />
+          </div>
+
+          <div className="mt-3 pt-2.5 border-t border-[#F0F0F0] flex items-center justify-between text-[12px] px-1">
+            <div className="flex items-center gap-1.5 text-[#616161]">
+              <span className="flex items-center justify-center w-5 h-5 rounded bg-[#F7F7F7] border border-[#E5E5E5]">
+                <Sparkles size={11} className="text-[#202223]" />
+              </span>
+              <span className="text-[11px] font-medium text-[#616161]">Practice Assistant</span>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <button 
+                onClick={() => setSearchQuery('')}
+                className="text-[12px] text-[#616161] hover:text-[#202223] px-2 py-1 rounded hover:bg-[#F0F0F0] transition-colors"
+              >
+                Clear
+              </button>
+              <button 
+                onClick={() => navigate('/doctor-dashboard/patients')}
+                className="text-[12px] font-medium text-[#202223] bg-[#F7F7F7] hover:bg-[#EFEFEF] border border-[#E5E5E5] px-2.5 py-1 rounded-md transition-colors flex items-center gap-1"
+              >
+                <span>Patients Roster</span>
+                <ChevronRight size={12} />
+              </button>
+            </div>
           </div>
         </div>
-        <img className="pt-img1" style={{ animation: 'left-right 8s infinite ease-in-out' }} src="/images/shap/wave-blue.png" alt=""/>
-        <img className="pt-img2" style={{ animation: 'up-down 6s infinite ease-in-out' }} src="/images/shap/circle-dots.png" alt=""/>
-        <img className="pt-img3" style={{ animation: 'rotation 20s infinite linear' }} src="/images/shap/plus-blue.png" alt=""/>
       </div>
 
-      <main className="main-container">
+      {/* ── 3. 3-CARD HIGHLIGHT GRID (Matches 3 Cards in Screenshot) ─────── */}
+      <section className="grid grid-cols-1 md:grid-cols-3 gap-5">
+        
+        {/* Card 1: Today's Appointments */}
+        <div className="saas-card p-5 flex flex-col justify-between h-[210px] bg-[#FFFFFF]">
+          <div className="flex flex-col">
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-[11px] font-medium tracking-wide uppercase text-[#8A8A8A]">
+                Clinical Queue
+              </span>
+              <span className="text-[11px] font-semibold text-[#245B19] bg-[#D9F7C3] px-2 py-0.5 rounded-full">
+                {todayCount} Today
+              </span>
+            </div>
+            <h3 className="text-[16px] font-semibold text-[#202223] m-0">
+              Today's Consultations
+            </h3>
+            <p className="text-[13px] text-[#616161] font-normal mt-1.5 line-clamp-2 leading-relaxed">
+              Review patient clinical profiles, record diagnostic notes, and issue updated treatment plans.
+            </p>
+          </div>
 
-        {/* Stats Overview */}
-        <div className="summary-cards-wrapper">
-            <div className="summary-card">
-                <div className="icon-box purple">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 16 16">
-                        <path d="M3.5 0a.5.5 0 0 1 .5.5V1h8V.5a.5.5 0 0 1 1 0V1h1a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2h1V.5a.5.5 0 0 1 .5-.5M1 4v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V4z"/>
-                        <path d="M4.5 7.5a.5.5 0 0 0-.5.5v1a.5.5 0 0 0 .5.5h1a.5.5 0 0 0 .5-.5v-1a.5.5 0 0 0-.5-.5zm3 0a.5.5 0 0 0-.5.5v1a.5.5 0 0 0 .5.5h1a.5.5 0 0 0 .5-.5v-1a.5.5 0 0 0-.5-.5zm3 0a.5.5 0 0 0-.5.5v1a.5.5 0 0 0 .5.5h1a.5.5 0 0 0 .5-.5v-1a.5.5 0 0 0-.5-.5z"/>
-                    </svg>
-                </div>
-                <div className="summary-info">
-                    <p>Today's Appointments</p>
-                    <h3>{todayAppointments}</h3>
-                </div>
-            </div>
-            
-            <div className="summary-card">
-                <div className="icon-box teal">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 16 16">
-                        <path d="M15 14s1 0 1-1-1-4-5-4-5 3-5 4 1 1 1 1h8Zm-7.978-1L7 12.996c.001-.264.167-1.03.76-1.72C8.312 10.629 9.282 10 11 10c1.717 0 2.687.63 3.24 1.276.593.69.758 1.457.76 1.72l-.008.002-.014.002zM11 7a3 3 0 1 0 0-6 3 3 0 0 0 0 6Zm2-3a2 2 0 1 1-4 0 2 2 0 0 1 4 0ZM6.936 9.28a6.002 6.002 0 0 0-1.23-.247A7.35 7.35 0 0 0 5 9c-4 0-5 3-5 4q0 1 1 1h4.216A2.238 2.238 0 0 1 5 13c0-1.01.377-2.042 1.09-2.904.243-.294.526-.569.846-.816ZM4.92 10A5.493 5.493 0 0 0 4 13H1c0-.26.164-1.03.76-1.724.545-.636 1.492-1.256 3.16-1.275ZM1.5 5.5a3 3 0 1 1 6 0 3 3 0 0 1-6 0Zm3-2a2 2 0 1 0 0 4 2 2 0 0 0 0-4Z"/>
-                    </svg>
-                </div>
-                <div className="summary-info">
-                    <p>Patients Today</p>
-                    <h3>{uniquePatients}</h3>
-                </div>
-            </div>
+          <div className="pt-3 border-t border-[#F0F0F0]">
+            <button 
+              onClick={() => {
+                const el = document.getElementById('appointments-section');
+                if (el) el.scrollIntoView({ behavior: 'smooth' });
+              }}
+              className="btn-secondary-saas w-full justify-between"
+            >
+              <span>View Today's Queue</span>
+              <ChevronRight size={14} />
+            </button>
+          </div>
         </div>
 
-        {/* Quick Actions */}
-        <section className="action-buttons">
-          <Link to="/doctor-dashboard/availability" className="btn btn-outline-primary">
-            <i className="fa-regular fa-calendar-check"></i> My Availability
-          </Link>
-          <Link to="/doctor-dashboard/exercise-library" className="btn btn-outline-secondary">
-            <i className="fa-solid fa-person-walking"></i> Exercise Library
-          </Link>
-        </section>
-
-        {/* Patients List */}
-        <section className="bg-slate-50 p-6 rounded-2xl mt-8 border border-slate-100 shadow-sm">
-          <div className="section-header">
-            <h2>Today's Patients</h2>
+        {/* Card 2: Red-Flag Alerts */}
+        <div className="saas-card p-5 flex flex-col justify-between h-[210px] bg-[#FFFFFF]">
+          <div className="flex flex-col">
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-[11px] font-medium tracking-wide uppercase text-[#8A8A8A]">
+                Patient Monitoring
+              </span>
+              {pendingAlertsCount > 0 ? (
+                <span className="text-[11px] font-semibold text-[#B42318] bg-[#FCE4E4] px-2 py-0.5 rounded-full flex items-center gap-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#E5484D]" />
+                  {pendingAlertsCount} Action Required
+                </span>
+              ) : (
+                <span className="text-[11px] font-medium text-[#245B19] bg-[#D9F7C3] px-2 py-0.5 rounded-full">
+                  All Clear
+                </span>
+              )}
+            </div>
+            <h3 className="text-[16px] font-semibold text-[#202223] m-0">
+              Red-Flag Alerts
+            </h3>
+            <p className="text-[13px] text-[#616161] font-normal mt-1.5 line-clamp-2 leading-relaxed">
+              Live notifications from home logs when patients report high pain (≥ 8/10) or acute new symptoms.
+            </p>
           </div>
-          
-          <div className="patient-list">
-            {loading ? (
-              <div className="flex justify-center items-center h-48">
-                <Loader2 className="w-8 h-8 text-primary animate-spin" />
-              </div>
-            ) : error ? (
-              <div className="p-6 text-center text-danger bg-red-50 rounded-xl">{error}</div>
-            ) : appointments.length === 0 ? (
-              <div className="p-12 text-center bg-white rounded-xl shadow-sm border border-gray-100">
-                <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <i className="fa-regular fa-calendar text-gray-300 text-2xl"></i>
-                </div>
-                <h3 className="text-gray-900 font-medium text-lg mb-1">No Appointments Today</h3>
-                <p className="text-gray-500">Enjoy your free time or manage your library.</p>
-              </div>
-            ) : (
-              currentAppointments.map((appt) => {
-                const isBlocked = appt.status === 'blocked';
-                const isCompleted = appt.status === 'completed';
-                const isFirstVisit = appt.past_consultations_count === 0;
-                
-                // If it's a next action (not completed, not blocked)
-                const isNextAction = !isBlocked && !isCompleted;
 
-                return (
-                  <div key={appt.id} className={`appointment-horizontal-card card-theme-warning ${isBlocked ? 'blocked-card' : ''}`} style={isBlocked ? { opacity: 0.6 } : {}}>
-                      <div className="card-time-block">
-                          <span className="appointment-time">{formatTime(appt.start_time)}</span>
-                          <span className="appointment-date">{formatDate(appt.appointment_date)}</span>
-                      </div>
-                      
-                      <div className="card-status-block">
-                          {!isBlocked && (
-                              <span className={`status-badge ${isFirstVisit ? 'in-progress' : 'scheduled'}`}>
-                                  {isFirstVisit ? 'First Visit' : 'Follow-Up'}
-                              </span>
-                          )}
-                      </div>
+          <div className="pt-3 border-t border-[#F0F0F0]">
+            <button 
+              onClick={() => {
+                if (alerts.length > 0) {
+                  setSelectedAlert(alerts[0]);
+                } else {
+                  navigate('/doctor-dashboard/patients');
+                }
+              }}
+              className="btn-secondary-saas w-full justify-between"
+            >
+              <span>{pendingAlertsCount > 0 ? `Review Alerts (${pendingAlertsCount})` : 'Check Alert History'}</span>
+              <ChevronRight size={14} />
+            </button>
+          </div>
+        </div>
 
-                      <div className="card-details-block">
-                          <h4 className="patient-heading" style={isBlocked ? { textDecoration: 'line-through', color: 'var(--gray-400)' } : {}}>
-                              {isBlocked ? '--- BLOCKED ---' : (appt.patient_name || 'Unknown Patient')}
-                          </h4>
-                          {!isBlocked && appt.diagnosis && (
-                              <div className="practitioner-info">
-                                  <span>Condition: {appt.diagnosis}</span>
-                              </div>
+        {/* Card 3: Rehab Exercise Library */}
+        <div className="saas-card p-5 flex flex-col justify-between h-[210px] bg-[#FFFFFF]">
+          <div className="flex flex-col">
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-[11px] font-medium tracking-wide uppercase text-[#8A8A8A]">
+                Exercise Prescriptions
+              </span>
+              <span className="text-[11px] font-medium text-[#555555] bg-[#EEEEEE] px-2 py-0.5 rounded-full">
+                Video Library
+              </span>
+            </div>
+            <h3 className="text-[16px] font-semibold text-[#202223] m-0">
+              Exercise Library & Plans
+            </h3>
+            <p className="text-[13px] text-[#616161] font-normal mt-1.5 line-clamp-2 leading-relaxed">
+              Prescribe multi-week recovery routines, target muscle groups, and configure sets/reps.
+            </p>
+          </div>
+
+          <div className="pt-3 border-t border-[#F0F0F0]">
+            <button 
+              onClick={() => navigate('/doctor-dashboard/exercise-library')}
+              className="btn-secondary-saas w-full justify-between"
+            >
+              <span>Manage Exercise Library</span>
+              <ChevronRight size={14} />
+            </button>
+          </div>
+        </div>
+
+      </section>
+
+      {/* ── 4. TODAY'S CLINICAL QUEUE TABLE ─────────────────────────────── */}
+      <section id="appointments-section" className="saas-card bg-[#FFFFFF] overflow-hidden">
+        
+        {/* Table Control Header */}
+        <div className="p-4 md:p-5 border-b border-[#EAEAEA] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 bg-[#FFFFFF]">
+          <div>
+            <h2 className="text-[16px] font-semibold text-[#202223] m-0">
+              Today's Scheduled Appointments
+            </h2>
+            <p className="text-[12px] text-[#616161] font-normal mt-0.5">
+              Showing active consultations for {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric', year: 'numeric' })}
+            </p>
+          </div>
+
+          <div className="flex items-center gap-2 self-stretch sm:self-auto">
+            {/* Filter Pill Tabs */}
+            <div className="flex items-center bg-[#F7F7F7] border border-[#E5E5E5] p-0.5 rounded-lg text-[12px]">
+              <button
+                onClick={() => setStatusFilter('all')}
+                className={`px-2.5 py-1 rounded-[6px] transition-colors ${
+                  statusFilter === 'all' 
+                    ? 'bg-[#FFFFFF] font-medium text-[#202223] shadow-xs' 
+                    : 'text-[#616161] hover:text-[#202223]'
+                }`}
+              >
+                All ({appointments.length})
+              </button>
+              <button
+                onClick={() => setStatusFilter('scheduled')}
+                className={`px-2.5 py-1 rounded-[6px] transition-colors ${
+                  statusFilter === 'scheduled' 
+                    ? 'bg-[#FFFFFF] font-medium text-[#202223] shadow-xs' 
+                    : 'text-[#616161] hover:text-[#202223]'
+                }`}
+              >
+                Pending
+              </button>
+              <button
+                onClick={() => setStatusFilter('completed')}
+                className={`px-2.5 py-1 rounded-[6px] transition-colors ${
+                  statusFilter === 'completed' 
+                    ? 'bg-[#FFFFFF] font-medium text-[#202223] shadow-xs' 
+                    : 'text-[#616161] hover:text-[#202223]'
+                }`}
+              >
+                Completed ({completedCount})
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Table Body */}
+        <div className="overflow-x-auto">
+          {loading ? (
+            <div className="flex items-center justify-center h-48 text-[#8A8A8A] gap-2">
+              <Loader2 size={18} className="animate-spin text-[#202223]" />
+              <span className="text-xs">Loading today's clinical queue...</span>
+            </div>
+          ) : error ? (
+            <div className="p-8 text-center text-[#B42318] bg-[#FCE4E4] m-4 rounded-lg text-xs">
+              {error}
+            </div>
+          ) : filteredAppointments.length === 0 ? (
+            <div className="p-12 text-center flex flex-col items-center justify-center">
+              <div className="w-10 h-10 rounded-full bg-[#F7F7F7] border border-[#E5E5E5] flex items-center justify-center text-[#8A8A8A] mb-3">
+                <Calendar size={18} />
+              </div>
+              <h4 className="text-[14px] font-semibold text-[#202223] m-0">No Appointments Match Filter</h4>
+              <p className="text-[12px] text-[#8A8A8A] max-w-sm mt-1">
+                {searchQuery ? `No patient matches "${searchQuery}".` : "There are no appointments scheduled for this view today."}
+              </p>
+            </div>
+          ) : (
+            <table className="w-full text-left border-collapse text-[13px]">
+              <thead>
+                <tr className="bg-[#F7F7F7] border-b border-[#EAEAEA] text-[#616161] text-[12px] font-medium">
+                  <th className="py-2.5 px-4 font-medium">Slot Time</th>
+                  <th className="py-2.5 px-4 font-medium">Patient Details</th>
+                  <th className="py-2.5 px-4 font-medium">Visit Type</th>
+                  <th className="py-2.5 px-4 font-medium">Condition / Diagnosis</th>
+                  <th className="py-2.5 px-4 font-medium">Status</th>
+                  <th className="py-2.5 px-4 font-medium text-right">Clinical Action</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-[#EAEAEA]">
+                {paginatedAppointments.map((appt) => {
+                  const isBlocked = appt.status === 'blocked';
+                  const isCompleted = appt.status === 'completed';
+                  const isFirstVisit = appt.past_consultations_count === 0;
+
+                  return (
+                    <tr 
+                      key={appt.id} 
+                      className={`hover:bg-[#F8F8F8] transition-colors ${isBlocked ? 'opacity-50 bg-[#FBFBFB]' : ''}`}
+                    >
+                      {/* Slot Time */}
+                      <td className="py-3 px-4 whitespace-nowrap">
+                        <div className="flex items-center gap-1.5 font-medium text-[#202223]">
+                          <Clock size={13} className="text-[#8A8A8A]" />
+                          <span>{formatTime(appt.start_time)}</span>
+                        </div>
+                      </td>
+
+                      {/* Patient Details */}
+                      <td className="py-3 px-4">
+                        <div className="flex flex-col">
+                          <span className={`font-semibold text-[#202223] ${isBlocked ? 'line-through text-[#8A8A8A]' : ''}`}>
+                            {isBlocked ? 'Blocked Slot' : (appt.patient_name || 'Walk-In Patient')}
+                          </span>
+                          {!isBlocked && appt.patient_phone && (
+                            <span className="text-[11px] text-[#8A8A8A] font-mono mt-0.5">
+                              {appt.patient_phone}
+                            </span>
                           )}
-                      </div>
-                      
-                      <div className="card-actions-block">
-                        {isBlocked ? (
-                          <span className="status-badge blocked">Blocked</span>
-                        ) : isCompleted ? (
-                          <span className="status-badge scheduled">Completed</span>
+                        </div>
+                      </td>
+
+                      {/* Visit Type */}
+                      <td className="py-3 px-4 whitespace-nowrap">
+                        {!isBlocked ? (
+                          <span className={isFirstVisit ? 'badge-semantic-neutral' : 'badge-semantic-success'}>
+                            {isFirstVisit ? 'First Visit' : 'Follow-Up'}
+                          </span>
                         ) : (
+                          <span className="text-[#8A8A8A] text-xs">—</span>
+                        )}
+                      </td>
+
+                      {/* Diagnosis / Notes */}
+                      <td className="py-3 px-4 max-w-xs truncate">
+                        <span className="text-[#616161]">
+                          {appt.diagnosis || appt.visit_reason || 'Initial Assessment'}
+                        </span>
+                      </td>
+
+                      {/* Status */}
+                      <td className="py-3 px-4 whitespace-nowrap">
+                        {getStatusBadge(appt)}
+                      </td>
+
+                      {/* Action Button */}
+                      <td className="py-3 px-4 text-right whitespace-nowrap">
+                        {isBlocked ? (
+                          <span className="text-[11px] text-[#8A8A8A]">Unavailable</span>
+                        ) : isCompleted ? (
                           <button 
-                            className="btn-action"
                             onClick={() => navigate(`/doctor-dashboard/consultation/${appt.id}`, { state: { appointment: appt } })}
+                            className="text-[12px] font-medium text-[#2C5E91] hover:underline cursor-pointer"
                           >
-                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
-                                <path d="M8 1a2 2 0 0 1 2 2v1h3a2 2 0 0 1 2 2v2a2 2 0 0 1-2 2h-3v1a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-1H3a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h3V3a2 2 0 0 1 2-2z"/>
-                            </svg>
-                            <span>Start</span>
+                            Review Notes
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() => navigate(`/doctor-dashboard/consultation/${appt.id}`, { state: { appointment: appt } })}
+                            className="btn-primary-saas text-[12px] py-1.5 px-3"
+                          >
+                            <Stethoscope size={13} />
+                            <span>Start Consultation</span>
                           </button>
                         )}
-                      </div>
-                  </div>
-                );
-              })
-            )}
-          </div>
-          
-          {/* Pagination Bar */}
-          {appointments.length > 0 && (
-              <div className="pagination-bar">
-                  <div className="pagination-left-panel">
-                      <label htmlFor="perPageSelect">Rows per page:</label>
-                      <select 
-                          id="perPageSelect" 
-                          className="rows-dropdown"
-                          value={itemsPerPage}
-                          onChange={(e) => {
-                              setItemsPerPage(Number(e.target.value));
-                              setCurrentPage(1);
-                          }}
-                      >
-                          <option value="5">5</option>
-                          <option value="10">10</option>
-                          <option value="20">20</option>
-                          <option value="50">50</option>
-                      </select>
-                  </div>
-                  
-                  <div className="pagination-center-panel">
-                      <nav className="pagination-numbers-nav" aria-label="Appointments page navigation">
-                          <button 
-                              className="page-num-btn" 
-                              onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                              disabled={currentPage === 1}
-                              aria-label="Previous page"
-                          >
-                              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
-                                  <path fillRule="evenodd" d="M11.354 1.646a.5.5 0 0 1 0 .708L5.707 8l5.647 5.646a.5.5 0 0 1-.708.708l-6-6a.5.5 0 0 1 0-.708l6-6a.5.5 0 0 1 .708 0z"/>
-                              </svg>
-                          </button>
-                          
-                          {Array.from({ length: totalPages }, (_, i) => i + 1).map(pageNum => (
-                              <button
-                                  key={pageNum}
-                                  className={`page-num-btn ${currentPage === pageNum ? 'active' : ''}`}
-                                  onClick={() => setCurrentPage(pageNum)}
-                                  aria-label={`Go to page ${pageNum}`}
-                                  aria-current={currentPage === pageNum ? 'page' : undefined}
-                              >
-                                  {pageNum}
-                              </button>
-                          ))}
-                          
-                          <button 
-                              className="page-num-btn" 
-                              onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                              disabled={currentPage === totalPages}
-                              aria-label="Next page"
-                          >
-                              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
-                                  <path fillRule="evenodd" d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708z"/>
-                              </svg>
-                          </button>
-                      </nav>
-                  </div>
-                  
-                  <div className="pagination-right-panel">
-                      <span>Showing {appointments.length > 0 ? startIndex + 1 : 0}-{Math.min(startIndex + itemsPerPage, appointments.length)} of {appointments.length} entries</span>
-                  </div>
-              </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
           )}
-        </section>
-      </main>
+        </div>
+
+        {/* Pagination Bar */}
+        {filteredAppointments.length > 0 && (
+          <div className="p-3.5 border-t border-[#EAEAEA] flex items-center justify-between text-[12px] text-[#616161] bg-[#FFFFFF]">
+            <div className="flex items-center gap-2">
+              <span>Show</span>
+              <select 
+                value={itemsPerPage}
+                onChange={(e) => {
+                  setItemsPerPage(Number(e.target.value));
+                  setCurrentPage(1);
+                }}
+                className="bg-[#FFFFFF] border border-[#E5E5E5] rounded px-1.5 py-0.5 text-[#202223] text-xs outline-none cursor-pointer"
+              >
+                <option value={5}>5</option>
+                <option value={10}>10</option>
+                <option value={20}>20</option>
+              </select>
+              <span>entries</span>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <span>
+                Page {currentPage} of {totalPages}
+              </span>
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={() => setCurrentPage(p => Math.max(p - 1, 1))}
+                  disabled={currentPage === 1}
+                  className="p-1 rounded border border-[#E5E5E5] disabled:opacity-30 disabled:cursor-not-allowed hover:bg-[#F0F0F0] text-[#202223] transition-colors"
+                >
+                  <ChevronLeft size={14} />
+                </button>
+                <button
+                  onClick={() => setCurrentPage(p => Math.min(p + 1, totalPages))}
+                  disabled={currentPage === totalPages}
+                  className="p-1 rounded border border-[#E5E5E5] disabled:opacity-30 disabled:cursor-not-allowed hover:bg-[#F0F0F0] text-[#202223] transition-colors"
+                >
+                  <ChevronRight size={14} />
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+      </section>
+
+      {/* ── 5. ALERT REVIEW MODAL (If triggered) ────────────────────────── */}
+      {selectedAlert && (
+        <AlertReviewModal
+          alert={selectedAlert}
+          onClose={() => setSelectedAlert(null)}
+          onSuccess={() => {
+            setSelectedAlert(null);
+            fetchDashboardData();
+          }}
+        />
+      )}
+
     </div>
   );
 };
