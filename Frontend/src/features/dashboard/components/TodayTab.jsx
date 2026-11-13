@@ -275,7 +275,7 @@ const TodayTab = ({ patientId, onBookAppointment }) => {
             <h2 style={{ marginBottom: '10px' }}>All Done for Today!</h2>
             <p style={{ marginBottom: '25px' }}>You completed {sessions.length} session{sessions.length !== 1 ? 's' : ''}. Great job staying on track!</p>
             <div style={{ display: 'flex', gap: '15px', justifyContent: 'center' }}>
-                <button className="btn btn-filled" style={{ width: 'auto', padding: '10px 30px' }} onClick={() => useNavigate()('/dashboard/progress')}>View Progress</button>
+                <button className="btn btn-filled" style={{ width: 'auto', padding: '10px 30px' }} onClick={() => navigate('/dashboard/progress')}>View Progress</button>
             </div>
           </div>
       ) : (
