@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
 
-const AlertSection = ({ alerts, onReview, formatTime }) => {
+const AlertSection = ({ alerts = [], onReview, formatTime }) => {
+    const [urgentOpen, setUrgentOpen] = useState(true); // Open by default
+    const [reviewOpen, setReviewOpen] = useState(false);
+
     if (!alerts || alerts.length === 0) return null;
 
     const urgentAlerts = alerts.filter(a => a.alert_level === 'red');
     const reviewAlerts = alerts.filter(a => a.alert_level === 'yellow');
-
-    const [urgentOpen, setUrgentOpen] = useState(true); // Open by default
-    const [reviewOpen, setReviewOpen] = useState(false);
 
     return (
         <div className="alerts-container">
