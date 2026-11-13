@@ -1,5 +1,16 @@
 import React, { useState } from 'react';
-import { Loader2, Plus, Trash2, CalendarX2 } from 'lucide-react';
+import { 
+  Loader2, 
+  Plus, 
+  Trash2, 
+  CalendarX2, 
+  Clock, 
+  ChevronLeft, 
+  ChevronRight, 
+  Info, 
+  Calendar,
+  AlertCircle 
+} from 'lucide-react';
 
 const DateOverridesTab = ({ rules, onUpdate, getToken }) => {
   const [showForm, setShowForm] = useState(false);
@@ -12,9 +23,6 @@ const DateOverridesTab = ({ rules, onUpdate, getToken }) => {
   
   // Date constraints
   const today = new Date().toLocaleDateString('en-CA');
-  const maxDateObj = new Date();
-  maxDateObj.setDate(maxDateObj.getDate() + 365);
-  const maxDate = maxDateObj.toISOString().split('T')[0];
 
   const specificDates = rules?.specific_dates || {};
   // Sort dates chronologically for display
@@ -24,7 +32,7 @@ const DateOverridesTab = ({ rules, onUpdate, getToken }) => {
 
   const handleOpenForm = () => {
     setShowForm(true);
-    setFormDate('');
+    setFormDate(today);
     setFormType('leave');
     setFormShifts([{ start: '09:00', end: '17:00' }]);
     setErrorMsg('');
@@ -66,9 +74,7 @@ const DateOverridesTab = ({ rules, onUpdate, getToken }) => {
     const dd = String(dateObj.getDate()).padStart(2, '0');
     const dateStr = `${yyyy}-${mm}-${dd}`;
     
-    // Don't allow selecting past dates
     if (dateStr < today) return;
-    
     setFormDate(dateStr);
   };
 
@@ -95,18 +101,15 @@ const DateOverridesTab = ({ rules, onUpdate, getToken }) => {
       return;
     }
     
-    // Client-side ignore if past date
     if (formDate < today) {
-      // Just silently close as requested in PRD
       handleCloseForm();
       return;
     }
 
     const shifts = formType === 'leave' ? [] : formShifts;
 
-    // Validate shifts if not leave
     if (formType === 'hours' && shifts.length === 0) {
-      setErrorMsg('Please add at least one hours block, or select Full Day Off.');
+      setErrorMsg('Please add at least one shift, or select Full Day Leave.');
       return;
     }
     
@@ -143,11 +146,11 @@ const DateOverridesTab = ({ rules, onUpdate, getToken }) => {
         onUpdate(data.availability_rules);
         handleCloseForm();
       } else {
-        setErrorMsg(data.message || 'Failed to save override');
+        setErrorMsg(data.message || 'Failed to save date override.');
       }
     } catch (err) {
-      console.error(err);
-      setErrorMsg('An error occurred.');
+      console.error("Save date override error:", err);
+      setErrorMsg('An error occurred while saving the override.');
     } finally {
       setLoading(false);
     }
@@ -174,229 +177,324 @@ const DateOverridesTab = ({ rules, onUpdate, getToken }) => {
     }
   };
 
-  // Format date nicely (e.g. 25 Jun 2026)
   const formatDateDisplay = (dateString) => {
     const d = new Date(dateString);
-    return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+    return d.toLocaleDateString('en-GB', { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' });
   };
 
   return (
-    <div className="animate-fade-in">
+    <div className="flex flex-col gap-8 font-['Inter',system-ui,sans-serif] text-[#202223]">
       
-      <div className="flex-between">
+      {/* ── 1. HEADER & ACTION BUTTON ─────────────────────────────── */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-[#EAEAEA]">
         <div>
-          <h3><i className="fa-regular fa-calendar-xmark" style={{ color: 'var(--secondary)', marginRight: '8px' }}></i> Date Overrides</h3>
-          <p style={{ fontSize: '0.95rem', color: 'var(--gray-800)' }}>
-            Mark specific dates as leave or give them different hours from your weekly routine.
+          <h3 className="text-[15px] font-semibold text-[#202223] m-0 flex items-center gap-2">
+            <CalendarX2 size={16} className="text-[#616161]" />
+            <span>Specific Calendar Overrides & Leaves</span>
+          </h3>
+          <p className="text-[13px] text-[#616161] mt-1 font-normal">
+            Mark holidays, clinical conferences, or custom hours for individual calendar dates.
           </p>
         </div>
+
         {!showForm && (
-          <button onClick={handleOpenForm} className="btn btn-outline">
-            + Mark a Date
+          <button 
+            type="button"
+            onClick={handleOpenForm} 
+            className="btn-primary-saas shrink-0"
+          >
+            <Plus size={14} />
+            <span>Mark a Date</span>
           </button>
         )}
       </div>
 
+      {/* ── 2. ADD OVERRIDE FORM MODAL / PANEL ────────────────────── */}
       {showForm && (
-        <div style={{ backgroundColor: 'var(--gray-100)', border: '1px solid var(--gray-200)', borderRadius: '1rem', padding: '1.5rem', marginBottom: '2rem' }}>
-          <h4 style={{ fontFamily: 'var(--font-secondary)', fontWeight: 600, color: 'var(--dark-brand)', marginBottom: '1.5rem' }}>Mark a Date</h4>
-          
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '2rem' }}>
-            <div style={{ flex: '1 1 300px' }}>
-              <label style={{ display: 'block', fontSize: '0.9rem', fontWeight: 600, color: 'var(--text-heading)', marginBottom: '0.5rem' }}>Date</label>
-              <div className="preview-card" style={{ maxWidth: '350px' }}>
-                <div className="cal-header">
-                  <button onClick={prevMonth} aria-label="Previous Month" className="btn-icon">
-                    <i className="fa-solid fa-chevron-left"></i>
-                  </button>
-                  <span style={{ fontWeight: 600, color: 'var(--dark-brand)' }}>{currentMonth.toLocaleString('default', { month: 'long', year: 'numeric' })}</span>
-                  <button onClick={nextMonth} aria-label="Next Month" className="btn-icon">
-                    <i className="fa-solid fa-chevron-right"></i>
-                  </button>
-                </div>
-                
-                <div className="cal-grid" style={{ padding: '0.5rem 0' }}>
-                  {['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'].map(d => (
-                    <div key={d} className="cal-day-name">{d}</div>
-                  ))}
-                  
-                  {calendarDays.map((day, idx) => {
-                    if (!day) return <div key={idx} className="cal-date"></div>;
-                    
-                    const dateObj = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), day);
-                    const yyyy = dateObj.getFullYear();
-                    const mm = String(dateObj.getMonth() + 1).padStart(2, '0');
-                    const dd = String(dateObj.getDate()).padStart(2, '0');
-                    const dateStr = `${yyyy}-${mm}-${dd}`;
-                    
-                    const isSelected = formDate === dateStr;
-                    const isPast = dateStr < today;
+        <div className="bg-[#FFFFFF] border border-[#E5E5E5] rounded-xl p-5 shadow-xs">
+          <div className="flex items-center justify-between pb-4 mb-5 border-b border-[#EAEAEA]">
+            <h4 className="text-[15px] font-semibold text-[#202223] m-0">
+              Configure Date Override
+            </h4>
+            <span className="text-[12px] text-[#8A8A8A]">
+              Selected: <strong className="text-[#202223] font-mono">{formDate || 'None'}</strong>
+            </span>
+          </div>
 
-                    return (
-                      <div
-                        key={idx}
-                        onClick={() => handleDateClick(day)}
-                        className={`cal-date ${!isPast ? 'active-month' : ''} ${isSelected ? 'selected' : ''}`}
-                        style={{ opacity: isPast ? 0.6 : 1, cursor: isPast ? 'not-allowed' : 'pointer' }}
-                      >
-                        {day}
-                      </div>
-                    );
-                  })}
-                </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
+            
+            {/* Left: Date Selection Mini-Calendar */}
+            <div className="border border-[#E5E5E5] rounded-xl p-4 bg-[#FFFFFF]">
+              <div className="flex items-center justify-between mb-3 text-[13px] font-medium">
+                <button 
+                  type="button" 
+                  onClick={prevMonth} 
+                  className="p-1 rounded hover:bg-[#F0F0F0] text-[#616161] transition-colors"
+                >
+                  <ChevronLeft size={16} />
+                </button>
+                <span className="text-[#202223] font-semibold">
+                  {currentMonth.toLocaleString('default', { month: 'long', year: 'numeric' })}
+                </span>
+                <button 
+                  type="button" 
+                  onClick={nextMonth} 
+                  className="p-1 rounded hover:bg-[#F0F0F0] text-[#616161] transition-colors"
+                >
+                  <ChevronRight size={16} />
+                </button>
+              </div>
+
+              <div className="grid grid-cols-7 gap-1 text-center text-[11px] font-medium text-[#8A8A8A] mb-1">
+                {['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'].map(d => (
+                  <div key={d} className="py-1">{d}</div>
+                ))}
+              </div>
+
+              <div className="grid grid-cols-7 gap-1 text-[12px]">
+                {calendarDays.map((day, idx) => {
+                  if (!day) return <div key={idx} className="h-8" />;
+                  
+                  const dateObj = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), day);
+                  const yyyy = dateObj.getFullYear();
+                  const mm = String(dateObj.getMonth() + 1).padStart(2, '0');
+                  const dd = String(dateObj.getDate()).padStart(2, '0');
+                  const dateStr = `${yyyy}-${mm}-${dd}`;
+                  
+                  const isSelected = formDate === dateStr;
+                  const isPast = dateStr < today;
+
+                  return (
+                    <button
+                      key={idx}
+                      type="button"
+                      disabled={isPast}
+                      onClick={() => handleDateClick(day)}
+                      className={`h-8 w-8 mx-auto rounded-lg flex items-center justify-center font-medium transition-colors cursor-pointer ${
+                        isSelected 
+                          ? 'bg-[#111111] text-[#FFFFFF] shadow-xs' 
+                          : isPast 
+                          ? 'text-[#CCCCCC] cursor-not-allowed' 
+                          : 'text-[#202223] hover:bg-[#F0F0F0]'
+                      }`}
+                    >
+                      {day}
+                    </button>
+                  );
+                })}
               </div>
             </div>
 
-            <div style={{ flex: '1 1 300px', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+            {/* Right: Type and Hours */}
+            <div className="flex flex-col gap-5">
               <div>
-                <label style={{ display: 'block', fontSize: '0.9rem', fontWeight: 600, color: 'var(--text-heading)', marginBottom: '1rem' }}>Type</label>
-                <div className="radio-group" style={{ flexDirection: 'column', gap: '1rem', marginTop: 0 }}>
-                  <label className="radio-label">
+                <label className="text-[12px] font-semibold uppercase tracking-wider text-[#8A8A8A] block mb-2">
+                  Override Type
+                </label>
+                
+                <div className="flex flex-col gap-2">
+                  <label className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-all ${
+                    formType === 'leave' 
+                      ? 'border-[#111111] bg-[#FAFAFA]' 
+                      : 'border-[#E5E5E5] hover:bg-[#F7F7F7]'
+                  }`}>
                     <input
                       type="radio"
                       name="override_type"
                       checked={formType === 'leave'}
                       onChange={() => setFormType('leave')}
+                      className="text-[#111111] focus:ring-0 cursor-pointer"
                     />
-                    Full Day Off / Leave
+                    <div>
+                      <span className="text-[13px] font-medium text-[#202223] block">
+                        Full Day Off / Leave
+                      </span>
+                      <span className="text-[11px] text-[#616161]">
+                        No appointment slots will be computed or booked on this date.
+                      </span>
+                    </div>
                   </label>
-                  <label className="radio-label">
+
+                  <label className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-all ${
+                    formType === 'hours' 
+                      ? 'border-[#111111] bg-[#FAFAFA]' 
+                      : 'border-[#E5E5E5] hover:bg-[#F7F7F7]'
+                  }`}>
                     <input
                       type="radio"
                       name="override_type"
                       checked={formType === 'hours'}
                       onChange={() => setFormType('hours')}
+                      className="text-[#111111] focus:ring-0 cursor-pointer"
                     />
-                    Special Hours (different from weekly routine)
+                    <div>
+                      <span className="text-[13px] font-medium text-[#202223] block">
+                        Custom Special Hours
+                      </span>
+                      <span className="text-[11px] text-[#616161]">
+                        Override routine with specific clinical hours for this single date.
+                      </span>
+                    </div>
                   </label>
                 </div>
               </div>
 
+              {/* Special Hours Blocks */}
               {formType === 'hours' && (
-                <div style={{ paddingLeft: '1.5rem', borderLeft: '2px solid rgba(86, 90, 207, 0.2)', display: 'flex', flexDirection: 'column', gap: '1rem', marginTop: '1.5rem' }}>
+                <div className="flex flex-col gap-2 pt-2 border-t border-[#EAEAEA]">
+                  <span className="text-[12px] font-semibold uppercase tracking-wider text-[#8A8A8A]">
+                    Working Shifts
+                  </span>
                   {formShifts.map((shift, idx) => (
-                    <div key={idx} className="time-inputs">
-                      <div className="time-input-wrap">
-                        <input
-                          type="time"
-                          value={shift.start}
-                          onChange={(e) => updateShift(idx, 'start', e.target.value)}
-                        />
-                        <i className="fa-regular fa-clock"></i>
-                      </div>
-                      <span>to</span>
-                      <div className="time-input-wrap">
-                        <input
-                          type="time"
-                          value={shift.end}
-                          onChange={(e) => updateShift(idx, 'end', e.target.value)}
-                        />
-                        <i className="fa-regular fa-clock"></i>
-                      </div>
+                    <div key={idx} className="flex items-center gap-2 text-[13px]">
+                      <input
+                        type="time"
+                        value={shift.start}
+                        onChange={(e) => updateShift(idx, 'start', e.target.value)}
+                        className="bg-[#FFFFFF] border border-[#E5E5E5] rounded-lg px-2.5 py-1 text-[#202223] font-mono text-xs"
+                      />
+                      <span className="text-[#8A8A8A] text-xs">to</span>
+                      <input
+                        type="time"
+                        value={shift.end}
+                        onChange={(e) => updateShift(idx, 'end', e.target.value)}
+                        className="bg-[#FFFFFF] border border-[#E5E5E5] rounded-lg px-2.5 py-1 text-[#202223] font-mono text-xs"
+                      />
                       {formShifts.length > 1 && (
                         <button
+                          type="button"
                           onClick={() => removeShift(idx)}
-                          className="btn-icon"
+                          className="text-[#8A8A8A] hover:text-[#B42318] p-1 rounded"
                         >
-                          <i className="fa-regular fa-trash-can"></i>
+                          <Trash2 size={13} />
                         </button>
                       )}
                     </div>
                   ))}
                   <button
+                    type="button"
                     onClick={addShift}
-                    className="add-link"
+                    className="inline-flex items-center gap-1 text-[12px] text-[#2C5E91] hover:underline pt-1 w-fit"
                   >
-                    + Add another block
+                    <Plus size={12} />
+                    <span>Add shift</span>
                   </button>
                 </div>
               )}
 
               {errorMsg && (
-                <div style={{ color: 'var(--danger)', fontSize: '0.9rem', marginTop: '0.5rem' }}>{errorMsg}</div>
+                <div className="bg-[#FCE4E4] text-[#B42318] p-2.5 rounded-lg text-xs flex items-center gap-2">
+                  <AlertCircle size={14} className="shrink-0" />
+                  <span>{errorMsg}</span>
+                </div>
               )}
 
-              <div style={{ display: 'flex', gap: '1rem', marginTop: '1.5rem', justifyContent: 'flex-start' }}>
+              <div className="flex items-center gap-2.5 pt-3">
                 <button
+                  type="button"
                   onClick={handleSaveOverride}
                   disabled={loading}
-                  className="btn btn-primary"
+                  className="btn-primary-saas"
                 >
-                  {loading && <Loader2 className="w-4 h-4 animate-spin" style={{ marginRight: '8px' }} />}
-                  Save Override
+                  {loading ? <Loader2 size={14} className="animate-spin" /> : null}
+                  <span>Save Override</span>
                 </button>
                 <button
+                  type="button"
                   onClick={handleCloseForm}
                   disabled={loading}
-                  className="btn"
-                  style={{ backgroundColor: 'transparent', border: '1px solid var(--gray-300)', color: 'var(--text-body)' }}
+                  className="btn-secondary-saas"
                 >
                   Cancel
                 </button>
               </div>
+
             </div>
+
           </div>
         </div>
       )}
 
-      {/* List of existing overrides */}
-      <h3 style={{ textTransform: 'uppercase', fontSize: '0.9rem', letterSpacing: '1px', color: 'var(--gray-400)', marginTop: '1.5rem' }}>
-        Upcoming Overrides
-      </h3>
-      
-      <div className="override-list">
-        {sortedDates.length === 0 ? (
-          <p style={{ fontSize: '0.95rem', color: 'var(--gray-400)', fontStyle: 'italic', padding: '1.25rem 0' }}>No specific date overrides set.</p>
-        ) : (
-          sortedDates.map(dateKey => {
-            const shifts = specificDates[dateKey];
-            const isPast = dateKey < today;
-            
-            return (
-              <div key={dateKey} className="override-item" style={{ opacity: isPast ? 0.5 : 1 }}>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-                  <div className="override-date" style={{ marginBottom: 0 }}>{formatDateDisplay(dateKey)}</div>
-                  {shifts.length > 0 && (
-                    <div style={{ color: 'var(--text-body)', fontSize: '0.95rem' }}>
-                      {shifts.map((s, i) => (
-                        <span key={i} style={{ display: 'block' }}>
-                          {s.start} to {s.end}
-                        </span>
-                      ))}
-                    </div>
-                  )}
-                </div>
-                
-                <div style={{ flex: 1, display: 'flex', justifyContent: 'flex-end', alignItems: 'center', paddingRight: '2rem' }}>
-                  {shifts.length === 0 ? (
-                    <span className="badge badge-leave" style={{ marginBottom: 0 }}>Full Day Leave</span>
-                  ) : (
-                    <span className="badge badge-special" style={{ marginBottom: 0 }}>Special Hours</span>
-                  )}
-                </div>
-                
-                <button
-                  onClick={() => handleDeleteOverride(dateKey)}
-                  className="btn-icon"
-                  style={{ color: 'var(--danger)' }}
-                  title="Remove override"
-                >
-                  <i className="fa-solid fa-trash-can"></i>
-                </button>
-              </div>
-            );
-          })
-        )}
-      </div>
+      {/* ── 3. LIST OF UPCOMING OVERRIDES ─────────────────────────── */}
+      <section className="flex flex-col gap-3">
+        <h4 className="text-[13px] font-semibold uppercase tracking-wider text-[#8A8A8A] m-0">
+          Upcoming Scheduled Overrides ({sortedDates.length})
+        </h4>
 
-      <div className="alert-box">
-        <i className="fa-solid fa-circle-info fa-lg"></i>
+        {sortedDates.length === 0 ? (
+          <div className="p-8 text-center bg-[#F7F7F7] border border-[#E5E5E5] rounded-xl flex flex-col items-center justify-center">
+            <Calendar size={20} className="text-[#8A8A8A] mb-2" />
+            <span className="text-[13px] font-medium text-[#202223]">No date overrides scheduled</span>
+            <span className="text-[12px] text-[#8A8A8A] mt-0.5">
+              Your weekly routine applies automatically to all upcoming dates.
+            </span>
+          </div>
+        ) : (
+          <div className="rounded-xl border border-[#E5E5E5] divide-y divide-[#EAEAEA] bg-[#FFFFFF] overflow-hidden">
+            {sortedDates.map(dateKey => {
+              const shifts = specificDates[dateKey];
+              const isLeave = shifts.length === 0;
+
+              return (
+                <div 
+                  key={dateKey} 
+                  className="p-4 flex items-center justify-between gap-4 hover:bg-[#FAFAFA] transition-colors"
+                >
+                  <div className="flex items-center gap-4">
+                    <div className="w-10 h-10 rounded-lg bg-[#F7F7F7] border border-[#E5E5E5] flex flex-col items-center justify-center text-[#202223] shrink-0">
+                      <span className="text-[10px] text-[#8A8A8A] uppercase font-bold leading-none">
+                        {new Date(dateKey + 'T00:00:00').toLocaleDateString('en-US', { month: 'short' })}
+                      </span>
+                      <span className="text-[14px] font-bold leading-tight font-mono">
+                        {new Date(dateKey + 'T00:00:00').getDate()}
+                      </span>
+                    </div>
+
+                    <div className="flex flex-col">
+                      <span className="text-[14px] font-semibold text-[#202223]">
+                        {formatDateDisplay(dateKey)}
+                      </span>
+                      <span className="text-[12px] text-[#616161] font-mono mt-0.5">
+                        {isLeave ? 'Full Day Leave' : shifts.map(s => `${s.start} - ${s.end}`).join(', ')}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-4">
+                    {isLeave ? (
+                      <span className="badge-semantic-error">
+                        Leave / Closed
+                      </span>
+                    ) : (
+                      <span className="badge-semantic-warning">
+                        Custom Hours
+                      </span>
+                    )}
+
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteOverride(dateKey)}
+                      className="text-[#8A8A8A] hover:text-[#B42318] p-1.5 rounded hover:bg-[#FCE4E4]/40 transition-colors cursor-pointer"
+                      title="Remove this date override"
+                    >
+                      <Trash2 size={15} />
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </section>
+
+      {/* ── 4. CONTEXTUAL NOTE ────────────────────────────────────── */}
+      <div className="p-3.5 rounded-xl bg-[#F7F7F7] border border-[#E5E5E5] flex items-start gap-2.5 text-[12px] text-[#616161]">
+        <Info size={16} className="text-[#8A8A8A] shrink-0 mt-0.5" />
         <div>
-          <strong style={{ color: 'var(--dark-brand)' }}>Note:</strong> The system checks specific dates first. 
-          If a date is listed here, it overrides the weekly routine for that day entirely.
+          <span className="font-semibold text-[#202223]">Priority Order:</span> Specific date overrides always take precedence over your recurring weekly blueprint.
         </div>
       </div>
-      
+
     </div>
   );
 };
