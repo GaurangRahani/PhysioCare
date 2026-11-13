@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@clerk/clerk-react';
 import {
-  X, Upload, Video, Image, Loader2, ChevronLeft, ChevronRight, Trash2, Plus
+  X, Video, Image as ImageIcon, Loader2, Trash2, Plus, AlertTriangle
 } from 'lucide-react';
 
 const BODY_PARTS = [
@@ -20,10 +20,10 @@ const ExerciseFormModal = ({ isOpen, onClose, exercise, onSaved }) => {
     target_body_part: '',
     video_url: '',
   });
-  const [videoFile, setVideoFile] = useState(null);   // new file upload
-  const [photoFiles, setPhotoFiles] = useState([]);    // new file uploads
-  const [existingPhotos, setExistingPhotos] = useState([]); // URLs from DB (when editing)
-  const [photoPreview, setPhotoPreview] = useState([]); // local Object URLs for preview
+  const [videoFile, setVideoFile] = useState(null);
+  const [photoFiles, setPhotoFiles] = useState([]);
+  const [existingPhotos, setExistingPhotos] = useState([]);
+  const [photoPreview, setPhotoPreview] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -49,7 +49,7 @@ const ExerciseFormModal = ({ isOpen, onClose, exercise, onSaved }) => {
       setPhotoPreview([]);
     }
     setError('');
-  }, [exercise, isOpen]);
+  }, [exercise, isOpen, isEditing]);
 
   const handleChange = (e) => {
     setForm(f => ({ ...f, [e.target.name]: e.target.value }));
@@ -59,7 +59,7 @@ const ExerciseFormModal = ({ isOpen, onClose, exercise, onSaved }) => {
     const file = e.target.files[0];
     if (file) {
       setVideoFile(file);
-      setForm(f => ({ ...f, video_url: '' })); // clear URL if file chosen
+      setForm(f => ({ ...f, video_url: '' }));
     }
   };
 
@@ -96,41 +96,39 @@ const ExerciseFormModal = ({ isOpen, onClose, exercise, onSaved }) => {
       formData.append('instructions', form.instructions);
       formData.append('target_body_part', form.target_body_part);
 
-      // Video: either file or URL
       if (videoFile) {
         formData.append('video', videoFile);
-      } else {
+      } else if (form.video_url) {
         formData.append('video_url', form.video_url);
       }
 
-      // Existing photos to keep (on edit)
+      photoFiles.forEach(file => {
+        formData.append('photos', file);
+      });
+
       if (isEditing) {
-        existingPhotos.forEach(url => formData.append('photo_urls', url));
+        formData.append('existing_photos', JSON.stringify(existingPhotos));
       }
 
-      // New photo files
-      photoFiles.forEach(file => formData.append('photos', file));
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      const endpoint = isEditing
+        ? `${apiUrl}/api/exercises/${exercise.id}`
+        : `${apiUrl}/api/exercises`;
 
-      const url = isEditing
-        ? `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/exercises/${exercise.id}`
-        : `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/exercises`;
-      const method = isEditing ? 'PUT' : 'POST';
-
-      const res = await fetch(url, {
-        method,
+      const res = await fetch(endpoint, {
+        method: isEditing ? 'PUT' : 'POST',
         headers: { Authorization: `Bearer ${token}` },
         body: formData,
       });
-      const data = await res.json();
 
-      if (res.ok && data.success) {
-        onSaved(data.exercise);
-        onClose();
+      const data = await res.json();
+      if (data.success) {
+        onSaved(data.data);
       } else {
         setError(data.message || 'Failed to save exercise.');
       }
-    } catch (err) {
-      setError('A network error occurred.');
+    } catch {
+      setError('A network error occurred. Please verify your connection.');
     } finally {
       setLoading(false);
     }
@@ -141,164 +139,233 @@ const ExerciseFormModal = ({ isOpen, onClose, exercise, onSaved }) => {
   const totalPhotos = existingPhotos.length + photoFiles.length;
 
   return (
-    <div className="modal-overlay" id="editExerciseModal" onClick={(e) => {
-      if (e.target.id === 'editExerciseModal') onClose();
-    }}>
-      <div className="modal-content">
-        <div className="modal-header-text">
-          <h3>{isEditing ? 'Edit Exercise' : 'Add New Exercise'}</h3>
-          <button className="modal-close-text" onClick={onClose}>&times;</button>
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs font-['Inter',system-ui,sans-serif]">
+      <div 
+        className="bg-[#FFFFFF] rounded-2xl border border-[#E5E5E5] shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden animate-fade-in"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between px-6 py-4 border-b border-[#EAEAEA] bg-[#FAFAFA]">
+          <div>
+            <span className="text-[11px] font-semibold uppercase tracking-wider text-[#8A8A8A]">
+              Exercise Database
+            </span>
+            <h3 className="text-[16px] font-semibold text-[#202223] m-0">
+              {isEditing ? 'Edit Exercise' : 'Add New Exercise'}
+            </h3>
+          </div>
+          <button 
+            type="button" 
+            onClick={onClose} 
+            className="p-1.5 rounded-lg text-[#616161] hover:text-[#202223] hover:bg-[#F0F0F0] transition-colors cursor-pointer"
+          >
+            <X size={18} />
+          </button>
         </div>
-        
-        <div className="modal-scrollable-body">
+
+        {/* Scrollable Form Body */}
+        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6 flex flex-col gap-5">
           {error && (
-            <div className="flex items-center gap-2 p-3.5 bg-red-50 text-danger text-sm font-medium rounded-xl border border-red-100 mb-4">
-              <AlertTriangle className="w-4 h-4 flex-shrink-0" /> {error}
+            <div className="flex items-center gap-2 p-3 bg-[#FCE4E4] text-[#B42318] text-[13px] rounded-lg border border-[#E5E5E5]">
+              <AlertTriangle size={15} className="shrink-0" />
+              <span>{error}</span>
             </div>
           )}
 
-          <div className="form-row">
-            <div className="form-group">
-              <label className="form-label">Exercise Name <span className="text-danger">*</span></label>
+          {/* Name & Target Body Part */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="text-[12px] font-medium text-[#202223] block mb-1.5">
+                Exercise Name <span className="text-[#E5484D]">*</span>
+              </label>
               <input 
                 type="text" 
                 name="name"
-                className="form-control" 
-                placeholder="e.g. Hip Extension"
+                required
+                className="w-full px-3 py-2 text-[13px] text-[#202223] bg-[#FFFFFF] border border-[#E5E5E5] rounded-lg outline-none focus:border-[#202223] focus:ring-1 focus:ring-[#202223] transition-all"
+                placeholder="e.g. Quadriceps Extension"
                 value={form.name}
                 onChange={handleChange}
               />
             </div>
-            <div className="form-group">
-              <label className="form-label">Target Body Part</label>
+            <div>
+              <label className="text-[12px] font-medium text-[#202223] block mb-1.5">
+                Target Body Part
+              </label>
               <select 
-                className="form-control"
                 name="target_body_part"
+                className="w-full px-3 py-2 text-[13px] text-[#202223] bg-[#FFFFFF] border border-[#E5E5E5] rounded-lg outline-none focus:border-[#202223] focus:ring-1 focus:ring-[#202223] transition-all"
                 value={form.target_body_part}
                 onChange={handleChange}
               >
-                <option value="">— Select —</option>
+                <option value="">— Select Target Area —</option>
                 {BODY_PARTS.map(bp => <option key={bp} value={bp}>{bp}</option>)}
               </select>
             </div>
           </div>
 
-          <div className="form-group">
-            <label className="form-label">Description</label>
+          {/* Description */}
+          <div>
+            <label className="text-[12px] font-medium text-[#202223] block mb-1.5">
+              Short Description / Overview
+            </label>
             <textarea 
-              className="form-control" 
               name="description"
-              placeholder="Brief overview..."
+              rows={2}
+              className="w-full px-3 py-2 text-[13px] text-[#202223] bg-[#FFFFFF] border border-[#E5E5E5] rounded-lg outline-none focus:border-[#202223] focus:ring-1 focus:ring-[#202223] transition-all resize-none"
+              placeholder="Brief summary of therapeutic purpose and targeted muscle groups..."
               value={form.description}
               onChange={handleChange}
-            ></textarea>
+            />
           </div>
 
-          <div className="form-group">
-            <label className="form-label">Step-by-step Instructions</label>
+          {/* Instructions */}
+          <div>
+            <label className="text-[12px] font-medium text-[#202223] block mb-1.5">
+              Step-by-step Instructions
+            </label>
             <textarea 
-              className="form-control" 
-              style={{ minHeight: '120px' }} 
               name="instructions"
-              placeholder="1. Start in a seated position...&#10;2. Slowly extend..."
+              rows={4}
+              className="w-full px-3 py-2 text-[13px] text-[#202223] bg-[#FFFFFF] border border-[#E5E5E5] rounded-lg outline-none focus:border-[#202223] focus:ring-1 focus:ring-[#202223] transition-all"
+              placeholder="1. Begin in an upright seated position...&#10;2. Slowly straighten the affected knee...&#10;3. Hold for 5 seconds and return gently..."
               value={form.instructions}
               onChange={handleChange}
-            ></textarea>
+            />
           </div>
 
-          <div className="form-group">
-            <label className="form-label">Video</label>
-            <div className="video-options">
+          {/* Video Attachment */}
+          <div>
+            <label className="text-[12px] font-medium text-[#202223] block mb-1.5">
+              Instructional Video (File or URL)
+            </label>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 items-center">
               <div 
-                className="upload-box"
                 onClick={() => videoInputRef.current?.click()}
+                className="flex items-center gap-3 p-3 border border-dashed border-[#CCCCCC] hover:border-[#202223] rounded-lg bg-[#F7F7F7] hover:bg-[#F0F0F0] cursor-pointer transition-colors"
               >
-                <div className="upload-icon"><Video className="w-5 h-5" /></div>
-                <div className="upload-text">
-                  <h5>{videoFile ? videoFile.name : 'Upload File'}</h5>
-                  <p>MP4, MOV (max 100MB)</p>
+                <div className="p-2 bg-[#FFFFFF] rounded-md border border-[#E5E5E5] text-[#202223]">
+                  <Video size={18} />
+                </div>
+                <div className="min-w-0">
+                  <span className="text-[12px] font-medium text-[#202223] block truncate">
+                    {videoFile ? videoFile.name : 'Upload Video File'}
+                  </span>
+                  <span className="text-[11px] text-[#8A8A8A] block">
+                    MP4, MOV (max 100MB)
+                  </span>
                 </div>
               </div>
-              <div className="url-input-wrapper">
-                <Video className="icon w-4 h-4" />
+              
+              <div className="relative">
                 <input 
                   type="text" 
-                  className="form-control" 
-                  placeholder="Or paste video URL" 
                   name="video_url"
+                  placeholder="Or paste YouTube / Vimeo URL" 
                   value={videoFile ? '' : form.video_url}
                   onChange={handleChange}
                   disabled={!!videoFile}
+                  className="w-full px-3 py-2 text-[13px] text-[#202223] bg-[#FFFFFF] border border-[#E5E5E5] rounded-lg outline-none focus:border-[#202223] focus:ring-1 focus:ring-[#202223] disabled:bg-[#F7F7F7] disabled:text-[#8A8A8A] transition-all"
                 />
               </div>
             </div>
             <input ref={videoInputRef} type="file" accept="video/*" className="hidden" onChange={handleVideoFile} />
             {videoFile && (
-              <div className="mt-2 flex items-center gap-2">
-                <span className="text-xs text-success font-medium">✓ Video file selected</span>
-                <button type="button" onClick={() => setVideoFile(null)} className="text-xs text-danger hover:underline bg-transparent border-0 cursor-pointer">Remove</button>
+              <div className="mt-2 flex items-center justify-between text-[12px] text-[#245B19] bg-[#D9F7C3] px-3 py-1.5 rounded-lg border border-[#A3F56C]">
+                <span>Selected: {videoFile.name} ({(videoFile.size / (1024*1024)).toFixed(1)} MB)</span>
+                <button type="button" onClick={() => setVideoFile(null)} className="text-[#B42318] hover:underline font-medium cursor-pointer">
+                  Remove
+                </button>
               </div>
             )}
           </div>
 
-          <div className="form-group">
-            <div className="photos-header">
-              <label className="form-label mb-0">Photos ({totalPhotos}/5)</label>
+          {/* Reference Photos */}
+          <div>
+            <div className="flex items-center justify-between mb-1.5">
+              <label className="text-[12px] font-medium text-[#202223]">
+                Reference Photos ({totalPhotos}/5)
+              </label>
               {totalPhotos < 5 && (
-                <button type="button" className="btn-link" onClick={() => photoInputRef.current?.click()}>
-                  <Plus className="w-3.5 h-3.5" /> Add Photos
+                <button
+                  type="button"
+                  onClick={() => photoInputRef.current?.click()}
+                  className="text-[12px] text-[#2C5E91] hover:underline flex items-center gap-1 font-medium cursor-pointer"
+                >
+                  <Plus size={13} /> Add Photos
                 </button>
               )}
             </div>
-            <input ref={photoInputRef} type="file" accept="image/*" multiple className="hidden" onChange={handlePhotos} />
 
-            {totalPhotos === 0 ? (
-              <div className="photo-upload-area" onClick={() => photoInputRef.current?.click()}>
-                <Image className="w-8 h-8 text-gray-400 mb-2" />
-                <span>Click to browse images</span>
-                <p className="text-xs text-gray-400 m-0">PNG, JPG, WEBP — up to 5 images</p>
-              </div>
-            ) : (
-              <div className="grid grid-cols-4 gap-3 mt-3">
-                {existingPhotos.map((url, i) => (
-                  <div key={`existing-${i}`} className="relative aspect-square rounded-xl overflow-hidden group">
-                    <img src={url} alt="" className="w-full h-full object-cover" />
-                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-all flex items-center justify-center">
-                      <button
-                        type="button"
-                        onClick={() => removeExistingPhoto(i)}
-                        className="opacity-0 group-hover:opacity-100 transition-opacity w-8 h-8 bg-danger rounded-full flex items-center justify-center border-0 cursor-pointer"
-                      >
-                        <Trash2 className="w-4 h-4 text-white" />
-                      </button>
-                    </div>
-                  </div>
-                ))}
-                {photoPreview.map((url, i) => (
-                  <div key={`new-${i}`} className="relative aspect-square rounded-xl overflow-hidden group">
-                    <img src={url} alt="" className="w-full h-full object-cover" />
-                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-all flex items-center justify-center">
-                      <button
-                        type="button"
-                        onClick={() => removeNewPhoto(i)}
-                        className="opacity-0 group-hover:opacity-100 transition-opacity w-8 h-8 bg-danger rounded-full flex items-center justify-center border-0 cursor-pointer"
-                      >
-                        <Trash2 className="w-4 h-4 text-white" />
-                      </button>
-                    </div>
-                    <div className="absolute top-1.5 right-1.5 bg-primary text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full">NEW</div>
-                  </div>
-                ))}
-              </div>
-            )}
+            <input 
+              ref={photoInputRef} 
+              type="file" 
+              accept="image/*" 
+              multiple 
+              className="hidden" 
+              onChange={handlePhotos} 
+            />
+
+            {/* Photos Preview Grid */}
+            <div className="grid grid-cols-5 gap-2.5">
+              {existingPhotos.map((url, idx) => (
+                <div key={`existing-${idx}`} className="relative aspect-square rounded-lg border border-[#E5E5E5] overflow-hidden group bg-[#F7F7F7]">
+                  <img src={url} alt={`Existing ${idx}`} className="w-full h-full object-cover" />
+                  <button
+                    type="button"
+                    onClick={() => removeExistingPhoto(idx)}
+                    className="absolute top-1 right-1 p-1 bg-black/70 hover:bg-[#E5484D] text-white rounded-md opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+                  >
+                    <Trash2 size={12} />
+                  </button>
+                </div>
+              ))}
+
+              {photoPreview.map((url, idx) => (
+                <div key={`preview-${idx}`} className="relative aspect-square rounded-lg border border-[#E5E5E5] overflow-hidden group bg-[#F7F7F7]">
+                  <img src={url} alt={`New upload ${idx}`} className="w-full h-full object-cover" />
+                  <button
+                    type="button"
+                    onClick={() => removeNewPhoto(idx)}
+                    className="absolute top-1 right-1 p-1 bg-black/70 hover:bg-[#E5484D] text-white rounded-md opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+                  >
+                    <Trash2 size={12} />
+                  </button>
+                </div>
+              ))}
+
+              {totalPhotos < 5 && (
+                <button
+                  type="button"
+                  onClick={() => photoInputRef.current?.click()}
+                  className="aspect-square rounded-lg border border-dashed border-[#CCCCCC] hover:border-[#202223] flex flex-col items-center justify-center gap-1 text-[#8A8A8A] hover:text-[#202223] transition-colors cursor-pointer bg-[#F7F7F7]"
+                >
+                  <ImageIcon size={18} />
+                  <span className="text-[10px] font-medium">+ Photo</span>
+                </button>
+              )}
+            </div>
           </div>
-        </div>
+        </form>
 
-        <div className="modal-footer">
-          <button type="button" className="btn-text" onClick={onClose}>Cancel</button>
-          <button type="submit" className="btn btn-primary" onClick={handleSubmit} disabled={loading}>
-            {loading && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
-            {loading ? 'Saving...' : (isEditing ? 'Save Changes' : 'Save Exercise')}
+        {/* Modal Footer Actions */}
+        <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-[#EAEAEA] bg-[#FAFAFA]">
+          <button 
+            type="button"
+            onClick={onClose} 
+            className="btn-secondary-saas"
+            disabled={loading}
+          >
+            Cancel
+          </button>
+          <button 
+            type="button"
+            onClick={handleSubmit} 
+            className="btn-primary-saas flex items-center gap-2"
+            disabled={loading}
+          >
+            {loading ? <Loader2 size={14} className="animate-spin" /> : null}
+            <span>{isEditing ? 'Save Changes' : 'Create Exercise'}</span>
           </button>
         </div>
       </div>
