@@ -1,6 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation, Link, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@clerk/clerk-react';
+import {
+  Loader2, ArrowLeft, Search, User, Phone, Calendar, Stethoscope, FileText,
+  Clock, Activity, AlertTriangle, ChevronDown, CheckCircle2,
+  HeartPulse, Dumbbell, AlertCircle, ArrowUpRight, TrendingUp, TrendingDown, Minus
+} from 'lucide-react';
 import './StartConsultation.css';
 
 const StartConsultation = () => {
@@ -10,15 +15,18 @@ const StartConsultation = () => {
   const location = useLocation();
   const { getToken } = useAuth();
   
-  const [appointment, setAppointment] = useState(location.state?.appointment || null);
+  const [appointment] = useState(location.state?.appointment || null);
   const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'overview');
   
   const [overviewData, setOverviewData] = useState(null);
   const [historyData, setHistoryData] = useState(null);
+  const [historySearch, setHistorySearch] = useState('');
+  const [historyTypeFilter, setHistoryTypeFilter] = useState('all');
+  const [collapsedConsultations, setCollapsedConsultations] = useState({});
   const [complianceSummary, setComplianceSummary] = useState(null);
   const [logsData, setLogsData] = useState({ summary: [], flagged_entries: [], standalone_concerns: [], grouped_logs: {} });
   const [expandedExercises, setExpandedExercises] = useState({});
-  const [flaggedExpanded, setFlaggedExpanded] = useState(false);
+  const [flaggedExpanded, setFlaggedExpanded] = useState(true);
   
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -30,7 +38,7 @@ const StartConsultation = () => {
     if (targetPatientId) {
       fetchPatientData(targetPatientId);
     } else {
-      setError("No patient data found. Please go back to the dashboard.");
+      setError("No patient ID provided. Please return to your patient directory.");
       setLoading(false);
     }
   }, [targetPatientId, getToken]);
@@ -70,11 +78,11 @@ const StartConsultation = () => {
         if (compJson.success) setComplianceSummary(compJson.data);
         if (logsJson.success) setLogsData(logsJson.data);
       } else {
-        setError('Failed to load patient data.');
+        setError('Failed to load patient clinical profile.');
       }
     } catch (err) {
       console.error(err);
-      setError('A network error occurred.');
+      setError('A network error occurred while loading patient records.');
     } finally {
       setLoading(false);
     }
@@ -87,28 +95,34 @@ const StartConsultation = () => {
     }));
   };
 
-  const getComplianceColor = (pct) =>
-    pct >= 80 ? 'var(--success)' : pct >= 50 ? 'var(--warning)' : 'var(--danger)';
+  const getComplianceColorClass = (pct) => {
+    if (pct >= 80) return 'text-[#245B19] bg-[#D9F7C3]';
+    if (pct >= 50) return 'text-[#805B00] bg-[#FFF2CC]';
+    return 'text-[#B42318] bg-[#FCE4E4]';
+  };
 
   if (loading) {
     return (
-      <div className="consultation-theme" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '60vh' }}>
-        <div style={{ textAlign: 'center' }}>
-          <i className="fa-solid fa-spinner fa-spin" style={{ fontSize: '2.5rem', color: 'var(--primary)', marginBottom: '1rem', display: 'block' }}></i>
-          <span style={{ fontFamily: 'var(--font-secondary)', color: 'var(--gray-600)', fontWeight: 600 }}>Loading patient data...</span>
-        </div>
+      <div className="flex flex-col h-72 items-center justify-center gap-3">
+        <Loader2 className="h-6 w-6 animate-spin text-[#202223]" />
+        <span className="text-xs text-[#8A8A8A]">Loading patient clinical records...</span>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="consultation-theme" style={{ padding: '2rem' }}>
-        <div style={{ backgroundColor: 'rgba(247, 43, 80, 0.04)', border: '1px solid rgba(247, 43, 80, 0.2)', padding: '1rem 1.5rem', borderRadius: '12px', color: 'var(--danger)', marginBottom: '1rem', fontFamily: 'var(--font-secondary)' }}>
-          <i className="fa-solid fa-triangle-exclamation" style={{ marginRight: '0.5rem' }}></i> {error}
+      <div className="max-w-2xl mx-auto my-12 p-6 bg-[#FFFFFF] border border-[#E5E5E5] rounded-xl text-center">
+        <div className="w-12 h-12 rounded-full bg-[#FCE4E4] text-[#B42318] flex items-center justify-center mx-auto mb-3">
+          <AlertCircle size={22} />
         </div>
-        <button onClick={() => navigate('/doctor-dashboard')} className="btn-outline">
-          <i className="fa-solid fa-arrow-left"></i> Back to Dashboard
+        <h3 className="text-[16px] font-semibold text-[#202223] m-0">Record Unavailable</h3>
+        <p className="text-[13px] text-[#616161] mt-1 mb-4">{error}</p>
+        <button 
+          onClick={() => navigate('/doctor-dashboard/patients')} 
+          className="btn-secondary-saas inline-flex items-center gap-2"
+        >
+          <ArrowLeft size={14} /> Back to Patients
         </button>
       </div>
     );
@@ -123,505 +137,771 @@ const StartConsultation = () => {
     return Math.abs(new Date(diff).getUTCFullYear() - 1970);
   };
   const age = getAge(profile?.date_of_birth);
+  const avatarInitials = (user?.name || 'UN').substring(0, 2).toUpperCase();
 
   return (
-    <div className="consultation-theme">
-      {/* FIXED THEME BACKGROUND */}
-      <div className="theme-bg" style={{ backgroundImage: 'url(/images/banner/img1.jpg)' }}>
-        <img className="pt-img1" style={{ animation: 'left-right 8s infinite ease-in-out' }} src="/images/shap/wave-blue.png" alt=""/>
-        <img className="pt-img2" style={{ animation: 'up-down 6s infinite ease-in-out' }} src="/images/shap/circle-dots.png" alt=""/>
-        <img className="pt-img3" style={{ animation: 'rotation 20s infinite linear' }} src="/images/shap/plus-blue.png" alt=""/>
-        <div className="bg-shape-bottom"></div>
+    <div className="flex flex-col gap-6 max-w-7xl mx-auto font-['Inter',system-ui,sans-serif] text-[#202223]">
+      
+      {/* ── Breadcrumb / Back Link ─────────────────────────────────── */}
+      <div className="flex items-center justify-between">
+        <Link 
+          to="/doctor-dashboard/patients" 
+          className="inline-flex items-center gap-1.5 text-[13px] font-medium text-[#616161] hover:text-[#202223] transition-colors"
+        >
+          <ArrowLeft size={14} />
+          <span>Back to Patients Directory</span>
+        </Link>
+
+        <span className="text-[11px] font-mono text-[#8A8A8A]">
+          Patient ID: {targetPatientId}
+        </span>
       </div>
 
-      <div className="app-container">
-
-        {/* PATIENT HEADER CARD */}
-        <div className="page-header">
-          <Link to="/doctor-dashboard" className="back-link">
-            <i className="fa-solid fa-arrow-left"></i> Back to Dashboard
-          </Link>
-
-          <div className="patient-header-card">
-              <div className="card-content">
-                  
-                  {/* Left Section: Avatar & Info */}
-                  <div className="left-section">
-                      <div className="avatar">
-                          <svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
-                      </div>
-
-                      <div className="info">
-                          <div className="name-row">
-                              <h1 className="name">{user?.name || 'Unknown Patient'}</h1>
-                              <span className="hc-badge">{isFirstVisit ? 'FIRST VISIT' : 'FOLLOW-UP'}</span>
-                          </div>
-
-                          <div className="details-row">
-                              <span className="detail-item">
-                                  {/* Male Icon */}
-                                  <svg viewBox="0 0 24 24"><path d="M9 9c1.29 0 2.5.41 3.47 1.11L17.58 5H14V3h8v8h-2V7.41l-5.11 5.09c.7 1 1.11 2.2 1.11 3.5 0 3.31-2.69 6-6 6s-6-2.69-6-6 2.69-6 6-6zm0 2c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4z"/></svg>
-                                  {profile?.gender ? profile.gender.charAt(0).toUpperCase() + profile.gender.slice(1) : 'Not specified'} {age ? `• ${age} yrs` : ''}
-                              </span>
-                              <span className="detail-item">
-                                  {/* Phone Icon */}
-                                  <svg viewBox="0 0 24 24"><path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/></svg>
-                                  {user?.phone || 'No phone'}
-                              </span>
-                              <span className="detail-item">
-                                  {/* Calendar Icon */}
-                                  <svg viewBox="0 0 24 24"><path d="M19 4h-1V2h-2v2H8V2H6v2H5c-1.11 0-1.99.9-1.99 2L3 20c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V10h14v10zM5 8V6h14v2H5z"/></svg>
-                                  Appt: {appointment?.start_time ? appointment.start_time.substring(0, 5) : '—'}
-                              </span>
-                          </div>
-                      </div>
-                  </div>
-
-                  {/* Right Section: Action Button */}
-                  {appointment?.status === 'completed' ? (
-                      <button className="consult-btn" style={{ backgroundColor: 'var(--success)', cursor: 'default', boxShadow: 'none' }}>
-                          <i className="fa-solid fa-check" style={{ fontSize: '18px' }}></i>
-                          Consultation Complete
-                      </button>
-                  ) : patientId ? (
-                      null
-                  ) : (
-                      <button className="consult-btn" onClick={() => navigate(`/doctor-dashboard/consultation/${appointmentId}/new`, { state: { appointment, overviewData } })}>
-                          <svg viewBox="0 0 24 24"><path d="M16 2.5C18.48 2.5 20.5 4.52 20.5 7v4.5h-2V7c0-1.38-1.12-2.5-2.5-2.5s-2.5 1.12-2.5 2.5v9c0 2.21-1.79 4-4 4s-4-1.79-4-4V7h2v9c0 1.1.9 2 2 2s2-.9 2-2V7c0-2.48 2.02-4.5 4.5-4.5M8.5 2C9.88 2 11 3.12 11 4.5S9.88 7 8.5 7 6 5.88 6 4.5 7.12 2 8.5 2M18 13.5v3h-3v2h3v3h2v-3h3v-2h-3v-3h-2z"/></svg>
-                          Start Consultation
-                      </button>
-                  )}
-              </div>
-          </div>
-        </div>
-
-        {/* TABS NAVIGATION */}
-        <div className="tabs-container" role="tablist">
-          <button
-            className={`tab-btn ${activeTab === 'overview' ? 'active' : ''}`}
-            onClick={() => setActiveTab('overview')}
-            role="tab"
-          >
-            <i className="fa-solid fa-file-lines"></i> Overview
-          </button>
-          <button
-            className={`tab-btn ${activeTab === 'history' ? 'active' : ''}`}
-            onClick={() => setActiveTab('history')}
-            role="tab"
-          >
-            <i className="fa-solid fa-clock-rotate-left"></i> Clinical History
-          </button>
-          <button
-            className={`tab-btn ${activeTab === 'compliance' ? 'active' : ''}`}
-            onClick={() => setActiveTab('compliance')}
-            role="tab"
-          >
-            <i className="fa-solid fa-chart-line"></i> Compliance & Logs
-          </button>
-        </div>
-
-        {/* ===================== TAB 1: OVERVIEW ===================== */}
-        <div className={`tab-content ${activeTab === 'overview' ? 'active' : ''}`} role="tabpanel">
-          <div className="overview-grid">
-
-            {/* LEFT: Medical Profile */}
+      {/* ── Patient Header Card ────────────────────────────────────── */}
+      <div className="saas-card p-6 bg-[#FFFFFF]">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-5">
+          
+          {/* Avatar & Patient Info */}
+          <div className="flex items-center gap-4">
+            <div className="w-14 h-14 rounded-2xl bg-[#111111] text-[#FFFFFF] text-[18px] font-semibold flex items-center justify-center shrink-0 tracking-wider shadow-xs">
+              {avatarInitials}
+            </div>
+            
             <div>
-              <div className="card medical-profile-card hoverable">
-                <div className="card-title">
-                  <i className="fa-solid fa-heart-pulse"></i> Medical Profile
-                </div>
-                <div className="medical-content">
-                  <span className="section-label">Medical History / Notes</span>
-                  <p>{profile?.medical_history || 'No medical history recorded.'}</p>
+              <div className="flex items-center gap-2.5">
+                <h1 className="text-[20px] font-semibold text-[#202223] tracking-tight m-0">
+                  {user?.name || 'Unknown Patient'}
+                </h1>
+                <span className={`text-[11px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-md ${
+                  isFirstVisit ? 'badge-semantic-info' : 'badge-semantic-neutral'
+                }`}>
+                  {isFirstVisit ? 'First Visit' : 'Follow-Up'}
+                </span>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[13px] text-[#616161] mt-1.5">
+                <span className="flex items-center gap-1.5">
+                  <User size={13} className="text-[#8A8A8A]" />
+                  {profile?.gender ? profile.gender.charAt(0).toUpperCase() + profile.gender.slice(1) : 'Gender unspecified'}
+                  {age ? ` • ${age} yrs` : ''}
+                </span>
+
+                <span className="flex items-center gap-1.5">
+                  <Phone size={13} className="text-[#8A8A8A]" />
+                  {user?.phone || 'No phone registered'}
+                </span>
+
+                {appointment?.start_time && (
+                  <span className="flex items-center gap-1.5">
+                    <Calendar size={13} className="text-[#8A8A8A]" />
+                    Appt: <strong className="text-[#202223] font-mono">{appointment.start_time.substring(0, 5)}</strong>
+                  </span>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Action Button (e.g. Start Consultation) */}
+          <div className="flex items-center gap-2.5 shrink-0">
+            {appointment?.status === 'completed' ? (
+              <span className="badge-semantic-success flex items-center gap-1.5 px-3 py-1.5 text-[12px] font-medium">
+                <CheckCircle2 size={13} /> Consultation Complete
+              </span>
+            ) : appointmentId ? (
+              <button 
+                onClick={() => navigate(`/doctor-dashboard/consultation/${appointmentId}/new`, { state: { appointment, overviewData } })}
+                className="btn-primary-saas flex items-center gap-2"
+              >
+                <Stethoscope size={14} />
+                <span>Start Consultation</span>
+              </button>
+            ) : null}
+          </div>
+
+        </div>
+      </div>
+
+      {/* ── Segmented Navigation Tabs ─────────────────────────────────── */}
+      <div className="flex items-center gap-1.5 p-1 bg-[#F7F7F7] border border-[#E5E5E5] rounded-xl w-fit">
+        <button
+          onClick={() => setActiveTab('overview')}
+          className={`flex items-center gap-2 px-4 py-2 rounded-lg text-[13px] font-medium transition-all cursor-pointer ${
+            activeTab === 'overview'
+              ? 'bg-[#FFFFFF] text-[#202223] shadow-[0_1px_3px_rgba(0,0,0,0.06)]'
+              : 'text-[#616161] hover:text-[#202223]'
+          }`}
+        >
+          <FileText size={15} />
+          <span>Overview</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab('history')}
+          className={`flex items-center gap-2 px-4 py-2 rounded-lg text-[13px] font-medium transition-all cursor-pointer ${
+            activeTab === 'history'
+              ? 'bg-[#FFFFFF] text-[#202223] shadow-[0_1px_3px_rgba(0,0,0,0.06)]'
+              : 'text-[#616161] hover:text-[#202223]'
+          }`}
+        >
+          <Clock size={15} />
+          <span>Clinical History</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab('compliance')}
+          className={`flex items-center gap-2 px-4 py-2 rounded-lg text-[13px] font-medium transition-all cursor-pointer ${
+            activeTab === 'compliance'
+              ? 'bg-[#FFFFFF] text-[#202223] shadow-[0_1px_3px_rgba(0,0,0,0.06)]'
+              : 'text-[#616161] hover:text-[#202223]'
+          }`}
+        >
+          <Activity size={15} />
+          <span>Compliance & Logs</span>
+          {logsData.flagged_entries?.length > 0 && (
+            <span className="w-2 h-2 rounded-full bg-[#E5484D]" />
+          )}
+        </button>
+      </div>
+
+      {/* ── TAB 1: OVERVIEW ─────────────────────────────────────────── */}
+      {activeTab === 'overview' && (
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start animate-fade-in">
+          
+          {/* Left Column: Medical Profile (5 cols) */}
+          <div className="lg:col-span-5 flex flex-col gap-4">
+            <div className="saas-card p-5">
+              <div className="flex items-center gap-2 pb-3 mb-4 border-b border-[#EAEAEA]">
+                <HeartPulse size={16} className="text-[#616161]" />
+                <h3 className="text-[15px] font-semibold text-[#202223] m-0">Medical Profile</h3>
+              </div>
+
+              <div className="flex flex-col gap-4">
+                <div>
+                  <span className="text-[11px] font-semibold uppercase tracking-wider text-[#8A8A8A] block mb-1.5">
+                    Medical History & Clinical Notes
+                  </span>
+                  <div className="p-3.5 bg-[#F7F7F7] border border-[#E5E5E5] rounded-xl text-[13px] text-[#616161] leading-relaxed">
+                    {profile?.medical_history || 'No prior medical conditions or surgical history recorded.'}
+                  </div>
                 </div>
 
                 {profile?.emergency_contact_name && (
-                  <div className="emergency-section" style={{ marginTop: '1.5rem', paddingTop: '1.5rem', borderTop: '1px dashed var(--gray-200)' }}>
-                    <span className="section-label">Emergency Contact</span>
-                    <p style={{ color: 'var(--text-body)', fontSize: '0.95rem', fontWeight: 500 }}>
-                      <i className="fa-solid fa-phone" style={{ color: 'var(--secondary)', marginRight: '0.4rem' }}></i>
-                      <strong>{profile.emergency_contact_name}</strong> · {profile.emergency_contact_phone}
-                    </p>
+                  <div className="pt-3 border-t border-[#EAEAEA]">
+                    <span className="text-[11px] font-semibold uppercase tracking-wider text-[#8A8A8A] block mb-1.5">
+                      Emergency Contact
+                    </span>
+                    <div className="flex items-center justify-between p-3 bg-[#FFFFFF] border border-[#E5E5E5] rounded-xl text-[13px]">
+                      <div className="font-medium text-[#202223]">
+                        {profile.emergency_contact_name}
+                      </div>
+                      <div className="text-[#616161] font-mono">
+                        {profile.emergency_contact_phone || 'No phone'}
+                      </div>
+                    </div>
                   </div>
                 )}
               </div>
             </div>
+          </div>
 
-            {/* RIGHT: Treatment Plan */}
-            <div>
-              <div className="card treatment-plan-card hoverable" style={{ animationDelay: '0.1s' }}>
-                
-                {/* Card Header */}
-                <div className="card-title" style={{ marginBottom: '1rem', color: 'var(--secondary)' }}>
-                  <i className="fa-solid fa-file-waveform" style={{ color: 'var(--secondary)' }}></i> Current Treatment Plan
+          {/* Right Column: Current Treatment Plan (7 cols) */}
+          <div className="lg:col-span-7 flex flex-col gap-4">
+            <div className="saas-card p-6">
+              
+              <div className="flex items-center justify-between pb-3 mb-4 border-b border-[#EAEAEA]">
+                <div className="flex items-center gap-2">
+                  <Dumbbell size={16} className="text-[#616161]" />
+                  <h3 className="text-[15px] font-semibold text-[#202223] m-0">Active Treatment Plan</h3>
                 </div>
-
-                {active_plan ? (
-                  <>
-                    <div className="tp-header">
-                      <h3>{active_plan.title || 'Untitled Plan'}</h3>
-                      <button onClick={() => setActiveTab('compliance')} className="btn-link">
-                        View Details <i className="fa-solid fa-chevron-right"></i>
-                      </button>
-                    </div>
-                    <div className="tp-date">
-                      <i className="fa-regular fa-calendar-check"></i> Started {new Date(active_plan.start_date).toLocaleDateString()}
-                    </div>
-
-                    {complianceSummary ? (
-                      <>
-                        {/* Compliance Bar */}
-                        <div className="compliance-wrapper">
-                          <div className="comp-labels">
-                            <span className="section-label" style={{ margin: 0 }}>Overall Compliance</span>
-                            <span className="comp-val" style={{ color: getComplianceColor(complianceSummary.overall_compliance) }}>
-                              {complianceSummary.overall_compliance}%
-                            </span>
-                          </div>
-                          <div className="progress-track">
-                            <div
-                              className="progress-fill"
-                              style={{
-                                width: `${Math.min(100, complianceSummary.overall_compliance)}%`,
-                                backgroundColor: getComplianceColor(complianceSummary.overall_compliance)
-                              }}
-                            ></div>
-                          </div>
-                        </div>
-
-                        {/* Exercises List */}
-                        {complianceSummary.exercises?.length > 0 && (
-                          <>
-                            <span className="section-label">Exercises</span>
-                            <div className="exercise-list">
-                              {complianceSummary.exercises.map(ex => (
-                                <div
-                                  key={ex.exercise_id}
-                                  className="exercise-item"
-                                  style={ex.compliance_percent < 50 ? { borderColor: 'rgba(86,90,207,0.4)', backgroundColor: 'rgba(86,90,207,0.04)' } : {}}
-                                >
-                                  {ex.exercise_name}
-                                  <div className="ex-status" style={{ color: getComplianceColor(ex.compliance_percent) }}>
-                                    <div className="ex-dot" style={{ backgroundColor: getComplianceColor(ex.compliance_percent) }}></div>
-                                    {ex.compliance_percent >= 80 ? 'Good' : ex.compliance_percent >= 50 ? 'Low' : 'Critical'}
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
-                          </>
-                        )}
-
-                        {/* Pain Trend */}
-                        <span className="section-label">Pain Trend</span>
-                        <div className="pain-trend-box">
-                          {complianceSummary.pain_trend?.length > 0 ? (
-                            <>
-                              <span>{complianceSummary.pain_trend[complianceSummary.pain_trend.length - 1].week}: {complianceSummary.pain_trend[complianceSummary.pain_trend.length - 1].avg_pain}</span>
-                              {complianceSummary.pain_trend?.length >= 2 ? (() => {
-                                const last = complianceSummary.pain_trend[complianceSummary.pain_trend.length - 1].avg_pain;
-                                const prev = complianceSummary.pain_trend[complianceSummary.pain_trend.length - 2].avg_pain;
-                                if (last > prev) return <span className="status" style={{ color: 'var(--danger)' }}>↑ Increasing</span>;
-                                if (last < prev) return <span className="status" style={{ color: 'var(--success)' }}>↓ Improving</span>;
-                                return <span className="status">→ Stable</span>;
-                              })() : complianceSummary.pain_trend?.length === 1
-                                ? <span className="status">→ Stable</span>
-                                : null
-                              }
-                            </>
-                          ) : (
-                            <>
-                              <span>No pain data recorded yet.</span>
-                              <span className="status">→ N/A</span>
-                            </>
-                          )}
-                        </div>
-                      </>
-                    ) : (
-                      <p style={{ marginTop: '1rem', color: 'var(--gray-600)' }}>No compliance data available yet.</p>
-                    )}
-                  </>
-                ) : (
-                  <p style={{ marginTop: '1rem', color: 'var(--gray-600)' }}>No active treatment plan found.</p>
+                {active_plan && (
+                  <button 
+                    onClick={() => setActiveTab('compliance')}
+                    className="text-[12px] font-medium text-[#2C5E91] hover:underline flex items-center gap-1 cursor-pointer"
+                  >
+                    <span>View Compliance</span>
+                    <ArrowUpRight size={13} />
+                  </button>
                 )}
               </div>
-            </div>
 
-          </div>
-        </div>
-
-        {/* ===================== TAB 2: CLINICAL HISTORY ===================== */}
-        <div className={`tab-content ${activeTab === 'history' ? 'active' : ''}`} role="tabpanel">
-          <h3 className="section-header">
-            <i className="fa-solid fa-clock-rotate-left"></i> Past Consultations
-          </h3>
-
-          <div className="history-list">
-            {!historyData?.consultations?.length ? (
-              <div className="card empty-state">
-                <i className="fa-regular fa-folder-open"></i>
-                <h3>No History Found</h3>
-                <p>No past consultations have been recorded for this patient.</p>
-              </div>
-            ) : (
-              historyData.consultations.map((consult, idx) => {
-                const linkedPlan = historyData.treatment_plans?.find(p => p.consultation_id === consult.id);
-                return (
-                  <div key={consult.id} className="history-item" style={{ animationDelay: `${idx * 0.05}s` }}>
-                    <div className="hi-top">
-                      <span className="badge outline">
-                        <i className="fa-regular fa-calendar" style={{ marginRight: '0.3rem' }}></i>
-                        {new Date(consult.consultation_date).toLocaleDateString()}
-                      </span>
-                      <span className={`badge ${consult.consultation_type === 'initial' ? 'info' : 'warning'}`}>
-                        {consult.consultation_type === 'initial' ? 'Initial Visit' : 'Follow-Up'}
+              {active_plan ? (
+                <div className="flex flex-col gap-5">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                    <div>
+                      <h4 className="text-[16px] font-semibold text-[#202223] m-0">
+                        {active_plan.title || 'Rehabilitation Plan'}
+                      </h4>
+                      <span className="text-[12px] text-[#8A8A8A] mt-0.5 block">
+                        Prescribed on {new Date(active_plan.start_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
                       </span>
                     </div>
 
-                    <div className="hi-title">
-                      <i className="fa-solid fa-stethoscope" style={{ color: 'var(--primary)', fontSize: '1.1rem' }}></i>
-                      {consult.diagnosis || 'No Diagnosis Recorded'}
-                    </div>
-
-                    <div className="hi-notes">
-                      <span className="label-sm">Clinical Notes</span>
-                      <p>{consult.clinical_notes || 'No notes provided.'}</p>
-                    </div>
-
-                    {consult.treatment_recommendations && (
-                      <div className="hi-notes">
-                        <span className="label-sm">Treatment Recommendations</span>
-                        <p>{consult.treatment_recommendations}</p>
+                    {complianceSummary && (
+                      <div className="flex items-center gap-2 bg-[#F7F7F7] border border-[#E5E5E5] px-3 py-1.5 rounded-lg text-[13px]">
+                        <span className="text-[#8A8A8A]">Overall Compliance:</span>
+                        <strong className="font-semibold text-[#202223] font-mono">
+                          {complianceSummary.overall_compliance}%
+                        </strong>
                       </div>
                     )}
-
-                    {linkedPlan && (
-                      <span className="badge info" style={{ marginTop: '0.5rem' }}>
-                        <i className="fa-solid fa-clipboard-list" style={{ marginRight: '0.3rem' }}></i>
-                        Plan: {linkedPlan.title || 'Untitled Plan'}
-                      </span>
-                    )}
                   </div>
-                );
-              })
+
+                  {/* Progress Bar */}
+                  {complianceSummary && (
+                    <div>
+                      <div className="w-full bg-[#EAEAEA] h-2 rounded-full overflow-hidden">
+                        <div 
+                          className="h-full bg-[#111111] transition-all duration-300"
+                          style={{ width: `${Math.min(100, complianceSummary.overall_compliance)}%` }}
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Prescribed Exercises List */}
+                  {complianceSummary?.exercises?.length > 0 && (
+                    <div className="flex flex-col gap-2 pt-2">
+                      <span className="text-[11px] font-semibold uppercase tracking-wider text-[#8A8A8A]">
+                        Prescribed Regimen ({complianceSummary.exercises.length} exercises)
+                      </span>
+                      
+                      <div className="divide-y divide-[#EAEAEA] border border-[#E5E5E5] rounded-xl overflow-hidden bg-[#FFFFFF]">
+                        {complianceSummary.exercises.map(ex => {
+                          const pct = ex.compliance_percent;
+                          return (
+                            <div key={ex.exercise_id} className="p-3 flex items-center justify-between text-[13px] hover:bg-[#F9F9F9] transition-colors">
+                              <span className="font-medium text-[#202223]">{ex.exercise_name}</span>
+                              <div className="flex items-center gap-2">
+                                <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-md ${
+                                  pct >= 80 ? 'badge-semantic-success' : pct >= 50 ? 'badge-semantic-warning' : 'badge-semantic-error'
+                                }`}>
+                                  {pct >= 80 ? 'Optimal' : pct >= 50 ? 'Moderate' : 'Critical'}
+                                </span>
+                                <span className="font-mono text-[#616161] text-[12px]">{pct}%</span>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Pain Trend Indicator */}
+                  <div className="p-3.5 bg-[#F7F7F7] border border-[#E5E5E5] rounded-xl flex items-center justify-between text-[13px]">
+                    <div className="flex items-center gap-2 text-[#616161]">
+                      <span>Pain Trajectory:</span>
+                      {complianceSummary?.pain_trend?.length > 0 ? (
+                        <span className="font-medium text-[#202223]">
+                          Week {complianceSummary.pain_trend[complianceSummary.pain_trend.length - 1].week}: Avg Pain {complianceSummary.pain_trend[complianceSummary.pain_trend.length - 1].avg_pain}/10
+                        </span>
+                      ) : (
+                        <span>No pain data recorded yet</span>
+                      )}
+                    </div>
+
+                    {complianceSummary?.pain_trend?.length >= 2 ? (() => {
+                      const last = complianceSummary.pain_trend[complianceSummary.pain_trend.length - 1].avg_pain;
+                      const prev = complianceSummary.pain_trend[complianceSummary.pain_trend.length - 2].avg_pain;
+                      if (last > prev) {
+                        return (
+                          <span className="badge-semantic-error flex items-center gap-1 text-[11px]">
+                            <TrendingUp size={12} /> Increasing Pain
+                          </span>
+                        );
+                      }
+                      if (last < prev) {
+                        return (
+                          <span className="badge-semantic-success flex items-center gap-1 text-[11px]">
+                            <TrendingDown size={12} /> Improving
+                          </span>
+                        );
+                      }
+                      return (
+                        <span className="badge-semantic-neutral flex items-center gap-1 text-[11px]">
+                          <Minus size={12} /> Stable
+                        </span>
+                      );
+                    })() : null}
+                  </div>
+
+                </div>
+              ) : (
+                <div className="py-12 flex flex-col items-center justify-center text-center">
+                  <Dumbbell size={24} className="text-[#CCCCCC] mb-2" />
+                  <h4 className="text-[14px] font-semibold text-[#202223] m-0">No Active Treatment Plan</h4>
+                  <p className="text-[12px] text-[#616161] mt-1 max-w-xs">
+                    Start a consultation to evaluate the patient and prescribe a custom rehabilitation plan.
+                  </p>
+                </div>
+              )}
+
+            </div>
+          </div>
+
+        </div>
+      )}
+
+      {/* ── TAB 2: CLINICAL HISTORY ─────────────────────────────────── */}
+      {activeTab === 'history' && (() => {
+        const allConsultations = historyData?.consultations || [];
+        const filteredConsultations = allConsultations.filter(c => {
+          if (historyTypeFilter !== 'all' && c.consultation_type !== historyTypeFilter) return false;
+          if (!historySearch.trim()) return true;
+          const q = historySearch.toLowerCase();
+          return (
+            (c.diagnosis || '').toLowerCase().includes(q) ||
+            (c.clinical_notes || '').toLowerCase().includes(q) ||
+            (c.treatment_recommendations || '').toLowerCase().includes(q)
+          );
+        });
+
+        const initialCount = allConsultations.filter(c => c.consultation_type === 'initial').length;
+        const followUpCount = allConsultations.filter(c => c.consultation_type === 'follow_up').length;
+
+        return (
+          <div className="flex flex-col gap-5 animate-fade-in">
+            {/* Header with Title & Stats */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-[#EAEAEA]">
+              <div>
+                <h3 className="text-[17px] font-semibold text-[#202223] tracking-tight m-0">
+                  Past Consultations & Clinical Ledger
+                </h3>
+                <p className="text-[12px] text-[#616161] mt-0.5 m-0">
+                  Chronological examination records, objective physical findings, and prescribed interventions.
+                </p>
+              </div>
+              <span className="badge-semantic-neutral self-start sm:self-center font-mono">
+                {allConsultations.length} records on file
+              </span>
+            </div>
+
+            {/* Interactive Search & Filter Toolbar */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-[#FAFAFA] p-2.5 rounded-xl border border-[#E5E5E5]">
+              <div className="relative flex-1 max-w-md">
+                <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#8A8A8A]" />
+                <input
+                  type="text"
+                  placeholder="Filter by diagnosis, clinical notes, recommendations..."
+                  value={historySearch}
+                  onChange={(e) => setHistorySearch(e.target.value)}
+                  className="w-full pl-9 pr-3 py-1.5 text-[13px] bg-[#FFFFFF] border border-[#E5E5E5] rounded-lg text-[#202223] placeholder-[#8A8A8A] outline-none focus:border-[#202223] focus:ring-1 focus:ring-[#202223] transition-all"
+                />
+              </div>
+
+              {/* Filter Pills */}
+              <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0">
+                <button
+                  type="button"
+                  onClick={() => setHistoryTypeFilter('all')}
+                  className={`px-3 py-1 rounded-lg text-[12px] font-medium transition-all cursor-pointer whitespace-nowrap ${
+                    historyTypeFilter === 'all'
+                      ? 'bg-[#111111] text-[#FFFFFF]'
+                      : 'bg-[#FFFFFF] text-[#616161] hover:text-[#202223] border border-[#E5E5E5]'
+                  }`}
+                >
+                  All ({allConsultations.length})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setHistoryTypeFilter('initial')}
+                  className={`px-3 py-1 rounded-lg text-[12px] font-medium transition-all cursor-pointer whitespace-nowrap ${
+                    historyTypeFilter === 'initial'
+                      ? 'bg-[#1E40AF] text-[#FFFFFF]'
+                      : 'bg-[#FFFFFF] text-[#616161] hover:text-[#202223] border border-[#E5E5E5]'
+                  }`}
+                >
+                  Initial Visits ({initialCount})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setHistoryTypeFilter('follow_up')}
+                  className={`px-3 py-1 rounded-lg text-[12px] font-medium transition-all cursor-pointer whitespace-nowrap ${
+                    historyTypeFilter === 'follow_up'
+                      ? 'bg-[#805B00] text-[#FFFFFF]'
+                      : 'bg-[#FFFFFF] text-[#616161] hover:text-[#202223] border border-[#E5E5E5]'
+                  }`}
+                >
+                  Follow-ups ({followUpCount})
+                </button>
+              </div>
+            </div>
+
+            {/* Consultations List */}
+            {allConsultations.length === 0 ? (
+              <div className="saas-card py-16 px-6 flex flex-col items-center justify-center text-center">
+                <Clock size={24} className="text-[#CCCCCC] mb-2" />
+                <h4 className="text-[15px] font-semibold text-[#202223] m-0">No Past Consultations</h4>
+                <p className="text-[13px] text-[#616161] mt-1 max-w-sm">
+                  No past consultations recorded for this patient. Completed consultations will be catalogued here.
+                </p>
+              </div>
+            ) : filteredConsultations.length === 0 ? (
+              <div className="saas-card py-12 px-6 flex flex-col items-center justify-center text-center">
+                <Search size={20} className="text-[#8A8A8A] mb-2" />
+                <span className="text-[14px] font-semibold text-[#202223]">No matching consultation records</span>
+                <span className="text-[12px] text-[#616161] mt-0.5">Try clearing your search query or switching filters</span>
+              </div>
+            ) : (
+              <div className="flex flex-col gap-4">
+                {filteredConsultations.map((consult) => {
+                  const linkedPlan = historyData.treatment_plans?.find(p => p.consultation_id === consult.id);
+                  const isInitial = consult.consultation_type === 'initial';
+                  const isCollapsed = !!collapsedConsultations[consult.id];
+
+                  return (
+                    <div 
+                      key={consult.id} 
+                      className={`saas-card overflow-hidden bg-[#FFFFFF] transition-all hover:border-[#D0D0D0] hover:shadow-xs border-l-4 ${
+                        isInitial ? 'border-l-[#4088F8]' : 'border-l-[#F5C451]'
+                      }`}
+                    >
+                      {/* Top Header Card Strip */}
+                      <div className="p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#EAEAEA]">
+                        <div className="flex items-start sm:items-center gap-3">
+                          <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${
+                            isInitial 
+                              ? 'bg-[#EBF3FE] text-[#1E40AF]' 
+                              : 'bg-[#FFF2CC] text-[#805B00]'
+                          }`}>
+                            <Stethoscope size={18} />
+                          </div>
+
+                          <div>
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <h4 className="text-[16px] font-semibold text-[#202223] tracking-tight m-0">
+                                {consult.diagnosis || 'Clinical Assessment'}
+                              </h4>
+                              <span className={`text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-md ${
+                                isInitial ? 'badge-semantic-info' : 'badge-semantic-warning'
+                              }`}>
+                                {isInitial ? 'Initial Assessment' : 'Follow-up Visit'}
+                              </span>
+                            </div>
+
+                            <div className="flex items-center gap-2 text-[12px] text-[#616161] mt-1">
+                              <Calendar size={13} className="text-[#8A8A8A]" />
+                              <span className="font-mono">
+                                {new Date(consult.consultation_date).toLocaleDateString('en-GB', { 
+                                  weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' 
+                                })}
+                              </span>
+                              {consult.consultation_time && (
+                                <span className="font-mono">• {consult.consultation_time}</span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Right Action: Expand/Collapse & Linked Plan Indicator */}
+                        <div className="flex items-center gap-2.5 self-end sm:self-center">
+                          {linkedPlan && (
+                            <span className="badge-semantic-success flex items-center gap-1.5 text-[11px] py-1 px-2.5">
+                              <Dumbbell size={11} /> Plan: {linkedPlan.title || 'Attached'}
+                            </span>
+                          )}
+
+                          <button
+                            type="button"
+                            onClick={() => setCollapsedConsultations(prev => ({ ...prev, [consult.id]: !prev[consult.id] }))}
+                            className="p-1.5 rounded-lg border border-[#E5E5E5] hover:bg-[#F0F0F0] text-[#616161] hover:text-[#202223] transition-colors cursor-pointer"
+                            aria-label="Toggle details"
+                          >
+                            <ChevronDown size={16} className={`transition-transform duration-200 ${isCollapsed ? '' : 'rotate-180'}`} />
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Expandable Content Area */}
+                      {!isCollapsed && (
+                        <div className="p-4 sm:p-5 flex flex-col gap-4">
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-[13px]">
+                            
+                            {/* Clinical Notes Card */}
+                            <div className="p-4 rounded-xl border border-[#E5E5E5] bg-[#FAFAFA] flex flex-col gap-2">
+                              <div className="flex items-center gap-2 text-[#202223] font-semibold text-[12px] uppercase tracking-wider">
+                                <FileText size={14} className="text-[#4088F8]" />
+                                <span>Doctor's Examination & Subjective Notes</span>
+                              </div>
+                              <p className="text-[13px] text-[#616161] leading-relaxed m-0 whitespace-pre-line font-normal">
+                                {consult.clinical_notes || 'No detailed clinical notes recorded.'}
+                              </p>
+                            </div>
+
+                            {/* Recommendations Card */}
+                            <div className="p-4 rounded-xl border border-[#E5E5E5] bg-[#FAFAFA] flex flex-col gap-2">
+                              <div className="flex items-center gap-2 text-[#202223] font-semibold text-[12px] uppercase tracking-wider">
+                                <CheckCircle2 size={14} className="text-[#245B19]" />
+                                <span>Prescription & Therapeutic Recommendations</span>
+                              </div>
+                              <p className="text-[13px] text-[#616161] leading-relaxed m-0 whitespace-pre-line font-normal">
+                                {consult.treatment_recommendations || 'Standard home exercise program prescribed.'}
+                              </p>
+                            </div>
+
+                          </div>
+
+                          {/* Footer with linked plan and quick navigation */}
+                          {linkedPlan && (
+                            <div className="pt-3 border-t border-[#EAEAEA] flex items-center justify-between text-[12px]">
+                              <span className="text-[#8A8A8A]">
+                                Prescribed Protocol: <strong className="text-[#202223]">{linkedPlan.title}</strong>
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() => setActiveTab('overview')}
+                                className="text-[#2C5E91] hover:underline font-medium flex items-center gap-1 cursor-pointer"
+                              >
+                                <span>Inspect Active Plan</span>
+                                <ArrowUpRight size={13} />
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                    </div>
+                  );
+                })}
+              </div>
             )}
           </div>
-        </div>
+        );
+      })()}
 
-        {/* ===================== TAB 3: COMPLIANCE & LOGS ===================== */}
-        <div className={`tab-content ${activeTab === 'compliance' ? 'active' : ''}`} role="tabpanel">
-
+      {/* ── TAB 3: COMPLIANCE & LOGS ───────────────────────────────── */}
+      {activeTab === 'compliance' && (
+        <div className="flex flex-col gap-6 animate-fade-in">
+          
           {logsData.summary.length === 0 && logsData.flagged_entries.length === 0 && Object.keys(logsData.grouped_logs).length === 0 ? (
-            <div className="card empty-state">
-              <i className="fa-solid fa-chart-line"></i>
-              <h3>No Logs Yet</h3>
-              <p>The patient has not logged any exercise sessions yet.</p>
+            <div className="saas-card py-16 px-6 flex flex-col items-center justify-center text-center">
+              <Activity size={24} className="text-[#CCCCCC] mb-2" />
+              <h4 className="text-[15px] font-semibold text-[#202223] m-0">No Compliance Logs Yet</h4>
+              <p className="text-[13px] text-[#616161] mt-1 max-w-sm">
+                Patient has not completed or submitted any home rehabilitation exercise sessions yet.
+              </p>
             </div>
           ) : (
             <>
-              {/* Compliance Summary Cards */}
+              {/* 1. Compliance Metric Cards */}
               {logsData.summary.length > 0 && (
-                <>
-                  <h3 className="section-header">
-                    <i className="fa-solid fa-chart-pie"></i> Compliance Summary
-                  </h3>
-                  <div className="summary-cards-grid">
+                <div>
+                  <div className="flex items-center justify-between pb-2 mb-3 border-b border-[#EAEAEA]">
+                    <h3 className="text-[15px] font-semibold text-[#202223] m-0">
+                      Exercise Compliance Summary
+                    </h3>
+                    <span className="text-[12px] text-[#8A8A8A]">
+                      {logsData.summary.length} active targets
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                     {logsData.summary.map((item, idx) => (
-                      <div key={idx} className="card summary-card">
-                        <h4 title={item.exercise_name}>{item.exercise_name}</h4>
-                        <div className="summary-stats">
-                          <div className="stat-block">
-                            <span className="label-sm">Sessions</span>
-                            <div className="stat-val">
-                              {item.completed_sessions} <span>/ {item.expected_sessions}</span>
-                            </div>
+                      <div key={idx} className="saas-card p-4 flex flex-col justify-between gap-3 bg-[#FFFFFF]">
+                        <div>
+                          <div className="flex items-center justify-between gap-2">
+                            <h4 className="text-[14px] font-semibold text-[#202223] m-0 truncate" title={item.exercise_name}>
+                              {item.exercise_name}
+                            </h4>
+                            <span className={`text-[11px] font-mono font-semibold px-2 py-0.5 rounded-md ${
+                              getComplianceColorClass(item.compliance_percent)
+                            }`}>
+                              {item.compliance_percent}%
+                            </span>
                           </div>
-                          <div className="stat-block" style={{ textAlign: 'right' }}>
-                            <span className="label-sm">Avg Sets</span>
-                            <div className="stat-val">
-                              {item.avg_sets_completed} <span>/ {item.prescribed_sets}</span>
+
+                          <div className="grid grid-cols-2 gap-2 mt-3 pt-3 border-t border-[#EAEAEA] text-[12px]">
+                            <div>
+                              <span className="text-[#8A8A8A] block">Sessions</span>
+                              <span className="font-medium text-[#202223] font-mono">
+                                {item.completed_sessions} <span className="text-[#8A8A8A]">/ {item.expected_sessions}</span>
+                              </span>
+                            </div>
+                            <div className="text-right">
+                              <span className="text-[#8A8A8A] block">Avg Sets</span>
+                              <span className="font-medium text-[#202223] font-mono">
+                                {item.avg_sets_completed} <span className="text-[#8A8A8A]">/ {item.prescribed_sets}</span>
+                              </span>
                             </div>
                           </div>
                         </div>
-                        <div className="mini-bar">
-                          <div
-                            className="mini-bar-fill"
-                            style={{
-                              width: `${Math.min(100, item.compliance_percent)}%`,
-                              backgroundColor: getComplianceColor(item.compliance_percent)
-                            }}
-                          ></div>
+
+                        {/* Progress Bar */}
+                        <div className="w-full bg-[#EAEAEA] h-1.5 rounded-full overflow-hidden">
+                          <div 
+                            className="h-full bg-[#111111]"
+                            style={{ width: `${Math.min(100, item.compliance_percent)}%` }}
+                          />
                         </div>
-                        <div className="card-watermark">{item.compliance_percent}%</div>
                       </div>
                     ))}
                   </div>
-                </>
+                </div>
               )}
 
-              {/* Flagged Entries */}
+              {/* 2. Flagged Pain & Discomfort Alerts */}
               {logsData.flagged_entries.length > 0 && (
-                <>
-                  <h3 className="section-header" style={{ color: 'var(--danger)' }}>
-                    <i className="fa-solid fa-triangle-exclamation" style={{ color: 'var(--danger)' }}></i> Flagged Alerts
-                  </h3>
-                  <div className="accordion-wrapper" style={{ marginBottom: '2.5rem' }}>
-                    <div className={`accordion-item ${flaggedExpanded ? 'open' : ''}`}>
-                      <button
-                        className="accordion-header"
-                        onClick={() => setFlaggedExpanded(!flaggedExpanded)}
-                        aria-expanded={flaggedExpanded}
-                      >
-                        <div className="acc-title">
-                          <i className="fa-solid fa-triangle-exclamation" style={{ animation: 'flow-vibrate 0.3s ease-in-out infinite alternate' }}></i>
-                          View Flagged Entries
-                          <span>({logsData.flagged_entries.length} {logsData.flagged_entries.length === 1 ? 'record' : 'records'})</span>
-                        </div>
-                        <i className="fa-solid fa-chevron-down acc-icon"></i>
-                      </button>
-                      <div className="accordion-body">
-                        <div style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                          {logsData.flagged_entries.map(log => (
-                            <div key={log.id} id={`log-${log.id}`} className="flagged-alert" style={{ 
-                              marginBottom: 0, 
-                              animation: 'none',
-                              boxShadow: highlightLogId === log.id ? '0 0 0 4px rgba(247, 43, 80, 0.4)' : 'none',
-                              transition: 'box-shadow 0.5s ease'
-                            }}>
-                              <div className="flagged-row">
-                                <div className="flagged-content">
-                                  <div className="flagged-top-line">
-                                    <span className="flagged-date">
-                                      {new Date(log.log_date).toLocaleDateString()}
-                                    </span>
-                                    <strong>{log.exercise_name}</strong>
-                                  </div>
-                                  {log.issue_type && (
-                                    <span className="flagged-issue" style={{ color: 'var(--text-body)', fontSize: '0.9rem' }}>
-                                      Issue: <strong style={{ color: 'var(--dark-brand)' }}>{log.issue_type.replace('_', ' ')}</strong>
-                                    </span>
-                                  )}
-                                  {log.comments && (
-                                    <span className="flagged-note" style={{ fontStyle: 'italic', color: 'var(--gray-600)', fontSize: '0.9rem' }}>"{log.comments}"</span>
-                                  )}
-                                </div>
-                                {log.pain_level != null && (
-                                  <div
-                                    className="pain-pill"
-                                    style={{
-                                      animation: log.pain_level >= 7 ? 'flow-vibrate 0.3s ease-in-out infinite alternate' : 'none',
-                                      backgroundColor: log.pain_level >= 7 ? 'var(--danger)' : 'var(--warning)',
-                                      color: '#fff',
-                                      padding: '0.4rem 0.8rem',
-                                      borderRadius: '25px',
-                                      fontWeight: 700,
-                                      fontSize: '0.85rem'
-                                    }}
-                                  >
-                                    {log.pain_level}/10
-                                  </div>
-                                )}
-                              </div>
-                            </div>
-                          ))}
-                        </div>
+                <div className="saas-card overflow-hidden bg-[#FFFFFF]">
+                  <button
+                    type="button"
+                    onClick={() => setFlaggedExpanded(!flaggedExpanded)}
+                    className="w-full p-4 flex items-center justify-between text-left hover:bg-[#FAFAFA] transition-colors cursor-pointer border-b border-[#EAEAEA]"
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <div className="p-1.5 rounded-lg bg-[#FCE4E4] text-[#B42318]">
+                        <AlertTriangle size={16} />
+                      </div>
+                      <div>
+                        <span className="text-[14px] font-semibold text-[#202223] block">
+                          Flagged Patient Alerts ({logsData.flagged_entries.length})
+                        </span>
+                        <span className="text-[12px] text-[#8A8A8A]">
+                          Instances where pain level reached ≥ 7/10 or patient reported severe difficulty.
+                        </span>
                       </div>
                     </div>
-                  </div>
-                </>
+                    <ChevronDown size={18} className={`text-[#616161] transition-transform ${flaggedExpanded ? 'rotate-180' : ''}`} />
+                  </button>
+
+                  {flaggedExpanded && (
+                    <div className="p-4 flex flex-col gap-2.5 bg-[#FFFFFF]">
+                      {logsData.flagged_entries.map(log => (
+                        <div 
+                          key={log.id} 
+                          id={`log-${log.id}`} 
+                          className={`p-3.5 rounded-xl border flex flex-col sm:flex-row sm:items-center justify-between gap-3 transition-all ${
+                            highlightLogId === String(log.id)
+                              ? 'bg-[#FFF2CC] border-[#F5C451] shadow-xs'
+                              : 'bg-[#FCFCFC] border-[#E5E5E5]'
+                          }`}
+                        >
+                          <div>
+                            <div className="flex items-center gap-2 mb-1">
+                              <span className="text-[11px] font-mono text-[#8A8A8A]">
+                                {new Date(log.log_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}
+                              </span>
+                              <strong className="text-[13px] text-[#202223]">{log.exercise_name}</strong>
+                              {log.issue_type && (
+                                <span className="badge-semantic-error text-[10px]">
+                                  {log.issue_type.replace('_', ' ')}
+                                </span>
+                              )}
+                            </div>
+                            {log.comments && (
+                              <p className="text-[12px] text-[#616161] italic m-0">
+                                "{log.comments}"
+                              </p>
+                            )}
+                          </div>
+
+                          {log.pain_level != null && (
+                            <span className="badge-semantic-error font-mono text-[12px] shrink-0 self-start sm:self-center">
+                              Pain: {log.pain_level}/10
+                            </span>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
               )}
 
-              {/* Full Log Drill-Down */}
+              {/* 3. Full Log Drill-Down */}
               {Object.keys(logsData.grouped_logs).length > 0 && (
-                <>
-                  <h3 className="section-header">
-                    <i className="fa-regular fa-file-lines"></i> Full Log Drill-Down
-                  </h3>
-                  <div className="accordion-wrapper">
-                    {Object.entries(logsData.grouped_logs).map(([exerciseName, logs]) => (
-                      <div
-                        key={exerciseName}
-                        className={`accordion-item ${expandedExercises[exerciseName] ? 'open' : ''}`}
-                      >
-                        <button
-                          className="accordion-header"
-                          onClick={() => toggleAccordion(exerciseName)}
-                          aria-expanded={expandedExercises[exerciseName]}
-                        >
-                          <div className="acc-title">
-                            <i className="fa-solid fa-dumbbell" style={{ fontSize: '0.85rem' }}></i>
-                            {exerciseName}
-                            <span>({logs.length} {logs.length === 1 ? 'log' : 'logs'})</span>
-                          </div>
-                          <i className="fa-solid fa-chevron-down acc-icon"></i>
-                        </button>
-                        <div className="accordion-body">
-                          <div style={{ overflowX: 'auto' }}>
-                            <table className="log-table">
-                              <thead>
-                                <tr>
-                                  <th>Date</th>
-                                  <th>Sets</th>
-                                  <th>Reps</th>
-                                  <th>Pain Level</th>
-                                  <th>Comments / Issue</th>
-                                </tr>
-                              </thead>
-                              <tbody>
-                                {logs.map(log => (
-                                  <tr key={log.id}>
-                                    <td>{new Date(log.log_date).toLocaleDateString()}</td>
-                                    <td>{log.sets_completed ?? '—'}</td>
-                                    <td>{log.reps_completed ?? '—'}</td>
-                                    <td>
-                                      {log.pain_level != null ? (
-                                        <span
-                                          className="pain-pill"
-                                          style={{
-                                            fontSize: '0.75rem',
-                                            height: '26px',
-                                            minWidth: '44px',
-                                            backgroundColor: log.pain_level >= 7
-                                              ? 'var(--danger)'
-                                              : log.pain_level > 3
-                                              ? 'var(--warning)'
-                                              : 'var(--success)'
-                                          }}
-                                        >
-                                          {log.pain_level}/10
-                                        </span>
-                                      ) : '—'}
-                                    </td>
-                                    <td className="td-note">
-                                      {log.issue_type && (
-                                        <div style={{ color: 'var(--secondary)', fontWeight: 700, marginBottom: '0.2rem', fontSize: '0.82rem' }}>
-                                          {log.issue_type.replace('_', ' ')}
-                                        </div>
-                                      )}
-                                      {log.comments || <span style={{ color: 'var(--gray-400)' }}>—</span>}
-                                    </td>
-                                  </tr>
-                                ))}
-                                {logs.length === 0 && (
-                                  <tr>
-                                    <td colSpan="5" style={{ textAlign: 'center', color: 'var(--gray-500)', padding: '2rem' }}>
-                                      No logs for this exercise.
-                                    </td>
-                                  </tr>
-                                )}
-                              </tbody>
-                            </table>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
+                <div>
+                  <div className="flex items-center justify-between pb-2 mb-3 border-b border-[#EAEAEA]">
+                    <h3 className="text-[15px] font-semibold text-[#202223] m-0">
+                      Detailed Exercise Logs
+                    </h3>
+                    <span className="text-[12px] text-[#8A8A8A]">
+                      Full patient workout telemetry
+                    </span>
                   </div>
-                </>
+
+                  <div className="flex flex-col gap-3">
+                    {Object.entries(logsData.grouped_logs).map(([exerciseName, logs]) => {
+                      const isExpanded = !!expandedExercises[exerciseName];
+                      return (
+                        <div key={exerciseName} className="saas-card overflow-hidden bg-[#FFFFFF]">
+                          <button
+                            type="button"
+                            onClick={() => toggleAccordion(exerciseName)}
+                            className="w-full p-4 flex items-center justify-between text-left hover:bg-[#FAFAFA] transition-colors cursor-pointer border-b border-[#EAEAEA]"
+                          >
+                            <div className="flex items-center gap-2">
+                              <Dumbbell size={15} className="text-[#616161]" />
+                              <span className="text-[14px] font-semibold text-[#202223]">
+                                {exerciseName}
+                              </span>
+                              <span className="text-[12px] text-[#8A8A8A] font-mono">
+                                ({logs.length} {logs.length === 1 ? 'entry' : 'entries'})
+                              </span>
+                            </div>
+                            <ChevronDown size={18} className={`text-[#616161] transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
+                          </button>
+
+                          {isExpanded && (
+                            <div className="overflow-x-auto">
+                              <table className="w-full text-left text-[13px] border-collapse">
+                                <thead>
+                                  <tr className="border-b border-[#EAEAEA] bg-[#FAFAFA] text-[#8A8A8A] text-[11px] font-semibold uppercase tracking-wider">
+                                    <th className="py-2.5 px-4">Date</th>
+                                    <th className="py-2.5 px-4">Sets</th>
+                                    <th className="py-2.5 px-4">Reps</th>
+                                    <th className="py-2.5 px-4">Pain Level</th>
+                                    <th className="py-2.5 px-4">Patient Feedback</th>
+                                  </tr>
+                                </thead>
+                                <tbody className="divide-y divide-[#EAEAEA]">
+                                  {logs.map((log) => (
+                                    <tr key={log.id} className="hover:bg-[#F9F9F9] transition-colors">
+                                      <td className="py-2.5 px-4 font-mono text-[#616161] text-[12px]">
+                                        {new Date(log.log_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}
+                                      </td>
+                                      <td className="py-2.5 px-4 font-medium text-[#202223]">
+                                        {log.sets_completed ?? '—'}
+                                      </td>
+                                      <td className="py-2.5 px-4 font-medium text-[#202223]">
+                                        {log.reps_completed ?? '—'}
+                                      </td>
+                                      <td className="py-2.5 px-4">
+                                        {log.pain_level != null ? (
+                                          <span className={`text-[11px] font-mono font-medium px-2 py-0.5 rounded-md ${
+                                            log.pain_level >= 7
+                                              ? 'badge-semantic-error'
+                                              : log.pain_level > 3
+                                              ? 'badge-semantic-warning'
+                                              : 'badge-semantic-success'
+                                          }`}>
+                                            {log.pain_level}/10
+                                          </span>
+                                        ) : '—'}
+                                      </td>
+                                      <td className="py-2.5 px-4 text-[#616161]">
+                                        {log.issue_type && (
+                                          <span className="font-medium text-[#202223] mr-2 block text-[11px]">
+                                            [{log.issue_type.replace('_', ' ')}]
+                                          </span>
+                                        )}
+                                        {log.comments || '—'}
+                                      </td>
+                                    </tr>
+                                  ))}
+                                </tbody>
+                              </table>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
               )}
             </>
           )}
-        </div>
 
-      </div>
+        </div>
+      )}
+
     </div>
   );
 };
