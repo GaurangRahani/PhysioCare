@@ -22,6 +22,7 @@ import DoctorDashboard from '../features/doctor/pages/DoctorDashboard';
 import AvailabilitySettings from '../features/doctor/pages/AvailabilitySettings';
 import ExerciseLibrary from '../features/doctor/pages/ExerciseLibrary';
 import PatientsTab from '../features/doctor/pages/PatientsTab';
+import RegionManagement from '../features/doctor/pages/RegionManagement';
 
 import ReceptionistLayout from '../features/receptionist/layout/ReceptionistLayout';
 import ReceptionistDashboard from '../features/receptionist/pages/ReceptionistDashboard';
@@ -104,6 +105,7 @@ const AppRoutes = () => {
         }
       >
         <Route index element={<DoctorDashboard />} />
+        <Route path="regions" element={<RegionManagement />} />
         <Route path="availability" element={<AvailabilitySettings />} />
         <Route path="exercise-library" element={<ExerciseLibrary />} />
         <Route path="patients" element={<PatientsTab />} />
