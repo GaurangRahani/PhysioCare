@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@clerk/clerk-react';
 import {
-  Dumbbell, Plus, Search, Filter, Loader2, ChevronDown,
-  Video, Image, MoreHorizontal, Edit2, EyeOff, Eye, AlertTriangle
+  Dumbbell, Plus, Search, Loader2, Video, Image as ImageIcon,
+  MoreVertical, Edit2, EyeOff, Eye, AlertTriangle, Layers, Activity, CheckCircle2
 } from 'lucide-react';
 import ExerciseFormModal from '../components/ExerciseFormModal';
 import ExerciseDetailModal from '../components/ExerciseDetailModal';
@@ -12,19 +12,6 @@ const BODY_PARTS = [
   'All', 'Neck', 'Shoulder', 'Upper Back', 'Lower Back', 'Core',
   'Hip', 'Knee', 'Ankle', 'Full Body', 'Other'
 ];
-
-const BODY_PART_COLORS = {
-  'Neck': 'bg-blue-100 text-blue-700',
-  'Shoulder': 'bg-violet-100 text-violet-700',
-  'Upper Back': 'bg-indigo-100 text-indigo-700',
-  'Lower Back': 'bg-purple-100 text-purple-700',
-  'Core': 'bg-orange-100 text-orange-700',
-  'Hip': 'bg-pink-100 text-pink-700',
-  'Knee': 'bg-green-100 text-green-700',
-  'Ankle': 'bg-teal-100 text-teal-700',
-  'Full Body': 'bg-primary/10 text-primary',
-  'Other': 'bg-gray-100 text-gray-600',
-};
 
 const ExerciseLibrary = () => {
   const { getToken } = useAuth();
@@ -40,7 +27,7 @@ const ExerciseLibrary = () => {
 
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [itemsPerPage, setItemsPerPage] = useState(12);
 
   // Modals
   const [formModal, setFormModal] = useState({ open: false, exercise: null });
@@ -84,7 +71,7 @@ const ExerciseLibrary = () => {
     fetchExercises();
   }, [fetchExercises]);
 
-  // Client-side search filter (backend doesn't support search yet so we do it here)
+  // Client-side search filter
   const filtered = exercises.filter(ex => {
     if (!search.trim()) return true;
     const q = search.toLowerCase();
@@ -96,7 +83,7 @@ const ExerciseLibrary = () => {
   });
 
   // Pagination Logic
-  const totalPages = Math.ceil(filtered.length / itemsPerPage);
+  const totalPages = Math.max(1, Math.ceil(filtered.length / itemsPerPage));
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
   const currentExercises = filtered.slice(indexOfFirstItem, indexOfLastItem);
@@ -107,12 +94,12 @@ const ExerciseLibrary = () => {
       if (existing) return prev.map(e => e.id === savedExercise.id ? savedExercise : e);
       return [savedExercise, ...prev];
     });
-    showToast(formModal.exercise ? 'Exercise updated!' : 'Exercise created!');
+    showToast(formModal.exercise ? 'Exercise updated successfully.' : 'Exercise created successfully.');
     setFormModal({ open: false, exercise: null });
   };
 
   const handleDeactivate = async (exercise) => {
-    if (!window.confirm(`Deactivate "${exercise.name}"? It will be hidden from new assignments.`)) return;
+    if (!window.confirm(`Deactivate "${exercise.name}"? It will be hidden from new patient prescription plans.`)) return;
     try {
       const token = await getToken();
       const res = await fetch(
@@ -123,7 +110,7 @@ const ExerciseLibrary = () => {
       if (data.success) {
         setExercises(prev => prev.map(e => e.id === exercise.id ? { ...e, is_active: false } : e));
         setDetailModal({ open: false, exercise: null });
-        showToast(data.warning ? data.message : 'Exercise deactivated.', data.warning ? 'warning' : 'success');
+        showToast(data.warning ? data.message : 'Exercise marked as inactive.', data.warning ? 'warning' : 'success');
       } else {
         showToast(data.message || 'Failed to deactivate.', 'error');
       }
@@ -143,7 +130,7 @@ const ExerciseLibrary = () => {
       if (data.success) {
         setExercises(prev => prev.map(e => e.id === exercise.id ? { ...e, is_active: true } : e));
         setDetailModal(prev => prev.open ? { ...prev, exercise: { ...prev.exercise, is_active: true } } : prev);
-        showToast('Exercise reactivated!');
+        showToast('Exercise reactivated successfully.');
       } else {
         showToast(data.message || 'Failed to reactivate.', 'error');
       }
@@ -152,314 +139,337 @@ const ExerciseLibrary = () => {
     }
   };
 
-
   const stats = {
     total: exercises.length,
     active: exercises.filter(e => e.is_active).length,
-    byPart: BODY_PARTS.slice(1).reduce((acc, bp) => {
-      acc[bp] = exercises.filter(e => e.target_body_part === bp && e.is_active).length;
-      return acc;
-    }, {})
+    inactive: exercises.filter(e => !e.is_active).length,
+    byPartCount: new Set(exercises.map(e => e.target_body_part).filter(Boolean)).size
   };
 
   return (
-    <div className="library-theme animate-fade-in">
-      {/* APPOINTMENT STYLE THEME BACKGROUND */}
-      <div className="theme-bg" style={{ backgroundImage: "url('/images/background/line-bg2.png')", backgroundColor: "#f9fbfe" }}>
-        <img className="pt-img1" src="/images/shap/trangle-orange.png" alt="" />
-        <img className="pt-img2" src="/images/shap/wave-blue.png" alt="" />
-        <img className="pt-img3" src="/images/shap/circle-dots.png" alt="" />
-        <img className="pt-img4" src="/images/shap/plus-blue.png" alt="" />
-        <img className="pt-img5" src="/images/shap/wave-blue.png" alt="" />
-        <img className="pt-img6" src="/images/shap/circle-dots.png" alt="" />
+    <div className="flex flex-col gap-6 max-w-7xl mx-auto font-['Inter',system-ui,sans-serif] text-[#202223]">
+      
+      {/* Toast Notification */}
+      {toast && (
+        <div className={`fixed top-6 right-6 z-[200] px-4 py-2.5 rounded-xl shadow-lg text-[13px] font-medium flex items-center gap-2 border animate-fade-in ${
+          toast.type === 'success' ? 'bg-[#D9F7C3] text-[#245B19] border-[#A3F56C]' :
+          toast.type === 'warning' ? 'bg-[#FFF2CC] text-[#805B00] border-[#F5C451]' :
+          'bg-[#FCE4E4] text-[#B42318] border-[#E5484D]'
+        }`}>
+          {toast.type === 'warning' ? <AlertTriangle size={15} /> : <CheckCircle2 size={15} />}
+          <span>{toast.message}</span>
+        </div>
+      )}
+
+      {/* Modals */}
+      <ExerciseFormModal
+        isOpen={formModal.open}
+        exercise={formModal.exercise}
+        onClose={() => setFormModal({ open: false, exercise: null })}
+        onSaved={handleSaved}
+      />
+      <ExerciseDetailModal
+        isOpen={detailModal.open}
+        exercise={detailModal.exercise}
+        onClose={() => setDetailModal({ open: false, exercise: null })}
+        onEdit={(ex) => setFormModal({ open: true, exercise: ex })}
+        onDeactivate={handleDeactivate}
+        onActivate={handleActivate}
+      />
+
+      {/* ── Page Header ────────────────────────────────────────────── */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-[#EAEAEA]">
+        <div>
+          <div className="flex items-center gap-2">
+            <h1 className="text-[22px] font-semibold text-[#202223] tracking-tight m-0">
+              Exercise Library
+            </h1>
+            <span className="badge-semantic-neutral">
+              Clinical Catalog
+            </span>
+          </div>
+          <p className="text-[13px] text-[#616161] mt-1 font-normal">
+            Manage, customize, and prescribe physiotherapy exercises for patient recovery plans.
+          </p>
+        </div>
+
+        <button 
+          onClick={() => setFormModal({ open: true, exercise: null })}
+          className="btn-primary-saas self-start sm:self-center shrink-0"
+        >
+          <Plus size={14} />
+          <span>Add Exercise</span>
+        </button>
       </div>
 
-      <div className="container">
-        {/* Toast */}
-        {toast && (
-          <div className={`fixed top-6 right-6 z-[200] px-5 py-3.5 rounded-xl shadow-lg text-sm font-bold flex items-center gap-2 transition-all ${
-            toast.type === 'success' ? 'bg-success text-white' :
-            toast.type === 'warning' ? 'bg-warning text-white' :
-            'bg-danger text-white'
-          }`}>
-            {toast.type === 'warning' && <AlertTriangle className="w-4 h-4" />}
-            {toast.message}
+      {/* ── Stats Strip (Enterprise Minimalist) ────────────────────────── */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5">
+        <div className="saas-card p-4">
+          <div className="flex items-center justify-between text-[#8A8A8A] text-[11px] font-semibold uppercase tracking-wider">
+            <span>Total Catalog</span>
+            <Dumbbell size={15} />
           </div>
-        )}
-
-        {/* Modals */}
-        <ExerciseFormModal
-          isOpen={formModal.open}
-          exercise={formModal.exercise}
-          onClose={() => setFormModal({ open: false, exercise: null })}
-          onSaved={handleSaved}
-        />
-        <ExerciseDetailModal
-          isOpen={detailModal.open}
-          exercise={detailModal.exercise}
-          onClose={() => setDetailModal({ open: false, exercise: null })}
-          onEdit={(ex) => setFormModal({ open: true, exercise: ex })}
-          onDeactivate={handleDeactivate}
-          onActivate={handleActivate}
-        />
-
-        {/* Page Header */}
-        <div className="page-header">
-          <div className="page-title">
-            <span>Clinic Resources</span>
-            <h1>Exercise Library</h1>
-            <p>Manage and prescribe exercises for your patients' recovery journey.</p>
+          <div className="text-[24px] font-semibold text-[#202223] font-mono mt-1">
+            {stats.total < 10 ? `0${stats.total}` : stats.total}
           </div>
-          <button 
-            className="btn btn-primary"
-            onClick={() => setFormModal({ open: true, exercise: null })}
+        </div>
+
+        <div className="saas-card p-4">
+          <div className="flex items-center justify-between text-[#8A8A8A] text-[11px] font-semibold uppercase tracking-wider">
+            <span>Active for Prescription</span>
+            <Activity size={15} className="text-[#245B19]" />
+          </div>
+          <div className="text-[24px] font-semibold text-[#202223] font-mono mt-1">
+            {stats.active < 10 ? `0${stats.active}` : stats.active}
+          </div>
+        </div>
+
+        <div className="saas-card p-4">
+          <div className="flex items-center justify-between text-[#8A8A8A] text-[11px] font-semibold uppercase tracking-wider">
+            <span>Inactive / Archived</span>
+            <EyeOff size={15} />
+          </div>
+          <div className="text-[24px] font-semibold text-[#616161] font-mono mt-1">
+            {stats.inactive < 10 ? `0${stats.inactive}` : stats.inactive}
+          </div>
+        </div>
+
+        <div className="saas-card p-4">
+          <div className="flex items-center justify-between text-[#8A8A8A] text-[11px] font-semibold uppercase tracking-wider">
+            <span>Target Body Areas</span>
+            <Layers size={15} />
+          </div>
+          <div className="text-[24px] font-semibold text-[#202223] font-mono mt-1">
+            {stats.byPartCount < 10 ? `0${stats.byPartCount}` : stats.byPartCount}
+          </div>
+        </div>
+      </div>
+
+      {/* ── Toolbar: Search & Filters ───────────────────────────────── */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-[#FAFAFA] p-2.5 rounded-xl border border-[#E5E5E5]">
+        {/* Search Input */}
+        <div className="relative flex-1 max-w-md">
+          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#8A8A8A]" />
+          <input 
+            type="text" 
+            placeholder="Search exercises by name, body part, description..." 
+            value={search}
+            onChange={e => { setSearch(e.target.value); setCurrentPage(1); }}
+            className="w-full pl-9 pr-3 py-1.5 text-[13px] bg-[#FFFFFF] border border-[#E5E5E5] rounded-lg text-[#202223] placeholder-[#8A8A8A] outline-none focus:border-[#202223] focus:ring-1 focus:ring-[#202223] transition-all"
+          />
+        </div>
+
+        {/* Filter Dropdown & Checkbox */}
+        <div className="flex items-center gap-3">
+          <select 
+            value={bodyPartFilter}
+            onChange={(e) => { setBodyPartFilter(e.target.value); setCurrentPage(1); }}
+            className="px-3 py-1.5 text-[13px] bg-[#FFFFFF] border border-[#E5E5E5] rounded-lg text-[#202223] outline-none focus:border-[#202223] cursor-pointer font-medium"
           >
-            <Plus className="w-4 h-4" /> Add Exercise
-          </button>
-        </div>
-
-        {/* Stats Grid */}
-        <div className="stats-grid">
-          <div className="stat-card c-total">
-            <h5>Total Exercises</h5>
-            <h2>{stats.total < 10 ? `0${stats.total}` : stats.total}</h2>
-          </div>
-          <div className="stat-card c-active">
-            <h5>Active</h5>
-            <h2>{stats.active < 10 ? `0${stats.active}` : stats.active}</h2>
-          </div>
-          <div className="stat-card c-inactive">
-            <h5>Inactive</h5>
-            <h2>{(stats.total - stats.active) < 10 ? `0${stats.total - stats.active}` : (stats.total - stats.active)}</h2>
-          </div>
-          <div className="stat-card c-bodyparts">
-            <h5>Body Parts</h5>
-            <h2>{Object.values(stats.byPart).filter(v => v > 0).length < 10 ? `0${Object.values(stats.byPart).filter(v => v > 0).length}` : Object.values(stats.byPart).filter(v => v > 0).length}</h2>
-          </div>
-        </div>
-
-        {/* Toolbar */}
-        <div className="toolbar">
-          <div className="search-wrapper">
-            <Search className="icon w-4 h-4" />
-            <input 
-              type="text" 
-              placeholder="Search exercises by name, description..." 
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-            />
-          </div>
-          <div className="filter-wrapper">
-            <select 
-              value={bodyPartFilter}
-              onChange={(e) => setBodyPartFilter(e.target.value)}
-            >
-              {BODY_PARTS.map(bp => (
-                <option key={bp} value={bp}>{bp === 'All' ? 'Filter by Body Part' : bp}</option>
-              ))}
-            </select>
-            <label className="toggle-inactive">
-              <input 
-                type="checkbox" 
-                checked={showInactive}
-                onChange={() => setShowInactive(!showInactive)}
-              />
-              Show Inactive
-            </label>
-          </div>
-        </div>
-
-        {/* Content */}
-        {loading ? (
-          <div className="flex justify-center items-center py-24">
-            <Loader2 className="w-8 h-8 text-primary animate-spin" />
-          </div>
-        ) : error ? (
-          <div className="text-center py-16 text-danger bg-red-50 rounded-xl border border-red-100">
-            {error}
-          </div>
-        ) : filtered.length === 0 ? (
-          <div className="stat-card text-center py-20" style={{ alignItems: 'center' }}>
-            <Dumbbell className="w-12 h-12 text-gray-200 mx-auto mb-4" />
-            <h3 className="font-bold text-heading mb-1">No exercises found</h3>
-            <p className="text-sm text-gray-400 mb-6">
-              {search ? `No results for "${search}"` : 'Start building your library by adding an exercise.'}
-            </p>
-            {!search && (
-              <button
-                onClick={() => setFormModal({ open: true, exercise: null })}
-                className="btn btn-primary"
-              >
-                <Plus className="w-4 h-4" /> Add First Exercise
-              </button>
-            )}
-          </div>
-        ) : (
-          <div className="exercise-grid">
-            {currentExercises.map(ex => (
-              <ExerciseCard
-                key={ex.id}
-                exercise={ex}
-                onClick={() => setDetailModal({ open: true, exercise: ex })}
-                onEdit={(e) => { e.stopPropagation(); setFormModal({ open: true, exercise: ex }); }}
-                onDeactivate={(e) => { e.stopPropagation(); handleDeactivate(ex); }}
-                onActivate={(e) => { e.stopPropagation(); handleActivate(ex); }}
-              />
+            {BODY_PARTS.map(bp => (
+              <option key={bp} value={bp}>{bp === 'All' ? 'Filter: All Body Parts' : bp}</option>
             ))}
-          </div>
-        )}
+          </select>
 
-        {/* Global Pagination Bar */}
-        {!loading && filtered.length > 0 && (
-          <div className="pagination-bar">
-            <div className="pagination-left-panel">
-                <label htmlFor="perPageSelect">Rows per page:</label>
-                <select 
-                    id="perPageSelect" 
-                    className="rows-dropdown"
-                    value={itemsPerPage}
-                    onChange={(e) => {
-                        setItemsPerPage(Number(e.target.value));
-                        setCurrentPage(1);
-                    }}
-                >
-                    <option value="5">5</option>
-                    <option value="10">10</option>
-                    <option value="20">20</option>
-                    <option value="50">50</option>
-                </select>
-            </div>
-            
-            <div className="pagination-center-panel">
-                <nav className="pagination-numbers-nav" aria-label="Exercises page navigation">
-                    <button 
-                        className="page-item-btn" 
-                        onClick={() => setCurrentPage(currentPage - 1)}
-                        disabled={currentPage === 1}
-                    >
-                        &lt;
-                    </button>
-
-                    {[...Array(totalPages)].map((_, i) => {
-                        const page = i + 1;
-                        if (page === 1 || page === totalPages || (page >= currentPage - 1 && page <= currentPage + 1)) {
-                            return (
-                                <button 
-                                    key={page}
-                                    className={`page-item-btn ${currentPage === page ? 'active' : ''}`}
-                                    onClick={() => setCurrentPage(page)}
-                                >
-                                    {page}
-                                </button>
-                            );
-                        } else if (page === currentPage - 2 || page === currentPage + 2) {
-                            return <span key={page} className="page-item-spacer">...</span>;
-                        }
-                        return null;
-                    })}
-
-                    <button 
-                        className="page-item-btn" 
-                        onClick={() => setCurrentPage(currentPage + 1)}
-                        disabled={currentPage === totalPages}
-                    >
-                        &gt;
-                    </button>
-                </nav>
-            </div>
-            
-            <div className="pagination-right-panel">
-                <span>Showing {filtered.length > 0 ? indexOfFirstItem + 1 : 0}-{Math.min(indexOfLastItem, filtered.length)} of {filtered.length} entries</span>
-            </div>
-          </div>
-        )}
+          <label className="flex items-center gap-2 text-[12px] text-[#616161] font-medium cursor-pointer select-none">
+            <input 
+              type="checkbox" 
+              checked={showInactive}
+              onChange={() => setShowInactive(!showInactive)}
+              className="rounded border-[#CCCCCC] text-[#111111] focus:ring-0 cursor-pointer"
+            />
+            <span>Show Inactive</span>
+          </label>
+        </div>
       </div>
+
+      {/* ── Exercises Grid ─────────────────────────────────────────── */}
+      {loading ? (
+        <div className="flex flex-col items-center justify-center py-24 gap-3 text-[#8A8A8A]">
+          <Loader2 className="w-6 h-6 text-[#202223] animate-spin" />
+          <span className="text-[13px]">Loading exercises...</span>
+        </div>
+      ) : error ? (
+        <div className="p-4 bg-[#FCE4E4] text-[#B42318] rounded-xl border border-[#E5E5E5] text-[13px] text-center">
+          {error}
+        </div>
+      ) : filtered.length === 0 ? (
+        <div className="saas-card py-20 px-6 flex flex-col items-center justify-center text-center">
+          <div className="w-12 h-12 rounded-full bg-[#F0F0F0] border border-[#E5E5E5] flex items-center justify-center mb-3 text-[#8A8A8A]">
+            <Dumbbell size={22} />
+          </div>
+          <h3 className="text-[16px] font-semibold text-[#202223] m-0">No Exercises Found</h3>
+          <p className="text-[13px] text-[#616161] mt-1 max-w-sm mb-4">
+            {search ? `No matches found for "${search}". Try clearing search or changing filters.` : 'Get started by creating your first exercise in the library.'}
+          </p>
+          {!search && (
+            <button
+              onClick={() => setFormModal({ open: true, exercise: null })}
+              className="btn-primary-saas"
+            >
+              <Plus size={14} /> Add First Exercise
+            </button>
+          )}
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
+          {currentExercises.map(ex => (
+            <ExerciseCard
+              key={ex.id}
+              exercise={ex}
+              onClick={() => setDetailModal({ open: true, exercise: ex })}
+              onEdit={(e) => { e.stopPropagation(); setFormModal({ open: true, exercise: ex }); }}
+              onDeactivate={(e) => { e.stopPropagation(); handleDeactivate(ex); }}
+              onActivate={(e) => { e.stopPropagation(); handleActivate(ex); }}
+            />
+          ))}
+        </div>
+      )}
+
+      {/* ── Enterprise Pagination Footer ───────────────────────────── */}
+      {!loading && filtered.length > 0 && (
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-3 border-t border-[#EAEAEA] text-[12px] text-[#616161]">
+          <div className="flex items-center gap-2">
+            <span>Show:</span>
+            <select 
+              value={itemsPerPage}
+              onChange={(e) => { setItemsPerPage(Number(e.target.value)); setCurrentPage(1); }}
+              className="px-2 py-1 bg-[#FFFFFF] border border-[#E5E5E5] rounded-md text-[#202223] font-medium outline-none"
+            >
+              <option value="8">8 per page</option>
+              <option value="12">12 per page</option>
+              <option value="24">24 per page</option>
+              <option value="48">48 per page</option>
+            </select>
+            <span className="text-[#8A8A8A] ml-2">
+              Showing {indexOfFirstItem + 1}–{Math.min(indexOfLastItem, filtered.length)} of {filtered.length} exercises
+            </span>
+          </div>
+
+          <div className="flex items-center gap-1">
+            <button 
+              type="button"
+              onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+              disabled={currentPage === 1}
+              className="px-3 py-1 rounded-md border border-[#E5E5E5] bg-[#FFFFFF] text-[#202223] font-medium hover:bg-[#F0F0F0] disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+            >
+              Previous
+            </button>
+            
+            <span className="px-2 font-mono text-[#202223]">
+              Page {currentPage} of {totalPages}
+            </span>
+
+            <button 
+              type="button"
+              onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+              disabled={currentPage === totalPages}
+              className="px-3 py-1 rounded-md border border-[#E5E5E5] bg-[#FFFFFF] text-[#202223] font-medium hover:bg-[#F0F0F0] disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+            >
+              Next
+            </button>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 };
 
-// ─── Exercise Card ────────────────────────────────────────────────────────────
+// ─── Single Exercise Card Component ──────────────────────────────────────────
 const ExerciseCard = ({ exercise, onClick, onEdit, onDeactivate, onActivate }) => {
   const [menuOpen, setMenuOpen] = useState(false);
-  const hasMedia = (exercise.photo_urls?.length > 0) || exercise.video_url;
   const thumbnail = exercise.photo_urls?.[0] || null;
-  const bpKey = exercise.target_body_part ? exercise.target_body_part.toLowerCase().replace(' ', '-') : 'other';
+  const hasPhotos = (exercise.photo_urls?.length || 0) > 0;
+  const hasVideo = !!exercise.video_url;
 
   return (
     <div
       onClick={onClick}
-      className={`exercise-card group ${exercise.is_active ? '' : 'inactive'}`}
+      className={`saas-card overflow-hidden flex flex-col group cursor-pointer transition-all duration-150 hover:border-[#CCCCCC] hover:shadow-xs relative ${
+        !exercise.is_active ? 'opacity-70 bg-[#FCFCFC]' : 'bg-[#FFFFFF]'
+      }`}
     >
-      {/* Thumbnail / Placeholder */}
-      <div className="card-media">
+      {/* Thumbnail Aspect Media Container */}
+      <div className="relative aspect-[16/10] bg-[#F7F7F7] overflow-hidden border-b border-[#EAEAEA]">
         {thumbnail ? (
-          <img src={thumbnail} alt={exercise.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
-        ) : exercise.video_url ? (
-          <div className="media-placeholder w-full h-full flex flex-col items-center justify-center gap-2">
-            <Video className="w-8 h-8" />
-            <p className="text-xs font-medium m-0">Video attached</p>
+          <img 
+            src={thumbnail} 
+            alt={exercise.name} 
+            className="w-full h-full object-cover group-hover:scale-102 transition-transform duration-200" 
+          />
+        ) : hasVideo ? (
+          <div className="w-full h-full flex flex-col items-center justify-center gap-1.5 text-[#8A8A8A]">
+            <Video size={24} />
+            <span className="text-[11px] font-medium">Video Attached</span>
           </div>
         ) : (
-          <div className="media-placeholder w-full h-full flex flex-col items-center justify-center gap-2">
-            <Dumbbell className="w-8 h-8" />
-            <p className="text-xs font-medium m-0">No media</p>
+          <div className="w-full h-full flex flex-col items-center justify-center gap-1.5 text-[#CCCCCC]">
+            <Dumbbell size={24} />
+            <span className="text-[11px] font-medium text-[#8A8A8A]">No Media</span>
           </div>
         )}
 
-        {/* Inactive badge */}
+        {/* Floating Media Badges (Top Left) */}
+        <div className="absolute top-2 left-2 flex items-center gap-1.5">
+          {hasVideo && (
+            <span className="flex items-center gap-1 px-2 py-0.5 rounded-md bg-black/70 text-white text-[11px] font-medium backdrop-blur-xs">
+              <Video size={11} /> Video
+            </span>
+          )}
+          {hasPhotos && (
+            <span className="flex items-center gap-1 px-2 py-0.5 rounded-md bg-black/70 text-white text-[11px] font-medium backdrop-blur-xs">
+              <ImageIcon size={11} /> {exercise.photo_urls.length}
+            </span>
+          )}
+        </div>
+
+        {/* Inactive Overlay Badge */}
         {!exercise.is_active && (
-          <div className="absolute inset-0 bg-white/60 flex items-center justify-center">
-            <span className="bg-gray-700 text-white text-[11px] font-bold px-3 py-1 rounded-full">Inactive</span>
+          <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+            <span className="bg-[#111111] text-[#FFFFFF] text-[11px] font-semibold px-2.5 py-0.5 rounded-md">
+              Inactive
+            </span>
           </div>
         )}
 
-        {/* Media count badge */}
-        {hasMedia && exercise.is_active && (
-          <div className="media-badges">
-            {exercise.video_url && (
-              <span className="media-badge">
-                <Video className="w-3 h-3 mr-1" />
-              </span>
-            )}
-            {(exercise.photo_urls?.length || 0) > 0 && (
-              <span className="media-badge">
-                <Image className="w-3 h-3 mr-1" /> {exercise.photo_urls.length}
-              </span>
-            )}
-          </div>
-        )}
-
-        {/* 3-dot menu — always visible on hover, options change by is_active */}
+        {/* 3-Dot Options Action (Top Right) */}
         <div className="absolute top-2 right-2" onClick={e => e.stopPropagation()}>
           <button
+            type="button"
             onClick={() => setMenuOpen(v => !v)}
-            className="w-7 h-7 rounded-full bg-white/80 backdrop-blur-sm flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all shadow-sm hover:bg-white border-0 cursor-pointer"
+            aria-label="Options"
+            className="w-7 h-7 rounded-md bg-white/90 hover:bg-white text-[#202223] flex items-center justify-center shadow-xs border border-[#E5E5E5] transition-colors cursor-pointer"
           >
-            <MoreHorizontal className="w-4 h-4 text-gray-600" />
+            <MoreVertical size={14} />
           </button>
+          
           {menuOpen && (
-            <div className="absolute top-8 right-0 bg-white rounded-xl shadow-lg border border-gray-100 py-1 w-40 z-10 text-left">
+            <div className="absolute top-8 right-0 bg-[#FFFFFF] rounded-xl shadow-lg border border-[#E5E5E5] py-1 w-36 z-30 text-left animate-fade-in text-[12px]">
               {exercise.is_active ? (
                 <>
                   <button
+                    type="button"
                     onClick={onEdit}
-                    className="w-full flex items-center gap-2 px-4 py-2 text-sm font-semibold text-dark hover:bg-gray-50 transition-colors border-0 bg-transparent cursor-pointer"
+                    className="w-full flex items-center gap-2 px-3 py-1.5 text-[#202223] hover:bg-[#F0F0F0] font-medium cursor-pointer"
                   >
-                    <Edit2 className="w-3.5 h-3.5 text-primary" /> Edit
+                    <Edit2 size={13} className="text-[#616161]" /> Edit
                   </button>
                   <button
+                    type="button"
                     onClick={onDeactivate}
-                    className="w-full flex items-center gap-2 px-4 py-2 text-sm font-semibold text-danger hover:bg-red-50 transition-colors border-0 bg-transparent cursor-pointer"
+                    className="w-full flex items-center gap-2 px-3 py-1.5 text-[#E5484D] hover:bg-[#FCE4E4] font-medium cursor-pointer"
                   >
-                    <EyeOff className="w-3.5 h-3.5" /> Deactivate
+                    <EyeOff size={13} /> Deactivate
                   </button>
                 </>
               ) : (
                 <button
+                  type="button"
                   onClick={onActivate}
-                  className="w-full flex items-center gap-2 px-4 py-2 text-sm font-semibold text-success hover:bg-green-50 transition-colors border-0 bg-transparent cursor-pointer"
+                  className="w-full flex items-center gap-2 px-3 py-1.5 text-[#245B19] hover:bg-[#D9F7C3] font-medium cursor-pointer"
                 >
-                  <Eye className="w-3.5 h-3.5" /> Reactivate
+                  <Eye size={13} /> Reactivate
                 </button>
               )}
             </div>
@@ -467,17 +477,28 @@ const ExerciseCard = ({ exercise, onClick, onEdit, onDeactivate, onActivate }) =
         </div>
       </div>
 
-      {/* Card body */}
-      <div className="card-body">
-        {exercise.target_body_part && (
-          <span className={`badge badge-${bpKey} mb-2 block w-fit`}>
-            {exercise.target_body_part}
-          </span>
-        )}
-        <h4>{exercise.name}</h4>
-        {exercise.description && (
-          <p className="text-xs text-gray-500 leading-relaxed line-clamp-2 m-0">{exercise.description}</p>
-        )}
+      {/* Card Content */}
+      <div className="p-4 flex flex-col flex-1 justify-between gap-2.5">
+        <div>
+          {exercise.target_body_part && (
+            <span className="badge-semantic-neutral inline-block mb-1.5 text-[11px] font-medium">
+              {exercise.target_body_part}
+            </span>
+          )}
+          <h4 className="text-[14px] font-semibold text-[#202223] tracking-tight leading-snug m-0 group-hover:text-[#000000]">
+            {exercise.name}
+          </h4>
+          {exercise.description && (
+            <p className="text-[12px] text-[#616161] line-clamp-2 mt-1 leading-normal m-0 font-normal">
+              {exercise.description}
+            </p>
+          )}
+        </div>
+
+        <div className="pt-2 border-t border-[#EAEAEA] flex items-center justify-between text-[11px] text-[#8A8A8A]">
+          <span>{exercise.instructions ? 'Instructions attached' : 'Standard regimen'}</span>
+          <span className="font-medium text-[#202223] group-hover:underline">View details →</span>
+        </div>
       </div>
     </div>
   );
