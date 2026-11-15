@@ -3,6 +3,7 @@ import {
   getDoctorProfile,
   updateDoctorProfile,
   getAllDoctors,
+  getDoctorAnalytics,
 } from "../controllers/doctor.controller.js";
 import { validate } from "../middlewares/validate.middleware.js";
 import { updateDoctorProfileSchema } from "../validators/doctor.validator.js";
@@ -12,6 +13,7 @@ const router = express.Router();
 
 // Only doctors can view and update their own profile
 router.get("/profile", requireAuth, requireRole(["doctor"]), getDoctorProfile);
+router.get("/analytics", requireAuth, requireRole(["doctor"]), getDoctorAnalytics);
 router.put(
   "/profile",
   requireAuth,
