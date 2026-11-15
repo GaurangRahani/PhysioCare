@@ -68,7 +68,7 @@ export const getOverview = async (req, res) => {
             JOIN users u_doctor  ON a.doctor_id  = u_doctor.id
             WHERE a.status != 'blocked'
             ORDER BY a.created_at DESC
-            LIMIT 5
+            LIMIT 100
           )
           UNION ALL
           (
@@ -83,7 +83,7 @@ export const getOverview = async (req, res) => {
             JOIN invoices i ON i.id = p.invoice_id
             JOIN users u    ON i.patient_id = u.id
             ORDER BY p.payment_date DESC
-            LIMIT 5
+            LIMIT 100
           )
           UNION ALL
           (
@@ -97,11 +97,11 @@ export const getOverview = async (req, res) => {
             FROM users u
             WHERE u.role = 'patient'
             ORDER BY u.created_at DESC
-            LIMIT 5
+            LIMIT 100
           )
         ) events
         ORDER BY event_time DESC
-        LIMIT 10
+        LIMIT 250
       `),
     ]);
 
