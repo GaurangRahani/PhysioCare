@@ -360,7 +360,7 @@ export const selfBook = async (req, res) => {
 export const getAppointments = async (req, res) => {
   try {
     const role = req.user.role;
-    const { date, range } = req.query;
+    const { date, range, startDate, endDate, date_from, date_to } = req.query;
 
     let conditions = [];
 
@@ -372,20 +372,22 @@ export const getAppointments = async (req, res) => {
     }
     // Receptionist/Admin gets all — no ownership filter
 
-    // Date filter — ?date=today or ?date=2026-07-01
-    if (date === "today" || (date === undefined && range === undefined)) {
-      // If date=today is explicit, filter to today
-      if (date === "today") {
-        const today = localToday();
-        conditions.push(eq(appointments.appointment_date, today));
-      }
-    } else if (date && date !== "today") {
-      // Specific date requested
-      conditions.push(eq(appointments.appointment_date, date));
-    }
-
-    // Range filter — ?range=week gives Mon-Sun of current week
-    if (range === "week") {
+    // Custom Date Range filter
+    const fromDate = startDate || date_from;
+    const toDate = endDate || date_to;
+    if (fromDate && toDate) {
+      conditions.push(gte(appointments.appointment_date, fromDate));
+      conditions.push(lte(appointments.appointment_date, toDate));
+    } else if (range === "7days" || range === "30days") {
+      const daysCount = range === "7days" ? 7 : 30;
+      const today = new Date();
+      const pastDate = new Date();
+      pastDate.setDate(today.getDate() - daysCount);
+      const fromStr = pastDate.toISOString().split("T")[0];
+      const toStr = today.toISOString().split("T")[0];
+      conditions.push(gte(appointments.appointment_date, fromStr));
+      conditions.push(lte(appointments.appointment_date, toStr));
+    } else if (range === "week") {
       const now = new Date();
       const dayOfWeek = now.getDay(); // 0=Sun
       const monday = new Date(now);
@@ -398,6 +400,14 @@ export const getAppointments = async (req, res) => {
 
       conditions.push(gte(appointments.appointment_date, weekStart));
       conditions.push(lte(appointments.appointment_date, weekEnd));
+    } else if (date === "all") {
+      // Return all without date constraint
+    } else if (date === "today") {
+      const today = localToday();
+      conditions.push(eq(appointments.appointment_date, today));
+    } else if (date && date !== "today") {
+      // Specific date requested
+      conditions.push(eq(appointments.appointment_date, date));
     }
 
     const patientsTable = aliasedTable(users, "patient");
@@ -663,9 +673,19 @@ export const getAvailableDates = async (req, res) => {
         .json({ success: false, message: "doctor_id and month are required" });
     }
 
-    const [year, monthNum] = month.split("-");
-    const startDate = new Date(year, parseInt(monthNum) - 1, 1);
-    const endDate = new Date(year, parseInt(monthNum), 0);
+    const [yearStr, monthNumStr] = month.split("-");
+    const year = parseInt(yearStr, 10);
+    const monthNum = parseInt(monthNumStr, 10);
+    if (isNaN(year) || isNaN(monthNum) || monthNum < 1 || monthNum > 12) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Invalid month format. Expected YYYY-MM" });
+    }
+
+    const totalDaysInMonth = new Date(year, monthNum, 0).getDate();
+    const formattedMonth = String(monthNum).padStart(2, "0");
+    const startMonthStr = `${yearStr}-${formattedMonth}-01`;
+    const endMonthStr = `${yearStr}-${formattedMonth}-${String(totalDaysInMonth).padStart(2, "0")}`;
 
     const [profile] = await db
       .select({ availability_rules: doctorProfiles.availability_rules })
@@ -678,8 +698,10 @@ export const getAvailableDates = async (req, res) => {
 
     const rules = profile.availability_rules;
     const slotMinutes = rules.slot_minutes || 30;
+    const weeklyRoutine = rules.weekly_routine || {};
+    const specificDates = rules.specific_dates || {};
 
-    // Fetch all appointments for this doctor in this month
+    // Fetch all active appointments for this doctor in this month
     const existingAppts = await db
       .select({
         appointment_date: appointments.appointment_date,
@@ -690,54 +712,76 @@ export const getAvailableDates = async (req, res) => {
       .where(
         and(
           eq(appointments.doctor_id, doctor_id),
-          gte(
-            appointments.appointment_date,
-            startDate.toISOString().split("T")[0],
-          ),
-          lte(
-            appointments.appointment_date,
-            endDate.toISOString().split("T")[0],
-          ),
+          gte(appointments.appointment_date, startMonthStr),
+          lte(appointments.appointment_date, endMonthStr),
         ),
       );
 
     const availableDates = [];
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
 
-    for (
-      let d = new Date(startDate);
-      d <= endDate;
-      d.setDate(d.getDate() + 1)
-    ) {
-      if (d < today) continue; // Skip past dates
+    // Current local time components for comparing today & past
+    const now = new Date();
+    const todayYear = now.getFullYear();
+    const todayMonth = String(now.getMonth() + 1).padStart(2, "0");
+    const todayDay = String(now.getDate()).padStart(2, "0");
+    const todayDateStr = `${todayYear}-${todayMonth}-${todayDay}`;
+    const currentMinutesNow = now.getHours() * 60 + now.getMinutes();
 
-      const dateStr = d.toISOString().split("T")[0];
-      const dayOfWeek = d.getDay().toString();
+    for (let day = 1; day <= totalDaysInMonth; day++) {
+      const dateStr = `${yearStr}-${formattedMonth}-${String(day).padStart(2, "0")}`;
+      if (dateStr < todayDateStr) continue; // Skip past days
 
-      let dayBlocks = [];
-      if (rules.specific_dates && rules.specific_dates[dateStr]) {
-        dayBlocks = rules.specific_dates[dateStr];
-      } else if (rules.weekly_routine && rules.weekly_routine[dayOfWeek]) {
-        dayBlocks = rules.weekly_routine[dayOfWeek];
+      // Day of week: 0 = Sun, 1 = Mon, ..., 6 = Sat
+      const dObj = new Date(`${dateStr}T00:00:00Z`);
+      const dayOfWeek = String(dObj.getUTCDay());
+
+      let dayBlocks = null;
+      if (specificDates[dateStr] !== undefined) {
+        dayBlocks = specificDates[dateStr];
+      } else if (weeklyRoutine[dayOfWeek]) {
+        dayBlocks = weeklyRoutine[dayOfWeek];
       }
 
-      if (dayBlocks.length === 0) continue; // No hours
+      if (!dayBlocks || dayBlocks.length === 0) continue; // Off / leave / closed
 
-      let totalSlots = 0;
+      // Generate all slot times for this date
+      const slotsForDay = [];
       for (const block of dayBlocks) {
-        const start = new Date(`${dateStr}T${block.start}:00`);
-        const end = new Date(`${dateStr}T${block.end}:00`);
-        totalSlots += Math.floor((end - start) / (1000 * 60 * slotMinutes));
+        const [sh, sm] = block.start.split(":").map(Number);
+        const [eh, em] = block.end.split(":").map(Number);
+        let cur = sh * 60 + sm;
+        const end = eh * 60 + em;
+        while (cur + slotMinutes <= end) {
+          const hh = String(Math.floor(cur / 60)).padStart(2, "0");
+          const mm = String(cur % 60).padStart(2, "0");
+          slotsForDay.push({ time: `${hh}:${mm}`, minutes: cur });
+          cur += slotMinutes;
+        }
       }
 
-      const takenSlotsForDay = existingAppts.filter(
-        (a) =>
-          a.appointment_date === dateStr &&
-          !["cancelled", "no_show"].includes(a.status),
-      ).length;
+      if (slotsForDay.length === 0) continue;
 
-      if (totalSlots > takenSlotsForDay) {
+      // Existing booked/blocked slots for this date
+      const bookedOrBlockedTimes = new Set(
+        existingAppts
+          .filter(
+            (a) =>
+              a.appointment_date === dateStr &&
+              !["cancelled", "no_show"].includes(a.status),
+          )
+          .map((a) => a.start_time.substring(0, 5)),
+      );
+
+      // Check if there is at least one bookable slot
+      const hasAvailableSlot = slotsForDay.some((slot) => {
+        if (bookedOrBlockedTimes.has(slot.time)) return false;
+        if (dateStr === todayDateStr && slot.minutes <= currentMinutesNow) {
+          return false; // Skip past slots for today
+        }
+        return true;
+      });
+
+      if (hasAvailableSlot) {
         availableDates.push(dateStr);
       }
     }
@@ -778,38 +822,43 @@ export const getAvailableSlots = async (req, res) => {
 
     const rules = profile.availability_rules;
     const slotMinutes = rules.slot_minutes || 30;
+    const weeklyRoutine = rules.weekly_routine || {};
+    const specificDates = rules.specific_dates || {};
 
-    // 2. Determine Day of Week (0 = Sunday, 1 = Monday, etc.)
-    const dateObj = new Date(date);
-    const dayOfWeek = dateObj.getDay().toString();
+    // 2. Determine Day of Week (0 = Sunday, 1 = Monday, etc.) using UTC
+    const dObj = new Date(`${date}T00:00:00Z`);
+    const dayOfWeek = String(dObj.getUTCDay());
 
-    let dayBlocks = [];
+    let dayBlocks = null;
 
     // Check if there are specific date overrides (like leave or custom hours)
-    if (rules.specific_dates && rules.specific_dates[date]) {
-      dayBlocks = rules.specific_dates[date]; // Empty array means closed
-    } else if (rules.weekly_routine && rules.weekly_routine[dayOfWeek]) {
-      dayBlocks = rules.weekly_routine[dayOfWeek];
+    if (specificDates[date] !== undefined) {
+      dayBlocks = specificDates[date]; // [] means closed / leave
+    } else if (weeklyRoutine[dayOfWeek]) {
+      dayBlocks = weeklyRoutine[dayOfWeek];
+    }
+
+    if (!dayBlocks || dayBlocks.length === 0) {
+      return res.status(200).json({ success: true, slots: [] }); // Doctor is not available
     }
 
     // 3. Generate all possible time slots for the day based on the blocks
     const allSlots = [];
     for (const block of dayBlocks) {
-      let current = new Date(`${date}T${block.start}:00`);
-      const end = new Date(`${date}T${block.end}:00`);
-
-      while (current < end) {
-        const hours = String(current.getHours()).padStart(2, "0");
-        const mins = String(current.getMinutes()).padStart(2, "0");
-        allSlots.push(`${hours}:${mins}`);
-
-        // Add slot_minutes
-        current.setMinutes(current.getMinutes() + slotMinutes);
+      const [sh, sm] = block.start.split(":").map(Number);
+      const [eh, em] = block.end.split(":").map(Number);
+      let cur = sh * 60 + sm;
+      const end = eh * 60 + em;
+      while (cur + slotMinutes <= end) {
+        const hh = String(Math.floor(cur / 60)).padStart(2, "0");
+        const mm = String(cur % 60).padStart(2, "0");
+        allSlots.push(`${hh}:${mm}`);
+        cur += slotMinutes;
       }
     }
 
     if (allSlots.length === 0) {
-      return res.status(200).json({ success: true, slots: [] }); // Doctor is not available
+      return res.status(200).json({ success: true, slots: [] });
     }
 
     // 4. Fetch existing appointments for this doctor on this date
@@ -826,7 +875,7 @@ export const getAvailableSlots = async (req, res) => {
         ),
       );
 
-    // 5. Subtract taken slots
+    // 5. Subtract taken & blocked slots
     const takenSlots = existingAppts
       .filter((a) => !["cancelled", "no_show"].includes(a.status))
       .map((a) => a.start_time.substring(0, 5)); // "09:30:00" -> "09:30"
