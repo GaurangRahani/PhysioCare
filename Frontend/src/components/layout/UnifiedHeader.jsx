@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { UserButton } from '@clerk/clerk-react';
-import { Activity } from 'lucide-react';
+import Logo from '../common/Logo';
 
 const UnifiedHeader = ({ brandLink, roleName, navigation, userName }) => {
   const location = useLocation();
@@ -39,18 +39,8 @@ const UnifiedHeader = ({ brandLink, roleName, navigation, userName }) => {
         boxShadow: '0 4px 20px rgba(0,0,0,0.02)',
       }}>
         {/* Brand */}
-        <Link to={brandLink} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', fontFamily: "'Poppins', sans-serif", fontSize: '1.5rem', fontWeight: 700, color: 'var(--dark-brand-color, #1f2278)', textDecoration: 'none' }}>
-          <div className="bg-primary/10 p-1.5 rounded-lg text-primary">
-            <Activity className="h-6 w-6" />
-          </div>
-          <span className="flex items-center gap-2">
-            AlignCare
-            {roleName && (
-              <span className="text-sm font-medium px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 mt-1">
-                {roleName}
-              </span>
-            )}
-          </span>
+        <Link to={brandLink} style={{ textDecoration: 'none' }}>
+          <Logo size="md" subtitle={roleName || ''} />
         </Link>
 
         {/* Nav links — desktop */}

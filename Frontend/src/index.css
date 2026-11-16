@@ -176,3 +176,16 @@ h1, h2, h3, h4, h5, h6 {
 .saas-card:hover {
   border-color: #D5D5D5;
 }
+
+/* Eliminate tap-highlight and orange outline on charts across mobile/touch devices */
+.recharts-wrapper,
+.recharts-wrapper:focus,
+.recharts-wrapper *:focus,
+.recharts-surface,
+.recharts-surface:focus,
+svg.recharts-surface,
+svg.recharts-surface:focus {
+  outline: none !important;
+  box-shadow: none !important;
+  -webkit-tap-highlight-color: transparent !important;
+}
