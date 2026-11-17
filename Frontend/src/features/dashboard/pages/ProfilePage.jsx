@@ -1,16 +1,22 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth, useClerk } from '@clerk/clerk-react';
 import { useNavigate } from 'react-router-dom';
 import {
-  User, Mail, Phone, Calendar, MapPin, Shield, FileText,
-  Edit3, Save, X, LogOut, Lock, CheckCircle2, AlertCircle,
-  ChevronRight, Download, Send, Loader2
+  User, 
+  Mail, 
+  Phone, 
+  Calendar, 
+  MapPin, 
+  Shield, 
+  Edit3, 
+  Save, 
+  LogOut, 
+  CheckCircle2, 
+  AlertCircle,
+  Loader2,
+  FileText
 } from 'lucide-react';
-import jsPDF from 'jspdf';
-import autoTable from 'jspdf-autotable';
-import './ProfilePage.css';
 
-// ── Helpers ────────────────────────────────────────────────────────────────────
 const API = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
 const calculateAge = (dob) => {
@@ -28,92 +34,36 @@ const formatDate = (dateStr) => {
   return new Date(dateStr).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' });
 };
 
-const StatusBadge = ({ status }) => {
-  const map = {
-    active:     { label: 'Active',      cls: 'bg-green-100 text-green-700' },
-    discharged: { label: 'Discharged',  cls: 'bg-slate-100 text-slate-600' },
-    inactive:   { label: 'Inactive',    cls: 'bg-amber-100 text-amber-700' },
-  };
-  const s = map[status] || { label: status, cls: 'bg-slate-100 text-slate-600' };
-  return (
-    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold ${s.cls}`}>
-      {s.label}
-    </span>
-  );
-};
-
-const InvoiceStatusBadge = ({ status }) => {
-  const map = {
-    paid:            { label: 'Paid',       cls: 'bg-green-100 text-green-700' },
-    cancelled:       { label: 'Cancelled',  cls: 'bg-slate-100 text-slate-500' },
-    refunded:        { label: 'Refunded',   cls: 'bg-red-100 text-red-600' },
-  };
-  const s = map[status] || { label: status, cls: 'bg-slate-100 text-slate-500' };
-  return (
-    <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-bold ${s.cls}`}>
-      {s.label}
-    </span>
-  );
-};
-
-// ── Toast ──────────────────────────────────────────────────────────────────────
-const Toast = ({ message, type, onDismiss }) => {
-  useEffect(() => {
-    const t = setTimeout(onDismiss, 4000);
-    return () => clearTimeout(t);
-  }, []);
-  return (
-    <div className={`fixed bottom-6 right-6 z-50 flex items-center gap-3 px-5 py-3.5 rounded-xl shadow-xl text-sm font-semibold animate-in slide-in-from-bottom-4 duration-300 ${
-      type === 'success' ? 'bg-green-600 text-white' : 'bg-red-600 text-white'
-    }`}>
-      {type === 'success' ? <CheckCircle2 className="w-4 h-4 shrink-0" /> : <AlertCircle className="w-4 h-4 shrink-0" />}
-      {message}
-      <button onClick={onDismiss} className="ml-2 opacity-70 hover:opacity-100"><X className="w-4 h-4" /></button>
-    </div>
-  );
-};
-
-// ── Main Component ─────────────────────────────────────────────────────────────
 const ProfilePage = () => {
   const { getToken } = useAuth();
-  const { signOut, openUserProfile } = useClerk();
+  const { signOut } = useClerk();
   const navigate = useNavigate();
 
   const [profile, setProfile] = useState(null);
-  const [internalUserId, setInternalUserId] = useState(null);
-  const [invoices, setInvoices] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isEditingPersonal, setIsEditingPersonal] = useState(false);
-  const [isEditingMedical, setIsEditingMedical] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [editForm, setEditForm] = useState({ phone: '', address: '', medical_history: '' });
-  const [invoicePage, setInvoicePage] = useState(1);
-  const [invoicesPerPage, setInvoicesPerPage] = useState(5);
-  const [emailingId, setEmailingId] = useState(null);
   const [toast, setToast] = useState(null);
 
-  const emergencyRef = useRef(null);
+  const showToast = (message, type = 'success') => {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), 4000);
+  };
 
-  const showToast = (message, type = 'success') => setToast({ message, type });
-
-  // ── Fetch data ────────────────────────────────────────────────────────────────
   useEffect(() => {
-    fetchAll();
+    fetchProfile();
   }, []);
 
-  const fetchAll = async () => {
+  const fetchProfile = async () => {
     try {
       setLoading(true);
       const token = await getToken();
       const headers = { Authorization: `Bearer ${token}` };
 
-      // 1. Profile
       const pRes = await fetch(`${API}/api/patients/profile`, { headers });
       const pData = await pRes.json();
       if (!pRes.ok) throw new Error(pData.message);
-
-      const userId = pData.user.id;
-      setInternalUserId(userId);
 
       const merged = {
         name: pData.user.name,
@@ -132,11 +82,6 @@ const ProfilePage = () => {
         address: merged.address,
         medical_history: merged.medical_history,
       });
-
-      // 2. Invoices
-      const iRes = await fetch(`${API}/api/payments/invoices`, { headers });
-      const iData = await iRes.json();
-      if (iRes.ok) setInvoices(iData.invoices || []);
     } catch (err) {
       console.error(err);
     } finally {
@@ -144,7 +89,6 @@ const ProfilePage = () => {
     }
   };
 
-  // ── Save profile ──────────────────────────────────────────────────────────────
   const handleSave = async () => {
     try {
       setIsSaving(true);
@@ -159,7 +103,6 @@ const ProfilePage = () => {
 
       setProfile(prev => ({ ...prev, ...editForm }));
       setIsEditingPersonal(false);
-      setIsEditingMedical(false);
       showToast('Profile updated successfully!');
     } catch (err) {
       showToast(err.message || 'Failed to save changes.', 'error');
@@ -170,323 +113,198 @@ const ProfilePage = () => {
 
   const handleCancel = () => {
     setEditForm({
-      phone: profile.phone,
-      address: profile.address,
-      medical_history: profile.medical_history,
+      phone: profile?.phone || '',
+      address: profile?.address || '',
+      medical_history: profile?.medical_history || '',
     });
     setIsEditingPersonal(false);
-    setIsEditingMedical(false);
   };
 
-
-
-  // ── Download PDF Receipt ──────────────────────────────────────────────────────
-  const handleDownloadInvoice = async (invoice) => {
-    try {
-      setEmailingId(invoice.id);
-      
-      const doc = new jsPDF();
-      
-      // Brand Colors
-      const primaryColor = [86, 90, 207]; // #565acf
-      const textColor = [68, 68, 68]; // #444444
-      
-      // 1. Header
-      doc.setFontSize(24);
-      doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
-      doc.setFont('helvetica', 'bold');
-      doc.text("AlignCare", 14, 22);
-      
-      doc.setFontSize(10);
-      doc.setTextColor(textColor[0], textColor[1], textColor[2]);
-      doc.setFont('helvetica', 'normal');
-      doc.text("123 Healing Way, Medical District", 14, 30);
-      doc.text("contact@aligncare.com | +91 9999999999", 14, 35);
-      
-      // 2. Title
-      doc.setFontSize(20);
-      doc.setTextColor(0, 0, 0);
-      doc.text("PAYMENT RECEIPT", 130, 25);
-      
-      // Divider
-      doc.setDrawColor(primaryColor[0], primaryColor[1], primaryColor[2]);
-      doc.setLineWidth(0.5);
-      doc.line(14, 42, 196, 42);
-      
-      // 3. Patient Info
-      doc.setFontSize(11);
-      doc.setFont('helvetica', 'bold');
-      doc.text("Billed To:", 14, 52);
-      doc.setFont('helvetica', 'normal');
-      doc.text(`Patient: ${profile?.name || 'Valued Patient'}`, 14, 58);
-      doc.text(`Email: ${profile?.email || 'N/A'}`, 14, 64);
-      if (profile?.phone) doc.text(`Phone: ${profile.phone}`, 14, 70);
-      
-      // 4. Receipt Info
-      doc.setFont('helvetica', 'bold');
-      doc.text("Receipt Details:", 120, 52);
-      doc.setFont('helvetica', 'normal');
-      const invoiceNum = invoice.id.toString().slice(0, 8).toUpperCase();
-      doc.text(`Receipt No: INV-${invoiceNum}`, 120, 58);
-      doc.text(`Date: ${new Date(invoice.created_at).toLocaleDateString()}`, 120, 64);
-      doc.text(`Status: ${invoice.status.toUpperCase()}`, 120, 70);
-      
-      // 5. Table
-      autoTable(doc, {
-        startY: 85,
-        head: [['Description', 'Date', 'Amount']],
-        body: [
-          [
-            invoice.description || 'Consultation Session Payment', 
-            new Date(invoice.created_at).toLocaleDateString(), 
-            `Rs. ${invoice.amount}`
-          ]
-        ],
-        theme: 'striped',
-        headStyles: { fillColor: primaryColor, textColor: 255 },
-        styles: { fontSize: 11, cellPadding: 6 },
-        columnStyles: {
-          2: { halign: 'right' }
-        }
-      });
-      
-      // 6. Total
-      const finalY = doc.lastAutoTable.finalY || 110;
-      doc.setFontSize(12);
-      doc.setFont('helvetica', 'bold');
-      doc.text("Total Paid:", 135, finalY + 15);
-      doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
-      doc.text(`Rs. ${invoice.amount}`, 170, finalY + 15);
-      
-      // 7. Footer
-      doc.setTextColor(150, 150, 150);
-      doc.setFontSize(10);
-      doc.setFont('helvetica', 'normal');
-      doc.text("Thank you for choosing AlignCare.", 105, 280, { align: "center" });
-      
-      // 8. Save
-      doc.save(`AlignCare_Receipt_INV-${invoiceNum}.pdf`);
-      
-      showToast("Receipt downloaded successfully!");
-    } catch (err) {
-      console.error("PDF Generation Error: ", err);
-      showToast("Could not generate PDF receipt.", "error");
-    } finally {
-      setEmailingId(null);
-    }
-  };
-
-  // ── Render ────────────────────────────────────────────────────────────────────
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="text-center">
-          <div className="w-10 h-10 border-4 border-purple-600 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-slate-500 font-medium">Loading profile…</p>
-        </div>
+      <div className="flex flex-col items-center justify-center min-h-[50vh] p-8">
+        <div className="w-8 h-8 border-2 border-[#202223] border-t-transparent rounded-full animate-spin mb-3" />
+        <span className="text-[13px] text-[#616161]">Loading health profile…</span>
       </div>
     );
   }
 
-  // ── Pagination Logic ────────────────────────────────────────────────────────
-  const totalInvoicePages = Math.ceil(invoices.length / invoicesPerPage);
-  const paginatedInvoices = invoices.slice((invoicePage - 1) * invoicesPerPage, invoicePage * invoicesPerPage);
-
   return (
-    <div className="profile-page-wrapper">
-      {/* Animated Background Shapes */}
-      <div className="shape shape-circle"></div>
-      <div className="shape shape-plus"></div>
-
-      <main className="main-container">
-        
-        {/* Page Header & Sign Out Button */}
-        <div className="page-header">
-            <div className="header-title">
-                <h1>My Profile</h1>
-                <p>Manage your personal details, billing, and account settings.</p>
-            </div>
-            <button className="btn-signout" onClick={() => signOut(() => navigate('/'))}>
-                <i className="fa-solid fa-arrow-right-from-bracket"></i> Sign Out
-            </button>
-        </div>
-
-        <div className="profile-content-stack" style={{ display: 'flex', flexDirection: 'column', gap: '2.5rem' }}>
-        {/* 1. PERSONAL INFORMATION CARD */}
-        <section className="profile-card">
-            <div className="card-header-row">
-                <span className="section-label">Personal Information</span>
-                {!isEditingPersonal ? (
-                  <button className="action-link" onClick={() => setIsEditingPersonal(true)}>
-                    <i className="fa-solid fa-pen"></i> Edit Profile
-                  </button>
-                ) : (
-                  <div style={{ display: 'flex', gap: '1rem' }}>
-                    <button className="action-link" onClick={handleCancel} style={{ color: 'var(--gray-500)' }}>
-                      Cancel
-                    </button>
-                    <button className="action-link" onClick={handleSave} disabled={isSaving}>
-                      {isSaving ? 'Saving...' : <><i className="fa-solid fa-save"></i> Save</>}
-                    </button>
-                  </div>
-                )}
-            </div>
-
-            {!isEditingPersonal ? (
-              <div className="info-grid">
-                  <div className="info-row">
-                      <div className="info-icon"><i className="fa-regular fa-user"></i></div>
-                      <div className="info-content">
-                          <span className="info-label">Name</span>
-                          <span className="info-value">{profile?.name}</span>
-                      </div>
-                  </div>
-                  <div className="info-row">
-                      <div className="info-icon"><i className="fa-regular fa-envelope"></i></div>
-                      <div className="info-content">
-                          <span className="info-label">Email</span>
-                          <span className="info-value">{profile?.email}</span>
-                          <span className="info-sub">(Change via account settings)</span>
-                      </div>
-                  </div>
-                  <div className="info-row">
-                      <div className="info-icon"><i className="fa-solid fa-phone"></i></div>
-                      <div className="info-content">
-                          <span className="info-label">Phone</span>
-                          <span className="info-value">{profile?.phone || '—'}</span>
-                      </div>
-                  </div>
-                  <div className="info-row">
-                      <div className="info-icon"><i className="fa-regular fa-calendar"></i></div>
-                      <div className="info-content">
-                          <span className="info-label">Date of Birth</span>
-                          <span className="info-value">
-                            {profile?.date_of_birth
-                              ? `${formatDate(profile.date_of_birth)} • ${calculateAge(profile.date_of_birth)} years`
-                              : '—'}
-                          </span>
-                      </div>
-                  </div>
-                  <div className="info-row">
-                      <div className="info-icon"><i className="fa-solid fa-shield-halved"></i></div>
-                      <div className="info-content">
-                          <span className="info-label">Gender</span>
-                          <span className="info-value">{profile?.gender ? profile.gender.charAt(0).toUpperCase() + profile.gender.slice(1) : '—'}</span>
-                      </div>
-                  </div>
-                  <div className="info-row">
-                      <div className="info-icon"><i className="fa-solid fa-location-dot"></i></div>
-                      <div className="info-content">
-                          <span className="info-label">Address</span>
-                          <span className="info-value">{profile?.address || 'Not provided'}</span>
-                      </div>
-                  </div>
-              </div>
-            ) : (
-              <div className="edit-form-grid" style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '1.5rem' }}>
-                <div className="info-row">
-                  <div className="info-icon"><i className="fa-solid fa-phone"></i></div>
-                  <div className="info-content" style={{ width: '100%' }}>
-                    <span className="info-label">Phone</span>
-                    <input type="tel" className="edit-input" value={editForm.phone} onChange={(e) => setEditForm(f => ({ ...f, phone: e.target.value }))} placeholder="Your phone number" />
-                  </div>
-                </div>
-                <div className="info-row">
-                  <div className="info-icon"><i className="fa-solid fa-location-dot"></i></div>
-                  <div className="info-content" style={{ width: '100%' }}>
-                    <span className="info-label">Address</span>
-                    <textarea className="edit-input" value={editForm.address} onChange={(e) => setEditForm(f => ({ ...f, address: e.target.value }))} placeholder="Your current address" rows={3}></textarea>
-                  </div>
-                </div>
-              </div>
-            )}
-        </section>
-
-        {/* 2. BILLING & PAYMENT HISTORY CARD */}
-        <section className="profile-card" style={{ display: 'flex', flexDirection: 'column' }}>
-            <div className="card-header-row" style={{ marginBottom: '1.5rem' }}>
-                <span className="section-label">Billing & Payment History</span>
-            </div>
-            
-            {invoices.length === 0 ? (
-                <div className="empty-state" style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <p>No payment history found.</p>
-                </div>
-            ) : (
-                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                    {paginatedInvoices.map(invoice => (
-                        <div key={invoice.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1rem', border: '1px solid var(--gray-200)', borderRadius: '8px', transition: 'all 0.2s', backgroundColor: 'var(--body-bg)' }}>
-                            <div>
-                                <h4 style={{ margin: '0 0 0.25rem 0', fontWeight: '600', color: 'var(--heading-text-color)', fontFamily: 'Poppins, sans-serif' }}>{invoice.description || 'Consultation Payment'}</h4>
-                                <div style={{ fontSize: '0.85rem', color: 'var(--gray-500)', display: 'flex', gap: '1rem' }}>
-                                    <span>{new Date(invoice.created_at).toLocaleDateString()}</span>
-                                    <span style={{ fontWeight: '600', color: 'var(--primary-color)' }}>₹{invoice.amount}</span>
-                                </div>
-                            </div>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                                <InvoiceStatusBadge status={invoice.status} />
-                                <button 
-                                  className="action-link" 
-                                  onClick={() => handleDownloadInvoice(invoice)}
-                                  disabled={emailingId === invoice.id || invoice.status !== 'paid'}
-                                  title="Download Receipt PDF"
-                                  style={{ padding: '0.5rem', border: '1px solid var(--gray-200)', borderRadius: '6px', background: 'transparent' }}
-                                >
-                                    {emailingId === invoice.id ? <Loader2 className="w-4 h-4 animate-spin"/> : <Download className="w-4 h-4" />}
-                                </button>
-                            </div>
-                        </div>
-                    ))}
-                </div>
-            )}
-            
-            {/* Pagination Controls */}
-            {invoices.length > 0 && (
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 'auto', paddingTop: '1.5rem', borderTop: '1px solid var(--gray-200)' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--gray-500)', fontSize: '0.9rem' }}>
-                      <span>Rows per page:</span>
-                      <select 
-                        value={invoicesPerPage} 
-                        onChange={(e) => {
-                          setInvoicesPerPage(Number(e.target.value));
-                          setInvoicePage(1);
-                        }}
-                        style={{ border: '1px solid var(--gray-300)', borderRadius: '4px', padding: '0.2rem 0.5rem', outline: 'none', color: 'var(--body-text-color)' }}
-                      >
-                        <option value={5}>5</option>
-                        <option value={10}>10</option>
-                        <option value={20}>20</option>
-                      </select>
-                    </div>
-
-                    <ul className="pagination" style={{ margin: 0 }}>
-                        <li className={`page-item nav-icon ${invoicePage === 1 ? 'disabled' : ''}`} onClick={() => invoicePage > 1 && setInvoicePage(invoicePage - 1)}>
-                            <i className="fa-solid fa-chevron-left"></i>
-                        </li>
-                        
-                        {[...Array(totalInvoicePages)].map((_, i) => (
-                            <li key={i} className={`page-item ${invoicePage === i + 1 ? 'active' : ''}`} onClick={() => setInvoicePage(i + 1)}>
-                                {i + 1}
-                            </li>
-                        ))}
-                        
-                        <li className={`page-item nav-icon ${invoicePage === totalInvoicePages ? 'disabled' : ''}`} onClick={() => invoicePage < totalInvoicePages && setInvoicePage(invoicePage + 1)}>
-                            <i className="fa-solid fa-chevron-right"></i>
-                        </li>
-                    </ul>
-
-                    <div style={{ color: 'var(--gray-500)', fontSize: '0.9rem' }}>
-                      Showing {(invoicePage - 1) * invoicesPerPage + 1}-{Math.min(invoicePage * invoicesPerPage, invoices.length)} of {invoices.length} entries
-                    </div>
-                </div>
-            )}
-        </section>
-        </div>
-
-      </main>
+    <div className="w-full max-w-full space-y-5 animate-fade-in font-['Inter',system-ui,sans-serif] pb-10">
       
-      {/* Toast */}
-      {toast && <Toast message={toast.message} type={toast.type} onDismiss={() => setToast(null)} />}
+      {/* ── 1. PAGE HEADER ─────────────────────────────────────────────────── */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-2.5 border-b border-[#EAEAEA]">
+        <div>
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-[#202223]">
+            My Health Profile
+          </h1>
+          <p className="text-[12px] sm:text-[13px] text-[#616161] mt-0.5">
+            Manage your personal clinical record, demographics, and contact information.
+          </p>
+        </div>
+
+        <button 
+          onClick={() => signOut(() => navigate('/'))}
+          className="inline-flex items-center justify-center gap-1.5 px-3.5 py-1.5 text-[12px] font-medium text-[#B81818] bg-[#FFFFFF] border border-[#EAEAEA] hover:bg-[#FCE4E4] rounded-[8px] transition-colors cursor-pointer self-start sm:self-auto shrink-0"
+        >
+          <LogOut size={14} />
+          <span>Sign Out</span>
+        </button>
+      </div>
+
+      {/* ── 2. PERSONAL INFORMATION CARD ────────────────────────────────────── */}
+      <div className="bg-[#FFFFFF] border border-[#EAEAEA] rounded-[12px] p-4 sm:p-5 shadow-xs space-y-4">
+        <div className="flex items-center justify-between pb-3 border-b border-[#F0F0F0]">
+          <div>
+            <h2 className="text-sm font-semibold text-[#202223]">Personal Record</h2>
+            <p className="text-[12px] text-[#616161]">Demographics and contact details for your therapy care team.</p>
+          </div>
+
+          {!isEditingPersonal ? (
+            <button 
+              onClick={() => setIsEditingPersonal(true)}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-[6px] text-[12px] font-medium text-[#202223] bg-[#F4F4F4] hover:bg-[#EAEAEA] transition-colors cursor-pointer"
+            >
+              <Edit3 size={13} />
+              <span>Edit Details</span>
+            </button>
+          ) : (
+            <div className="flex items-center gap-2">
+              <button 
+                onClick={handleCancel}
+                className="px-3 py-1.5 rounded-[6px] text-[12px] font-medium text-[#616161] hover:bg-[#F4F4F4] transition-colors cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={handleSave} 
+                disabled={isSaving}
+                className="inline-flex items-center gap-1 px-3 py-1.5 rounded-[6px] text-[12px] font-semibold text-[#FFFFFF] bg-[#008060] hover:bg-[#006e52] transition-colors cursor-pointer disabled:opacity-50"
+              >
+                {isSaving ? <Loader2 size={13} className="animate-spin" /> : <Save size={13} />}
+                <span>Save</span>
+              </button>
+            </div>
+          )}
+        </div>
+
+        {!isEditingPersonal ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 text-[13px]">
+            <div className="p-3 bg-[#FBFBFB] border border-[#F0F0F0] rounded-[8px] space-y-1">
+              <span className="text-[11px] font-medium text-[#8A8A8A] flex items-center gap-1.5">
+                <User size={12} /> Full Name
+              </span>
+              <p className="font-semibold text-[#202223] truncate">{profile?.name || '—'}</p>
+            </div>
+
+            <div className="p-3 bg-[#FBFBFB] border border-[#F0F0F0] rounded-[8px] space-y-1">
+              <span className="text-[11px] font-medium text-[#8A8A8A] flex items-center gap-1.5">
+                <Mail size={12} /> Registered Email
+              </span>
+              <p className="font-semibold text-[#202223] truncate">{profile?.email || '—'}</p>
+            </div>
+
+            <div className="p-3 bg-[#FBFBFB] border border-[#F0F0F0] rounded-[8px] space-y-1">
+              <span className="text-[11px] font-medium text-[#8A8A8A] flex items-center gap-1.5">
+                <Phone size={12} /> Contact Number
+              </span>
+              <p className="font-semibold text-[#202223] truncate">{profile?.phone || 'Not provided'}</p>
+            </div>
+
+            <div className="p-3 bg-[#FBFBFB] border border-[#F0F0F0] rounded-[8px] space-y-1">
+              <span className="text-[11px] font-medium text-[#8A8A8A] flex items-center gap-1.5">
+                <Calendar size={12} /> Date of Birth
+              </span>
+              <p className="font-semibold text-[#202223]">
+                {profile?.date_of_birth
+                  ? `${formatDate(profile.date_of_birth)} (${calculateAge(profile.date_of_birth)} yrs)`
+                  : '—'}
+              </p>
+            </div>
+
+            <div className="p-3 bg-[#FBFBFB] border border-[#F0F0F0] rounded-[8px] space-y-1">
+              <span className="text-[11px] font-medium text-[#8A8A8A] flex items-center gap-1.5">
+                <Shield size={12} /> Gender
+              </span>
+              <p className="font-semibold text-[#202223] capitalize">{profile?.gender || '—'}</p>
+            </div>
+
+            <div className="p-3 bg-[#FBFBFB] border border-[#F0F0F0] rounded-[8px] space-y-1">
+              <span className="text-[11px] font-medium text-[#8A8A8A] flex items-center gap-1.5">
+                <MapPin size={12} /> Home Address
+              </span>
+              <p className="font-semibold text-[#202223] truncate">{profile?.address || 'Not provided'}</p>
+            </div>
+          </div>
+        ) : (
+          <div className="space-y-3.5 max-w-xl text-[13px]">
+            <div className="space-y-1">
+              <label className="text-[12px] font-medium text-[#616161]">Phone Number</label>
+              <input
+                type="tel"
+                value={editForm.phone}
+                onChange={(e) => setEditForm(prev => ({ ...prev, phone: e.target.value }))}
+                placeholder="+91 98765 43210"
+                className="w-full px-3 py-2 bg-[#FFFFFF] border border-[#EAEAEA] rounded-[8px] text-[#202223] outline-none focus:border-[#202223]"
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="text-[12px] font-medium text-[#616161]">Residential Address</label>
+              <textarea
+                rows={3}
+                value={editForm.address}
+                onChange={(e) => setEditForm(prev => ({ ...prev, address: e.target.value }))}
+                placeholder="Enter street, city, postal code"
+                className="w-full px-3 py-2 bg-[#FFFFFF] border border-[#EAEAEA] rounded-[8px] text-[#202223] outline-none focus:border-[#202223]"
+              />
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* ── 3. CLINICAL NOTES & MEDICAL HISTORY ─────────────────────────────── */}
+      <div className="bg-[#FFFFFF] border border-[#EAEAEA] rounded-[12px] p-4 sm:p-5 shadow-xs space-y-3">
+        <div className="flex items-center justify-between pb-2.5 border-b border-[#F0F0F0]">
+          <div>
+            <h2 className="text-sm font-semibold text-[#202223]">Medical History & Notes</h2>
+            <p className="text-[12px] text-[#616161]">Pre-existing conditions, surgeries, or injuries shared with doctors.</p>
+          </div>
+          <FileText size={16} className="text-[#8A8A8A]" />
+        </div>
+
+        {!isEditingPersonal ? (
+          <div className="p-3.5 bg-[#FBFBFB] border border-[#F0F0F0] rounded-[8px] text-[13px]">
+            {profile?.medical_history ? (
+              <p className="text-[#202223] leading-relaxed whitespace-pre-wrap">{profile.medical_history}</p>
+            ) : (
+              <p className="text-[#8A8A8A] italic">No medical history or pre-existing conditions recorded.</p>
+            )}
+          </div>
+        ) : (
+          <div className="space-y-1">
+            <textarea
+              rows={4}
+              value={editForm.medical_history}
+              onChange={(e) => setEditForm(prev => ({ ...prev, medical_history: e.target.value }))}
+              placeholder="e.g. Previous knee arthroscopy (2023), Chronic lower back stiffness"
+              className="w-full px-3 py-2 text-[13px] bg-[#FFFFFF] border border-[#EAEAEA] rounded-[8px] text-[#202223] outline-none focus:border-[#202223]"
+            />
+          </div>
+        )}
+      </div>
+
+      {/* ── TOAST NOTIFICATION ────────────────────────────────────────────── */}
+      {toast && (
+        <div className={`fixed bottom-6 right-6 z-50 flex items-center gap-2.5 px-4 py-2.5 rounded-[10px] text-[13px] font-medium shadow-xl border animate-fade-in ${
+          toast.type === 'success' 
+            ? 'bg-[#FFFFFF] border-[#D9F7C3] text-[#245B19]' 
+            : 'bg-[#FFFFFF] border-[#FCE4E4] text-[#B81818]'
+        }`}>
+          {toast.type === 'success' ? <CheckCircle2 size={16} /> : <AlertCircle size={16} />}
+          <span>{toast.message}</span>
+        </div>
+      )}
+
     </div>
   );
 };
