@@ -101,7 +101,7 @@ const PatientsTab = () => {
   }
 
   return (
-    <div className="flex flex-col gap-6 max-w-7xl mx-auto font-['Inter',system-ui,sans-serif] text-[#202223]">
+    <div className="flex flex-col gap-6 w-full font-['Inter',system-ui,sans-serif] text-[#202223]">
       
       {/* ALERTS SECTION */}
       <AlertSection
