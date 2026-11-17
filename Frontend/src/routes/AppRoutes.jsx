@@ -16,9 +16,11 @@ import AppointmentsPage from '../features/dashboard/pages/AppointmentsPage.jsx';
 import ExerciseSessionPage from '../features/dashboard/pages/ExerciseSessionPage';
 import SessionCompletePage from '../features/dashboard/pages/SessionCompletePage';
 import ProfilePage from '../features/dashboard/pages/ProfilePage.jsx';
+import InvoicesPage from '../features/dashboard/pages/InvoicesPage.jsx';
 
 import DoctorLayout from '../features/doctor/layout/DoctorLayout';
 import DoctorDashboard from '../features/doctor/pages/DoctorDashboard';
+import DoctorAppointments from '../features/doctor/pages/DoctorAppointments';
 import AvailabilitySettings from '../features/doctor/pages/AvailabilitySettings';
 import ExerciseLibrary from '../features/doctor/pages/ExerciseLibrary';
 import PatientsTab from '../features/doctor/pages/PatientsTab';
@@ -83,6 +85,8 @@ const AppRoutes = () => {
         <Route index element={<PatientDashboard />} />
         <Route path="appointments" element={<AppointmentsPage />} />
         <Route path="progress" element={<ProgressPage />} />
+        <Route path="invoices" element={<InvoicesPage />} />
+        <Route path="billing" element={<Navigate to="/dashboard/invoices" replace />} />
         <Route path="profile" element={<ProfilePage />} />
         <Route path="session/:planId/:sessionNumber" element={<ExerciseSessionPage />} />
         <Route path="session/:planId/:sessionNumber/complete" element={<SessionCompletePage />} />
@@ -105,6 +109,7 @@ const AppRoutes = () => {
         }
       >
         <Route index element={<DoctorDashboard />} />
+        <Route path="appointments" element={<DoctorAppointments />} />
         <Route path="regions" element={<RegionManagement />} />
         <Route path="availability" element={<AvailabilitySettings />} />
         <Route path="exercise-library" element={<ExerciseLibrary />} />
@@ -116,6 +121,7 @@ const AppRoutes = () => {
       </Route>
 
       {/* Receptionist Dashboard Routes */}
+      <Route path="/receptionist" element={<Navigate to="/receptionist-dashboard" replace />} />
       <Route 
         path="/receptionist-dashboard" 
         element={
