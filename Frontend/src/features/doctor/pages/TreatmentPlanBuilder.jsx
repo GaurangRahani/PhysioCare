@@ -248,7 +248,7 @@ const TreatmentPlanBuilder = () => {
   const currentList = mode === 'new' ? newPlanExercises : existingExercises;
 
   return (
-    <div className="flex flex-col gap-6 max-w-4xl mx-auto font-['Inter',system-ui,sans-serif] text-[#202223] animate-fade-in">
+    <div className="flex flex-col gap-6 w-full font-['Inter',system-ui,sans-serif] text-[#202223] animate-fade-in">
       
       {/* ── Top Navigation Breadcrumb ──────────────────────────────── */}
       <div className="flex items-center justify-between">
