@@ -1,6 +1,18 @@
 import React, { useEffect, useState } from 'react';
 import { useUser, useClerk } from '@clerk/clerk-react';
-import { Edit, Info, Building2, Phone, Mail, User } from 'lucide-react';
+import { 
+  Building2, 
+  Phone, 
+  Mail, 
+  User, 
+  Edit, 
+  Info, 
+  ShieldCheck, 
+  Sparkles, 
+  ExternalLink,
+  Server,
+  CheckCircle2
+} from 'lucide-react';
 
 const API = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
@@ -8,133 +20,161 @@ const AdminSettings = () => {
   const { user } = useUser();
   const { openUserProfile } = useClerk();
   const [clinicInfo, setClinicInfo] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     fetch(`${API}/api/clinic/info`)
       .then((r) => r.json())
-      .then(setClinicInfo)
-      .catch(console.error);
+      .then((data) => setClinicInfo(data))
+      .catch(console.error)
+      .finally(() => setLoading(false));
   }, []);
 
   return (
-    <div className="dashboard-container" style={{ padding: '0', maxWidth: '800px' }}>
-      {/* Page heading */}
-      <div className="page-header">
-        <h1 className="page-title">Settings</h1>
-        <p className="page-date">Manage your profile and clinic configuration.</p>
+    <div className="max-w-[1000px] mx-auto space-y-6">
+      
+      {/* ── 1. PAGE HEADER ROW ────────────────────────────────────────── */}
+      <div className="pb-1">
+        <h1 className="text-[20px] font-bold text-[#202223] tracking-tight">
+          System & Clinic Settings
+        </h1>
+        <p className="text-[12px] text-[#616161] mt-0.5">
+          Manage administrator profile credentials, clinic identity, and server infrastructure configurations.
+        </p>
       </div>
 
-      {/* ── Your Profile Card ────────────────────────────────────────── */}
-      <div className="settings-card" style={{ marginBottom: '2rem', maxWidth: '100%' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.5rem' }}>
-          <div className="stat-icon icon-purple" style={{ width: '48px', height: '48px' }}>
-            <User size={24} />
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+        
+        {/* ── 2. ADMINISTRATOR PROFILE CARD ───────────────────────────── */}
+        <div className="bg-[#FFFFFF] border border-[#EAEAEA] rounded-[14px] p-5 shadow-xs flex flex-col justify-between">
+          <div className="space-y-4">
+            <div className="flex items-center gap-3 pb-3 border-b border-[#F0F0F0]">
+              <div className="w-9 h-9 rounded-[8px] bg-[#202020] text-[#FFFFFF] flex items-center justify-center">
+                <User size={18} />
+              </div>
+              <div>
+                <h2 className="text-[14px] font-semibold text-[#202223]">
+                  Executive Profile
+                </h2>
+                <p className="text-[11px] text-[#8A8A8A]">
+                  Primary administrator contact & identity
+                </p>
+              </div>
+            </div>
+
+            <div className="space-y-3 text-[13px]">
+              {/* Full Name */}
+              <div className="space-y-0.5">
+                <span className="text-[11px] font-semibold uppercase tracking-wider text-[#8A8A8A]">
+                  Full Name
+                </span>
+                <div className="font-medium text-[#202223]">
+                  {user?.fullName || '—'}
+                </div>
+              </div>
+
+              {/* Email Address */}
+              <div className="space-y-0.5">
+                <span className="text-[11px] font-semibold uppercase tracking-wider text-[#8A8A8A]">
+                  Email Address
+                </span>
+                <div className="text-[#202223] flex items-center gap-1.5 font-medium">
+                  <Mail size={13} className="text-[#8A8A8A]" />
+                  <span>{user?.primaryEmailAddress?.emailAddress || '—'}</span>
+                </div>
+              </div>
+
+              {/* Public Clinic Contact Phone */}
+              <div className="space-y-0.5">
+                <span className="text-[11px] font-semibold uppercase tracking-wider text-[#8A8A8A]">
+                  Clinic Public Helpline
+                </span>
+                <div className="text-[#202223] flex items-center gap-1.5 font-mono">
+                  <Phone size={13} className="text-[#008060]" />
+                  <span>{user?.primaryPhoneNumber?.phoneNumber || (
+                    <span className="text-[#8A8A8A] font-sans text-[12px]">Not set — add via Update Profile</span>
+                  )}</span>
+                </div>
+                <p className="text-[10px] text-[#8A8A8A] mt-0.5 leading-snug">
+                  This phone number is displayed on patient dashboards and booking confirmation receipts.
+                </p>
+              </div>
+            </div>
           </div>
-          <div>
-            <h2 style={{ fontFamily: 'var(--font-heading)', fontSize: '1.25rem', fontWeight: 700, color: 'var(--heading-text-color)', margin: 0 }}>
-              Your Profile
-            </h2>
-            <p style={{ color: 'var(--gray-500)', fontSize: '0.85rem', margin: 0 }}>
-              Your phone number is used as the clinic contact number shown to patients.
-            </p>
+
+          <div className="pt-4 mt-4 border-t border-[#F0F0F0] flex items-center justify-between">
+            <button
+              onClick={() => openUserProfile()}
+              className="px-3.5 py-2 text-[12px] font-semibold text-[#FFFFFF] bg-[#000000] hover:bg-[#202020] rounded-[8px] transition-colors cursor-pointer inline-flex items-center gap-1.5 shadow-xs"
+            >
+              <Edit size={14} />
+              <span>Update Profile</span>
+            </button>
+            <span className="text-[11px] text-[#8A8A8A] flex items-center gap-1">
+              <CheckCircle2 size={13} className="text-[#008060]" />
+              <span>Clerk Live Sync</span>
+            </span>
           </div>
         </div>
 
-        <div className="settings-field" style={{ paddingTop: '0' }}>
-          <span className="settings-field-label">Name</span>
-          <span className="settings-field-value">{user?.fullName || '—'}</span>
+        {/* ── 3. CLINIC CONFIGURATION CARD ────────────────────────────── */}
+        <div className="bg-[#FFFFFF] border border-[#EAEAEA] rounded-[14px] p-5 shadow-xs flex flex-col justify-between">
+          <div className="space-y-4">
+            <div className="flex items-center gap-3 pb-3 border-b border-[#F0F0F0]">
+              <div className="w-9 h-9 rounded-[8px] bg-[#F4F4F4] text-[#202223] border border-[#EAEAEA] flex items-center justify-center">
+                <Building2 size={18} />
+              </div>
+              <div>
+                <h2 className="text-[14px] font-semibold text-[#202223]">
+                  Clinic Identity & Server
+                </h2>
+                <p className="text-[11px] text-[#8A8A8A]">
+                  Infrastructure-managed environmental variables
+                </p>
+              </div>
+            </div>
+
+            <div className="space-y-3.5">
+              {/* Clinic Name */}
+              <div className="p-3 bg-[#FBFBFB] border border-[#EAEAEA] rounded-[10px] space-y-1">
+                <div className="text-[10px] font-semibold uppercase tracking-wider text-[#8A8A8A]">
+                  Registered Clinic Name
+                </div>
+                <div className="text-[15px] font-bold text-[#202223] tracking-tight">
+                  {clinicInfo?.clinic_name || 'AlignCare Physical Therapy'}
+                </div>
+                <p className="text-[11px] text-[#616161]">
+                  Configured via server variable: <code className="bg-[#FFFFFF] border border-[#EAEAEA] px-1.5 py-0.5 rounded text-[10px] font-mono font-semibold text-[#202223]">CLINIC_NAME</code>
+                </p>
+              </div>
+
+              {/* Public Phone */}
+              <div className="p-3 bg-[#FBFBFB] border border-[#EAEAEA] rounded-[10px] space-y-1">
+                <div className="text-[10px] font-semibold uppercase tracking-wider text-[#8A8A8A]">
+                  Public Support Contact
+                </div>
+                <div className="text-[15px] font-bold text-[#008060] font-mono">
+                  {clinicInfo?.contact_phone || '—'}
+                </div>
+                <p className="text-[11px] text-[#616161]">
+                  Pulled directly from your admin profile phone number in real time.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="pt-4 mt-4 border-t border-[#F0F0F0]">
+            <div className="p-2.5 bg-[#F9FAFB] border border-[#EAEAEA] rounded-[8px] flex items-start gap-2 text-[11px] text-[#616161]">
+              <Server size={14} className="shrink-0 text-[#8A8A8A] mt-0.5" />
+              <span>
+                To modify core clinical brand identity or payment credentials, update the backend environment configuration.
+              </span>
+            </div>
+          </div>
         </div>
 
-        <div className="settings-field">
-          <span className="settings-field-label">Email</span>
-          <span className="settings-field-value" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <Mail size={16} className="text-gray-400" />
-            {user?.primaryEmailAddress?.emailAddress || '—'}
-          </span>
-        </div>
-
-        <div className="settings-field">
-          <span className="settings-field-label">Phone (Clinic Contact)</span>
-          <span className="settings-field-value" style={{ color: user?.primaryPhoneNumber ? 'var(--heading-text-color)' : 'var(--gray-400)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <Phone size={16} className={user?.primaryPhoneNumber ? 'text-primary' : 'text-gray-400'} />
-            {user?.primaryPhoneNumber?.phoneNumber || (
-              <span style={{ fontWeight: 500, fontSize: '0.9rem' }}>Not set — add via Update Profile</span>
-            )}
-          </span>
-        </div>
-
-        <div style={{ marginTop: '2rem', display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
-          <button
-            className="btn-primary"
-            onClick={() => openUserProfile()}
-            style={{ borderRadius: '2rem' }}
-          >
-            <Edit size={18} />
-            Update Profile
-          </button>
-          <p style={{ fontSize: '0.8rem', color: 'var(--gray-500)', margin: 0, maxWidth: '300px', lineHeight: 1.4 }}>
-            Updates sync automatically via webhook. Changes to phone appear in the patient app within seconds.
-          </p>
-        </div>
       </div>
 
-      {/* ── Clinic Configuration Card ─────────────────────────────────── */}
-      <div className="settings-card" style={{ maxWidth: '100%' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.5rem' }}>
-          <div className="stat-icon icon-blue" style={{ width: '48px', height: '48px' }}>
-            <Building2 size={24} />
-          </div>
-          <div>
-            <h2 style={{ fontFamily: 'var(--font-heading)', fontSize: '1.25rem', fontWeight: 700, color: 'var(--heading-text-color)', margin: 0 }}>
-              Clinic Configuration
-            </h2>
-            <p style={{ color: 'var(--gray-500)', fontSize: '0.85rem', margin: 0 }}>
-              These values are securely read from environment variables on the server.
-            </p>
-          </div>
-        </div>
-
-        <div style={{ background: 'rgba(86,90,207,0.03)', border: '1px solid rgba(86,90,207,0.1)', borderRadius: '1rem', padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-          {/* Clinic Name */}
-          <div>
-            <div style={{ fontSize: '0.75rem', fontWeight: 700, letterSpacing: '0.05em', textTransform: 'uppercase', color: 'var(--gray-500)', marginBottom: '0.5rem' }}>
-              Clinic Name
-            </div>
-            <div style={{ fontFamily: 'var(--font-heading)', fontWeight: 700, fontSize: '1.25rem', color: 'var(--primary-color)' }}>
-              {clinicInfo?.clinic_name || '—'}
-            </div>
-            <div style={{ fontSize: '0.8rem', color: 'var(--gray-500)', marginTop: '0.4rem' }}>
-              To change: update the <code style={{ background: '#fff', padding: '0.2rem 0.5rem', borderRadius: '0.25rem', border: '1px solid var(--gray-200)', color: 'var(--danger)', fontWeight: 600 }}>CLINIC_NAME</code> environment variable on your server.
-            </div>
-          </div>
-
-          <div style={{ borderTop: '1px dashed rgba(86,90,207,0.2)' }} />
-
-          {/* Contact Phone */}
-          <div>
-            <div style={{ fontSize: '0.75rem', fontWeight: 700, letterSpacing: '0.05em', textTransform: 'uppercase', color: 'var(--gray-500)', marginBottom: '0.5rem' }}>
-              Clinic Contact Phone
-            </div>
-            <div style={{ fontFamily: 'var(--font-heading)', fontWeight: 700, fontSize: '1.25rem', color: 'var(--primary-color)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <Phone size={20} />
-              {clinicInfo?.contact_phone || '—'}
-            </div>
-            <div style={{ fontSize: '0.8rem', color: 'var(--gray-500)', marginTop: '0.4rem' }}>
-              Pulled directly from your admin profile above. Update your profile to change this.
-            </div>
-          </div>
-        </div>
-
-        {/* Explanation box */}
-        <div className="info-box" style={{ marginTop: '2rem', display: 'flex', alignItems: 'flex-start', gap: '0.75rem' }}>
-          <Info size={20} style={{ flexShrink: 0, marginTop: '0.1rem' }} />
-          <div>
-            <strong style={{ display: 'block', marginBottom: '0.25rem' }}>Infrastructure Managed</strong>
-            There is no "save" button here because these core configuration values are managed securely at the infrastructure level. 
-            Updating your phone via <strong>Update Profile</strong> is the only thing that syncs automatically.
-          </div>
-        </div>
-      </div>
     </div>
   );
 };
