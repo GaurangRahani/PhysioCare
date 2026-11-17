@@ -140,7 +140,7 @@ const StartConsultation = () => {
   const avatarInitials = (user?.name || 'UN').substring(0, 2).toUpperCase();
 
   return (
-    <div className="flex flex-col gap-6 max-w-7xl mx-auto font-['Inter',system-ui,sans-serif] text-[#202223]">
+    <div className="flex flex-col gap-6 w-full font-['Inter',system-ui,sans-serif] text-[#202223]">
       
       {/* ── Breadcrumb / Back Link ─────────────────────────────────── */}
       <div className="flex items-center justify-between">
