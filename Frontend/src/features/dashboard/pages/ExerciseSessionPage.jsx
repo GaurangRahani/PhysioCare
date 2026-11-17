@@ -1,10 +1,21 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '@clerk/clerk-react';
-import { ChevronLeft, AlertTriangle } from 'lucide-react';
+import { 
+  ChevronLeft, 
+  AlertTriangle, 
+  CheckCircle2, 
+  Dumbbell, 
+  Clock, 
+  Stethoscope, 
+  ChevronRight, 
+  Check, 
+  X, 
+  Phone,
+  ArrowRight
+} from 'lucide-react';
 import ExerciseMediaCarousel from '../components/ExerciseMediaCarousel';
 import ReportConcernModal from '../components/ReportConcernModal';
-import './ExerciseSessionPage.css';
 
 const ExerciseSessionPage = () => {
   const { planId, sessionNumber } = useParams();
@@ -28,9 +39,6 @@ const ExerciseSessionPage = () => {
   const [shakeChips, setShakeChips] = useState(false);
   const [patientId, setPatientId] = useState(null);
   const [isConcernModalOpen, setIsConcernModalOpen] = useState(false);
-  
-  // High Pain Modal handling flag
-  const [pendingPainNavigation, setPendingPainNavigation] = useState(false);
 
   useEffect(() => {
     fetchSessionData();
@@ -41,7 +49,6 @@ const ExerciseSessionPage = () => {
       setLoading(true);
       const token = await getToken();
       
-      // First get user profile to find patientId
       const profileRes = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/patients/profile`, {
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -50,7 +57,6 @@ const ExerciseSessionPage = () => {
       const fetchedPatientId = profileData.user.id;
       setPatientId(fetchedPatientId);
 
-      // Now fetch today's schedule
       const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/patients/${fetchedPatientId}/today`, {
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -61,33 +67,16 @@ const ExerciseSessionPage = () => {
         const session = data.sessions.find(s => s.session_number === parseInt(sessionNumber));
         if (session && session.exercises) {
           setExercises(session.exercises);
-          // Find first pending exercise to resume
           const firstPendingIndex = session.exercises.findIndex(e => e.schedule_status !== 'completed');
           setCurrentIndex(firstPendingIndex >= 0 ? firstPendingIndex : 0);
         }
       }
     } catch (err) {
       console.error(err);
-      // Fallback redirect if error
       navigate('/dashboard');
     } finally {
       setLoading(false);
     }
-  };
-
-  const getPainLabel = (v) => {
-    if (v === 0) return "0 — None";
-    if (v <= 2) return `${v} — Very Mild`;
-    if (v <= 4) return `${v} — Mild`;
-    if (v <= 6) return `${v} — Moderate`;
-    if (v <= 8) return `${v} — Severe`;
-    return `${v} — Very Severe`;
-  };
-
-  const getPainColor = (v) => {
-    if (v <= 3) return 'text-green-600';
-    if (v <= 6) return 'text-amber-600';
-    return 'text-red-600';
   };
 
   const handleBack = () => {
@@ -144,14 +133,13 @@ const ExerciseSessionPage = () => {
 
       if (painLevel >= 7) {
         setShowHighPainModal(true);
-        return; // Wait for modal dismissal
+        return;
       }
 
       proceedAfterSave();
-
     } catch (err) {
       console.error(err);
-      alert("Couldn't save. Please try again.");
+      alert("Couldn't save progress. Please try again.");
     } finally {
       setIsSubmitting(false);
     }
@@ -206,8 +194,9 @@ const ExerciseSessionPage = () => {
 
   if (loading || !currentExercise) {
     return (
-      <div className="session-page-wrapper" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <div className="spinner" style={{ borderColor: 'var(--gray-300)', borderTopColor: 'var(--primary-color)', width: '48px', height: '48px', borderWidth: '4px' }}></div>
+      <div className="flex flex-col items-center justify-center min-h-[50vh] p-8 font-['Inter',system-ui,sans-serif]">
+        <div className="w-8 h-8 border-2 border-[#202223] border-t-transparent rounded-full animate-spin mb-3" />
+        <span className="text-[13px] text-[#616161]">Loading exercise protocol...</span>
       </div>
     );
   }
@@ -222,235 +211,346 @@ const ExerciseSessionPage = () => {
   ];
 
   return (
-    <div className="session-page-wrapper">
-      <div className="shape shape-circle"></div>
+    <div className="w-full space-y-5 animate-fade-in font-['Inter',system-ui,sans-serif] text-[#202223] pb-28 md:pb-8">
+      
+      {/* ── 1. TOP SESSION CONTEXT & PROGRESS ───────────────────────────────── */}
+      <div className="space-y-2">
+        <div className="flex items-center justify-between pb-1">
+          <div className="flex items-center gap-2">
+            <button 
+              type="button"
+              onClick={handleBack} 
+              className="p-1 rounded-[6px] text-[#616161] hover:text-[#202223] hover:bg-[#F4F4F4] transition-colors cursor-pointer"
+              title="Return to schedule"
+            >
+              <ChevronLeft size={18} />
+            </button>
+            <span className="text-[14px] font-semibold text-[#202223]">
+              Session {sessionNumber}
+            </span>
+            <span className="text-[#8A8A8A] text-[13px]">
+              · Exercise {currentIndex + 1} of {exercises.length}
+            </span>
+          </div>
 
-      {/* Top Session Navigation Context */}
-      <div className="session-top-bar">
-          <div className="container">
-              <div className="session-title-wrapper">
-                  <button onClick={handleBack} className="btn-back-link">
-                    <ChevronLeft size={24} />
-                  </button>
-                  <span>Session {sessionNumber} <span className="muted">· Exercise {currentIndex + 1} of {exercises.length}</span></span>
-              </div>
-          </div>
-          <div className="top-progress-bar">
-              <div 
-                className="top-progress-fill" 
-                style={{ width: `${((currentIndex) / exercises.length) * 100}%` }}
-              ></div>
-          </div>
+          <span className="text-[11px] font-mono font-medium text-[#616161] bg-[#F4F4F4] px-2.5 py-0.5 rounded-full">
+            {Math.round(((currentIndex) / exercises.length) * 100)}% Complete
+          </span>
+        </div>
+
+        {/* Progress Fill Bar */}
+        <div className="w-full h-1.5 rounded-full bg-[#EAEAEA] overflow-hidden">
+          <div 
+            className="h-full bg-[#202223] rounded-full transition-all duration-300"
+            style={{ width: `${((currentIndex) / exercises.length) * 100}%` }}
+          />
+        </div>
       </div>
 
-      {/* Main Content Container */}
-      <main className="container">
+      {/* ── 2. TWO-COLUMN RESPONSIVE LAYOUT (Mobile Stacks, Tablet/Desktop 2-Col) ── */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+        
+        {/* ── LEFT COLUMN: MEDIA & INSTRUCTIONS (lg:col-span-6) ── */}
+        <div className="lg:col-span-6 space-y-4">
           
-          {/* Video & Information Row */}
-          <div className="exercise-grid">
-              
-              {/* Video Section */}
-              <div className="video-card-container">
-                  <ExerciseMediaCarousel 
-                    videoUrl={currentExercise.video_url} 
-                    imageUrls={currentExercise.image_urls} 
-                  />
-              </div>
-
-              {/* Details Section */}
-              <div className="info-card">
-                  <div className="info-header">
-                      <h2>{currentExercise.exercise_name}</h2>
-                      {currentExercise.target_body_part && (
-                        <span className="badge">{currentExercise.target_body_part}</span>
-                      )}
-                  </div>
-                  <div className="prescribed">Prescribed: {prescribedSets} Sets × {currentExercise.prescribed_reps} Reps</div>
-                  
-                  {currentExercise.instructions && (
-                    <>
-                      <div className="instructions-label">Instructions</div>
-                      <ul className="instructions-list">
-                          {currentExercise.instructions.split('\n').map((instruction, idx) => (
-                              instruction.trim() ? <li key={idx}>{instruction.trim()}</li> : null
-                          ))}
-                      </ul>
-                    </>
-                  )}
-
-                  {currentExercise.doctor_notes && (
-                    <div style={{ marginTop: '1.5rem' }}>
-                      <span className="instructions-label">Doctor's Note</span>
-                      <div className="doctor-note-box">
-                        {currentExercise.doctor_notes}
-                      </div>
-                    </div>
-                  )}
-              </div>
+          {/* Video Demonstration Card */}
+          <div className="bg-[#FFFFFF] border border-[#EAEAEA] rounded-[14px] overflow-hidden shadow-xs">
+            <div className="aspect-video w-full bg-[#0A0A0A] flex items-center justify-center">
+              <ExerciseMediaCarousel 
+                videoUrl={currentExercise.video_url} 
+                imageUrls={currentExercise.image_urls} 
+              />
+            </div>
           </div>
 
-          {/* Log Progress Section */}
-          <div className="progress-card">
-              <h3 className="progress-title">Log Your Progress</h3>
-              
-              <div className="form-grid">
-                  
-                  {/* Top Left: Sets Completed */}
-                  <div className="form-group">
-                      <label className="form-label">Sets Completed (Goal: {prescribedSets})</label>
-                      <div className="btn-group">
-                          {chipNumbers.map(n => (
-                            <button
-                                key={n}
-                                type="button"
-                                onClick={() => setSetsCompleted(n)}
-                                className={`btn-outline ${setsCompleted === n ? 'active' : ''}`}
-                            >
-                                {n}
-                            </button>
-                          ))}
-                          {prescribedSets >= 3 && (
-                            <button
-                                type="button"
-                                onClick={() => setSetsCompleted(99)}
-                                className={`btn-outline ${setsCompleted === 99 ? 'active' : ''}`}
-                            >
-                                More
-                            </button>
-                          )}
-                      </div>
-                      {shakeChips && setsCompleted === null && (
-                        <p className="shake" style={{ color: 'var(--danger)', fontSize: '0.85rem', marginTop: '0.5rem' }}>Please select how many sets you completed.</p>
-                      )}
-                  </div>
-
-                  {/* Top Right: Pain Level */}
-                  <div className="form-group" style={{ marginTop: '0' }}>
-                      <label className="form-label">Pain Level (0-10)</label>
-                      <div className="range-wrapper" style={{ marginTop: '0' }}>
-                          <div className="range-labels">
-                              <span className="label-none">0 — None</span>
-                              <span className="label-none" style={{ color: 'var(--primary)' }}>Current: {painLevel}</span>
-                              <span className="label-severe">10 — Severe</span>
-                          </div>
-                          <input 
-                            type="range" 
-                            min="0" 
-                            max="10" 
-                            value={painLevel} 
-                            onChange={e => setPainLevel(Number(e.target.value))} 
-                          />
-                      </div>
-                  </div>
-
-                  {/* Bottom Left: Comments */}
-                  <div className="form-group" style={{ height: '100%', display: 'flex', flexDirection: 'column', marginBottom: 0 }}>
-                      <label className="form-label">Comments (Optional)</label>
-                      <textarea 
-                        placeholder="How did it feel? Any difficulties?"
-                        value={comments}
-                        onChange={e => setComments(e.target.value)}
-                        style={{ flex: 1, resize: 'none', padding: '15px', minHeight: 0, boxSizing: 'border-box' }}
-                      ></textarea>
-                  </div>
-
-                  {/* Bottom Right: Flag a concern */}
-                  <div className="form-group" style={{ marginBottom: 0 }}>
-                      <label className="form-label">Flag a concern? (Optional)</label>
-                      <div className="btn-grid">
-                          {concerns.map(c => (
-                            <button
-                                key={c.id}
-                                type="button"
-                                onClick={() => setSelectedConcern(selectedConcern === c.id ? null : c.id)}
-                                className={`btn-outline ${selectedConcern === c.id ? 'active' : ''}`}
-                            >
-                                {c.label}
-                            </button>
-                          ))}
-                      </div>
-                  </div>
-
+          {/* Exercise Instructions & Clinical Details Card */}
+          <div className="bg-[#FFFFFF] border border-[#EAEAEA] rounded-[14px] p-4 sm:p-5 shadow-xs space-y-3">
+            <div className="flex items-start justify-between gap-3 pb-3 border-b border-[#F0F0F0]">
+              <div>
+                <h2 className="text-[18px] sm:text-[20px] font-semibold text-[#202223] leading-tight">
+                  {currentExercise.exercise_name}
+                </h2>
+                <div className="flex items-center gap-2 mt-1">
+                  <span className="inline-flex items-center gap-1 text-[12px] font-medium text-[#008060]">
+                    <Dumbbell size={13} />
+                    Prescribed: {prescribedSets} Sets × {currentExercise.prescribed_reps} Reps
+                  </span>
+                </div>
               </div>
 
-              {/* Footer Action */}
-              <div className="action-footer">
-                  <button type="button" onClick={handleSubmit} disabled={isSubmitting} className="btn-complete">
-                      {isSubmitting ? (
-                        <span>Saving...</span>
-                      ) : isLastExercise ? (
-                        <>Complete Session <i className="fa-solid fa-check-double" style={{ marginLeft: '0.5rem' }}></i></>
-                      ) : (
-                        <>
-                          Complete & Next 
-                          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginLeft: '0.5rem' }}>
-                              <polyline points="20 6 9 17 4 12"></polyline>
-                          </svg>
-                        </>
-                      )}
+              {currentExercise.target_body_part && (
+                <span className="px-2.5 py-0.5 rounded-full bg-[#F4F4F4] text-[#616161] text-[11px] font-medium uppercase tracking-wider shrink-0">
+                  {currentExercise.target_body_part}
+                </span>
+              )}
+            </div>
+
+            {/* Instructions */}
+            {currentExercise.instructions && (
+              <div className="space-y-1.5">
+                <span className="text-[11px] font-semibold uppercase tracking-wider text-[#8A8A8A]">
+                  Step-by-Step Instructions
+                </span>
+                <ol className="list-decimal pl-4 space-y-1 text-[13px] text-[#616161] leading-relaxed">
+                  {currentExercise.instructions.split('\n').map((instruction, idx) => (
+                    instruction.trim() ? <li key={idx}>{instruction.trim()}</li> : null
+                  ))}
+                </ol>
+              </div>
+            )}
+
+            {/* Doctor Note (if present) */}
+            {currentExercise.doctor_notes && (
+              <div className="p-3 bg-[#FBFBFB] border border-[#EAEAEA] rounded-[10px] space-y-1 mt-2">
+                <span className="text-[11px] font-semibold uppercase tracking-wider text-[#8A8A8A] flex items-center gap-1">
+                  <Stethoscope size={12} /> Therapist Guidance
+                </span>
+                <p className="text-[12px] text-[#202223] italic">
+                  "{currentExercise.doctor_notes}"
+                </p>
+              </div>
+            )}
+          </div>
+
+        </div>
+
+        {/* ── RIGHT COLUMN: LOG PROGRESS & FORM (lg:col-span-6) ── */}
+        <div className="lg:col-span-6">
+          <div className="bg-[#FFFFFF] border border-[#EAEAEA] rounded-[14px] p-4 sm:p-5 shadow-xs space-y-5">
+            
+            <div className="pb-3 border-b border-[#F0F0F0]">
+              <h3 className="text-[15px] font-semibold text-[#202223]">
+                Log Your Progress
+              </h3>
+              <p className="text-[12px] text-[#616161] mt-0.5">
+                Record your sets completed and symptom feedback for your therapist.
+              </p>
+            </div>
+
+            {/* 1. Sets Completed */}
+            <div className="space-y-2">
+              <label className="text-[11px] font-semibold uppercase tracking-wider text-[#616161]">
+                Sets Completed (Prescribed Goal: {prescribedSets})
+              </label>
+              
+              <div className="flex items-center gap-2 overflow-x-auto pb-1">
+                {chipNumbers.map(n => (
+                  <button
+                    key={n}
+                    type="button"
+                    onClick={() => setSetsCompleted(n)}
+                    className={`min-w-[44px] h-[40px] px-3 rounded-[8px] border text-[13px] font-mono font-medium transition-colors cursor-pointer flex items-center justify-center ${
+                      setsCompleted === n
+                        ? 'bg-[#202223] text-[#FFFFFF] border-[#202223] font-bold shadow-xs'
+                        : 'bg-[#FFFFFF] border-[#EAEAEA] text-[#202223] hover:border-[#202223] hover:bg-[#FBFBFB]'
+                    }`}
+                  >
+                    {n}
                   </button>
-                  <button type="button" onClick={() => setShowSkipConfirm(true)} disabled={isSubmitting} className="btn-skip">Skip this exercise</button>
+                ))}
+
+                {prescribedSets >= 3 && (
+                  <button
+                    type="button"
+                    onClick={() => setSetsCompleted(99)}
+                    className={`min-w-[50px] h-[40px] px-3 rounded-[8px] border text-[13px] font-medium transition-colors cursor-pointer flex items-center justify-center ${
+                      setsCompleted === 99
+                        ? 'bg-[#202223] text-[#FFFFFF] border-[#202223] font-bold shadow-xs'
+                        : 'bg-[#FFFFFF] border-[#EAEAEA] text-[#202223] hover:border-[#202223] hover:bg-[#FBFBFB]'
+                    }`}
+                  >
+                    More
+                  </button>
+                )}
               </div>
 
+              {shakeChips && setsCompleted === null && (
+                <p className="text-[12px] text-[#B81818] font-medium flex items-center gap-1 animate-pulse">
+                  <AlertTriangle size={13} />
+                  Please select how many sets you completed before submitting.
+                </p>
+              )}
+            </div>
+
+            {/* 2. Pain Level Slider */}
+            <div className="p-3.5 bg-[#FBFBFB] border border-[#EAEAEA] rounded-[10px] space-y-2.5">
+              <div className="flex justify-between items-center">
+                <label className="text-[12px] font-medium text-[#202223]">
+                  Pain / Discomfort Level
+                </label>
+                <span className={`text-[11px] font-mono font-bold px-2 py-0.5 rounded-full ${
+                  painLevel <= 3 
+                    ? 'bg-[#D9F7C3] text-[#245B19]' 
+                    : painLevel <= 6 
+                    ? 'bg-[#FFF2CC] text-[#8A6116]' 
+                    : 'bg-[#FCE4E4] text-[#B81818]'
+                }`}>
+                  {painLevel}/10
+                </span>
+              </div>
+
+              <input
+                type="range"
+                min="0"
+                max="10"
+                value={painLevel}
+                onChange={e => setPainLevel(Number(e.target.value))}
+                className="w-full h-1.5 bg-[#EAEAEA] rounded-lg appearance-none cursor-pointer accent-[#202223]"
+              />
+
+              <div className="flex justify-between text-[10px] font-mono text-[#8A8A8A]">
+                <span>0 — None</span>
+                <span>Current: {painLevel}</span>
+                <span>10 — Severe</span>
+              </div>
+            </div>
+
+            {/* 3. Comments Textarea */}
+            <div className="space-y-1.5">
+              <label className="text-[11px] font-semibold uppercase tracking-wider text-[#616161]">
+                Comments / Mobility Feedback (Optional)
+              </label>
+              <textarea
+                placeholder="How did this movement feel? Any joint tightness or fatigue?"
+                value={comments}
+                onChange={e => setComments(e.target.value)}
+                rows={2}
+                className="w-full p-2.5 text-[13px] bg-[#FFFFFF] border border-[#EAEAEA] rounded-[10px] text-[#202223] placeholder-[#8A8A8A] outline-none focus:border-[#202223] transition-colors resize-none"
+              />
+            </div>
+
+            {/* 4. Flag a Concern Buttons */}
+            <div className="space-y-1.5">
+              <label className="text-[11px] font-semibold uppercase tracking-wider text-[#616161]">
+                Flag a Concern? (Optional)
+              </label>
+              <div className="grid grid-cols-2 gap-2">
+                {concerns.map(c => {
+                  const isSelected = selectedConcern === c.id;
+                  return (
+                    <button
+                      key={c.id}
+                      type="button"
+                      onClick={() => setSelectedConcern(isSelected ? null : c.id)}
+                      className={`py-2 px-2.5 rounded-[8px] border text-left text-[12px] font-medium transition-colors cursor-pointer flex items-center justify-between ${
+                        isSelected
+                          ? 'bg-[#202223] text-[#FFFFFF] border-[#202223] shadow-xs'
+                          : 'bg-[#FFFFFF] border-[#EAEAEA] text-[#616161] hover:border-[#202223] hover:text-[#202223]'
+                      }`}
+                    >
+                      <span className="truncate">{c.label}</span>
+                      {isSelected && <Check size={12} className="shrink-0" />}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* 5. Complete & Action Footer */}
+            <div className="pt-3 border-t border-[#F0F0F0] space-y-2">
+              <button
+                type="button"
+                onClick={handleSubmit}
+                disabled={isSubmitting}
+                className="w-full py-3 px-4 rounded-[8px] text-[13px] font-semibold text-[#FFFFFF] bg-[#000000] hover:bg-[#202020] disabled:opacity-50 disabled:cursor-not-allowed shadow-xs transition-colors cursor-pointer flex items-center justify-center gap-2"
+              >
+                {isSubmitting ? (
+                  <span>Saving progress...</span>
+                ) : isLastExercise ? (
+                  <>
+                    <CheckCircle2 size={15} />
+                    <span>Complete Session</span>
+                  </>
+                ) : (
+                  <>
+                    <span>Complete & Next Exercise</span>
+                    <ArrowRight size={15} />
+                  </>
+                )}
+              </button>
+
+              <div className="text-center pt-1">
+                <button
+                  type="button"
+                  onClick={() => setShowSkipConfirm(true)}
+                  disabled={isSubmitting}
+                  className="text-[12px] text-[#8A8A8A] hover:text-[#B81818] hover:underline cursor-pointer transition-colors"
+                >
+                  Skip this exercise
+                </button>
+              </div>
+            </div>
+
           </div>
+        </div>
 
-      </main>
+      </div>
 
-      {/* Modals */}
+      {/* ── 3. HIGH PAIN DIALOG MODAL ───────────────────────────────────────── */}
       {showHighPainModal && (
-        <div className="modal-overlay">
-          <div className="modal-content">
-            <div style={{ marginBottom: '1rem', color: 'var(--danger)' }}>
-                <AlertTriangle size={48} style={{ margin: '0 auto' }} />
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-fade-in font-['Inter',system-ui,sans-serif]">
+          <div className="bg-[#FFFFFF] rounded-[16px] max-w-sm w-full p-6 border border-[#EAEAEA] shadow-2xl text-center space-y-3">
+            <div className="w-12 h-12 rounded-full bg-[#FCE4E4] text-[#B81818] flex items-center justify-center mx-auto">
+              <AlertTriangle size={24} />
             </div>
-            <h3>High Pain Level Logged</h3>
-            <p style={{ margin: '1rem 0' }}>
-              You reported <strong>{painLevel}/10</strong> pain. If this feels sudden, worsening, or wrong, please contact the clinic:
+            <h3 className="text-base font-semibold text-[#202223]">
+              High Pain Level Reported
+            </h3>
+            <p className="text-[13px] text-[#616161] leading-relaxed">
+              You logged a discomfort level of <strong className="text-[#B81818]">{painLevel}/10</strong>. If this feels acute or sudden, please contact your clinic.
             </p>
-            <div style={{ margin: '1.5rem 0', fontSize: '1.2rem', fontWeight: 'bold' }}>
-              <a href="tel:+919876543210" style={{ color: 'var(--primary)', textDecoration: 'none' }}>+91 98765 43210</a>
+            <div className="py-2 text-[14px] font-mono font-bold text-[#202223] flex items-center justify-center gap-1.5">
+              <Phone size={14} className="text-[#008060]" />
+              <a href="tel:+919876543210" className="hover:underline">+91 98765 43210</a>
             </div>
-            <div className="modal-actions row">
-              <button 
+            <div className="flex flex-col gap-2 pt-2">
+              <button
+                type="button"
                 onClick={() => {
                   setShowHighPainModal(false);
                   setIsConcernModalOpen(true);
                 }}
-                className="btn-modal-primary danger"
+                className="w-full py-2 px-3 text-[12px] font-semibold text-[#FFFFFF] bg-[#B81818] hover:bg-[#9B1414] rounded-[8px] transition-colors cursor-pointer"
               >
-                Report a Concern
+                Report Concern to Doctor
               </button>
-              <button 
+              <button
+                type="button"
                 onClick={() => {
                   setShowHighPainModal(false);
                   proceedAfterSave();
                 }}
-                className="btn-modal-secondary"
+                className="w-full py-2 px-3 text-[12px] font-medium text-[#616161] hover:text-[#202223] hover:bg-[#F4F4F4] rounded-[8px] transition-colors cursor-pointer"
               >
-                OK, Got It
+                Acknowledge & Continue
               </button>
             </div>
           </div>
         </div>
       )}
 
+      {/* ── 4. SKIP CONFIRMATION DIALOG MODAL ───────────────────────────────── */}
       {showSkipConfirm && (
-        <div className="modal-overlay">
-          <div className="modal-content">
-            <h3>Skip this exercise?</h3>
-            <p style={{ margin: '1rem 0', color: 'var(--gray-500)' }}>
-              Skipping marks this exercise as missed. Your doctor will see this in your progress report.
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-fade-in font-['Inter',system-ui,sans-serif]">
+          <div className="bg-[#FFFFFF] rounded-[16px] max-w-sm w-full p-6 border border-[#EAEAEA] shadow-2xl text-center space-y-3">
+            <h3 className="text-base font-semibold text-[#202223]">
+              Skip this exercise?
+            </h3>
+            <p className="text-[13px] text-[#616161] leading-relaxed">
+              Skipping will log this movement as uncompleted. Your physical therapist will review this in your weekly compliance record.
             </p>
-            <div className="modal-actions row">
-              <button 
+            <div className="flex items-center gap-2 pt-3">
+              <button
+                type="button"
                 onClick={() => setShowSkipConfirm(false)}
-                className="btn-modal-secondary"
+                className="flex-1 py-2 px-3 text-[12px] font-medium text-[#202223] bg-[#F4F4F4] hover:bg-[#EAEAEA] rounded-[8px] transition-colors cursor-pointer"
               >
                 Go Back
               </button>
-              <button 
+              <button
+                type="button"
                 onClick={handleSkipConfirm}
-                className="btn-modal-primary danger"
+                className="flex-1 py-2 px-3 text-[12px] font-semibold text-[#FFFFFF] bg-[#B81818] hover:bg-[#9B1414] rounded-[8px] transition-colors cursor-pointer"
               >
                 Skip Anyway
               </button>
@@ -459,6 +559,7 @@ const ExerciseSessionPage = () => {
         </div>
       )}
 
+      {/* ── 5. REPORT CONCERN MODAL ─────────────────────────────────────────── */}
       <ReportConcernModal
         isOpen={isConcernModalOpen}
         onClose={() => {
@@ -468,6 +569,7 @@ const ExerciseSessionPage = () => {
         prefilledIssueType="increased_pain"
         patientId={patientId}
       />
+
     </div>
   );
 };

@@ -1,9 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '@clerk/clerk-react';
-import { Check } from 'lucide-react';
-import './ExerciseSessionPage.css';
-import './SessionCompletePage.css';
+import { Check, CheckCircle2, Trophy, ArrowRight, Loader2 } from 'lucide-react';
 
 const SessionCompletePage = () => {
   const { planId, sessionNumber } = useParams();
@@ -17,8 +15,6 @@ const SessionCompletePage = () => {
 
   useEffect(() => {
     fetchCompliance();
-    
-    // Trigger checkmark animation after a short delay
     const timer = setTimeout(() => setShowCheck(true), 200);
     return () => clearTimeout(timer);
   }, []);
@@ -45,11 +41,10 @@ const SessionCompletePage = () => {
         setWeeklyCompliance(data.weeklyCompliance);
       }
       
-      // Determine sessions per day from the current session object to show hint
       if (data.sessions && data.sessions.length > 0) {
         const currentSession = data.sessions.find(s => s.session_number === parseInt(sessionNumber));
         if (currentSession && currentSession.exercises.length > 0) {
-           setSessionsPerDay(currentSession.exercises[0].sessions_per_day || 1);
+          setSessionsPerDay(currentSession.exercises[0].sessions_per_day || 1);
         }
       }
     } catch (err) {
@@ -59,69 +54,57 @@ const SessionCompletePage = () => {
     }
   };
 
-  const getMessage = (percent) => {
-    if (percent >= 90) return "Outstanding! 🔥";
-    if (percent >= 80) return "Keep it up! 💪";
-    if (percent >= 60) return "Good progress! 👍";
-    return "Every session counts — keep going.";
-  };
-
-  const getProgressBarColor = (percent) => {
-    if (percent >= 80) return 'excellent';
-    if (percent >= 50) return 'good';
-    return 'needs-work';
-  };
-
   const percent = weeklyCompliance.percent || 0;
 
   return (
-    <div className="session-page-wrapper">
-      <svg className="theme-wave" viewBox="0 0 1440 320" preserveAspectRatio="none">
-        <path fill="rgba(86, 90, 207, 0.05)" fillOpacity="1" d="M0,160L48,176C96,192,192,224,288,213.3C384,203,480,149,576,144C672,139,768,181,864,197.3C960,213,1056,203,1152,176C1248,149,1344,107,1392,85.3L1440,64L1440,0L1392,0C1344,0,1248,0,1152,0C1056,0,960,0,864,0C768,0,672,0,576,0C480,0,384,0,288,0C192,0,96,0,48,0L0,0Z"></path>
-      </svg>
-
-      <div className="shape shape-circle"></div>
-      <div className="shape shape-plus"></div>
-
-      <div className="complete-page-content">
-        <div className={`success-icon-container ${showCheck ? 'show' : ''}`}>
-          <Check className="success-icon" strokeWidth={3} />
+    <div className="min-h-[70vh] flex items-center justify-center p-4 font-['Inter',system-ui,sans-serif] animate-fade-in text-[#202223] pb-24 md:pb-8">
+      <div className="bg-[#FFFFFF] border border-[#EAEAEA] rounded-[16px] shadow-sm max-w-md w-full p-6 sm:p-8 text-center space-y-5">
+        
+        {/* Animated Trophy / Checkmark Icon */}
+        <div className="w-16 h-16 rounded-full bg-[#D9F7C3] text-[#245B19] flex items-center justify-center mx-auto shadow-xs">
+          <Check size={32} strokeWidth={3} className="animate-scale-in" />
         </div>
 
-        <h1 className="complete-title">
-          Session {sessionNumber} Complete!
-        </h1>
-        
-        <p className="complete-subtitle">
-          {getMessage(percent)}
-        </p>
-
-        <div className="compliance-container">
-          <div className="compliance-header">
-            <span className="compliance-label">This week</span>
-            <span className="compliance-value">{percent}%</span>
-          </div>
-          <div className="compliance-track">
-            <div 
-              className={`compliance-fill ${getProgressBarColor(percent)}`}
-              style={{ width: `${loading ? 0 : percent}%` }}
-            />
-          </div>
-          
-          <p className="streak-message">
-            {sessionsPerDay === 2 && parseInt(sessionNumber) === 1 
-              ? "Session 2 (Evening) — come back this evening."
-              : "See you tomorrow! Keep the streak going."}
+        <div>
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-[#202223]">
+            Session {sessionNumber} Complete!
+          </h1>
+          <p className="text-[13px] text-[#616161] mt-1">
+            {percent >= 80 ? 'Outstanding adherence! Keep up the momentum.' : 'Every exercise session brings you closer to recovery.'}
           </p>
         </div>
 
-        <button 
+        {/* Weekly Compliance Progress Card */}
+        <div className="p-4 bg-[#FBFBFB] border border-[#EAEAEA] rounded-[12px] space-y-2.5 text-left">
+          <div className="flex items-center justify-between text-[12px]">
+            <span className="font-medium text-[#616161]">Weekly Compliance</span>
+            <span className="font-mono font-bold text-[#202223]">{percent}%</span>
+          </div>
+
+          <div className="w-full h-2 rounded-full bg-[#EAEAEA] overflow-hidden">
+            <div 
+              className="h-full bg-[#008060] rounded-full transition-all duration-700 ease-out"
+              style={{ width: `${loading ? 0 : percent}%` }}
+            />
+          </div>
+
+          <p className="text-[11px] text-[#8A8A8A] pt-1">
+            {sessionsPerDay === 2 && parseInt(sessionNumber) === 1 
+              ? 'Session 2 (Evening) scheduled for later today.'
+              : 'Protocol logged successfully. See you for tomorrow’s session.'}
+          </p>
+        </div>
+
+        {/* CTA Button */}
+        <button
+          type="button"
           onClick={() => navigate('/dashboard')}
-          className="btn-submit"
-          style={{ maxWidth: '400px' }}
+          className="w-full py-3 px-4 rounded-[8px] text-[13px] font-semibold text-[#FFFFFF] bg-[#000000] hover:bg-[#202020] shadow-xs transition-colors cursor-pointer inline-flex items-center justify-center gap-1.5"
         >
-          Back to Dashboard
+          <span>Return to Dashboard</span>
+          <ArrowRight size={14} />
         </button>
+
       </div>
     </div>
   );

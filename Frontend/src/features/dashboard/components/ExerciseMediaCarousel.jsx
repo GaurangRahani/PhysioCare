@@ -85,8 +85,8 @@ const ExerciseMediaCarousel = ({ videoUrl, imageUrls }) => {
                 onClick={() => setCurrentIndex(idx)}
                 className={`rounded-full transition-all duration-300 ${
                   currentIndex === idx
-                    ? 'w-2 h-2 bg-purple-600'
-                    : 'w-1.5 h-1.5 bg-slate-300 hover:bg-slate-400'
+                    ? 'w-2 h-2 bg-[#202223]'
+                    : 'w-1.5 h-1.5 bg-[#CCCCCC] hover:bg-[#8A8A8A]'
                 }`}
               />
             ))}

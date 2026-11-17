@@ -1,6 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@clerk/clerk-react';
-import { X, AlertTriangle, MessageSquareWarning, ActivitySquare, HeartPulse } from 'lucide-react';
+import { 
+  X, 
+  AlertTriangle, 
+  MessageSquare, 
+  Activity, 
+  HeartPulse, 
+  Dumbbell, 
+  Loader2,
+  CheckCircle2
+} from 'lucide-react';
 
 const ReportConcernModal = ({ isOpen, onClose, prefilledIssueType = null, patientId }) => {
   const { getToken } = useAuth();
@@ -20,10 +29,10 @@ const ReportConcernModal = ({ isOpen, onClose, prefilledIssueType = null, patien
   }, [isOpen, prefilledIssueType]);
 
   const issueTypes = [
-    { id: 'increased_pain', label: 'Increased Pain', icon: HeartPulse, color: 'red' },
-    { id: 'exercise_difficulty', label: 'Exercise Difficulty', icon: ActivitySquare, color: 'amber' },
-    { id: 'new_symptom', label: 'New Symptom', icon: AlertTriangle, color: 'orange' },
-    { id: 'general_concern', label: 'General Concern', icon: MessageSquareWarning, color: 'slate' }
+    { id: 'increased_pain', label: 'Increased Pain', icon: HeartPulse },
+    { id: 'exercise_difficulty', label: 'Exercise Difficulty', icon: Dumbbell },
+    { id: 'new_symptom', label: 'New Symptom', icon: AlertTriangle },
+    { id: 'general_concern', label: 'General Concern', icon: MessageSquare }
   ];
 
   const handleSubmit = async () => {
@@ -59,7 +68,6 @@ const ReportConcernModal = ({ isOpen, onClose, prefilledIssueType = null, patien
       }
 
       onClose();
-      // Optional: Add a toast notification here
     } catch (err) {
       setError(err.message);
     } finally {
@@ -72,65 +80,69 @@ const ReportConcernModal = ({ isOpen, onClose, prefilledIssueType = null, patien
   const isFormValid = selectedIssueType && comments.trim().length >= 10;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center !p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg overflow-hidden animate-in zoom-in-95 duration-200">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-xs font-['Inter',system-ui,sans-serif] animate-fade-in select-none">
+      
+      {/* Modal Dialog Card */}
+      <div 
+        className="relative bg-[#FFFFFF] rounded-[16px] border border-[#EAEAEA] shadow-2xl w-full max-w-[460px] max-h-[92vh] flex flex-col overflow-hidden animate-fade-in"
+        onClick={(e) => e.stopPropagation()}
+      >
         
-        {/* Header */}
-        <div className="flex items-center justify-between !p-6 border-b border-slate-100">
-          <div>
-            <h2 className="text-xl font-bold text-slate-800">Report a Concern</h2>
-            <p className="text-sm text-slate-500 !mt-1">Let your doctor know about anything unusual between visits.</p>
+        {/* ── 1. MODAL HEADER ────────────────────────────────────────────── */}
+        <div className="px-4 py-3.5 sm:px-5 sm:py-4 border-b border-[#EAEAEA] flex items-center justify-between shrink-0 bg-[#FFFFFF]">
+          <div className="min-w-0 pr-2">
+            <h2 className="text-[15px] font-semibold text-[#202223] truncate">
+              Report a Concern
+            </h2>
           </div>
-          <button onClick={onClose} className="!p-2 text-slate-400 hover:bg-slate-100 rounded-full transition-colors">
-            <X className="w-5 h-5" />
+
+          <button 
+            type="button"
+            onClick={onClose}
+            className="p-1.5 rounded-[8px] text-[#8A8A8A] hover:text-[#202223] hover:bg-[#F4F4F4] transition-colors cursor-pointer shrink-0"
+            title="Close dialog"
+          >
+            <X size={18} />
           </button>
         </div>
 
-        {/* Content */}
-        <div className="!p-6 !space-y-6">
+        {/* ── 2. MODAL BODY (SCROLLABLE) ─────────────────────────────────── */}
+        <div className="p-4 sm:p-5 overflow-y-auto flex-1 space-y-4 text-[#202223]">
+          
           {error && (
-            <div className="!p-3 text-sm text-red-600 bg-red-50 rounded-lg border border-red-100">
-              {error}
+            <div className="p-3 bg-[#FCE4E4] border border-[#F5C2C2] text-[#B81818] rounded-[10px] text-[12px] flex items-start gap-2">
+              <AlertTriangle size={15} className="shrink-0 mt-0.5" />
+              <span>{error}</span>
             </div>
           )}
 
           {/* Issue Type Selection */}
-          <div>
-            <label className="block text-sm font-bold text-slate-700 !mb-3">What type of concern?</label>
-            <div className="grid grid-cols-2 !gap-3">
+          <div className="space-y-1.5">
+            <label className="text-[11px] font-semibold uppercase tracking-wider text-[#616161]">
+              What type of concern?
+            </label>
+            <div className="grid grid-cols-2 gap-2">
               {issueTypes.map(type => {
                 const Icon = type.icon;
                 const isSelected = selectedIssueType === type.id;
-                
-                const colorClasses = {
-                  red: {
-                    border: 'border-red-500', bg: 'bg-red-50', iconBg: 'bg-red-100', text: 'text-red-700', iconText: 'text-red-600'
-                  },
-                  amber: {
-                    border: 'border-amber-500', bg: 'bg-amber-50', iconBg: 'bg-amber-100', text: 'text-amber-700', iconText: 'text-amber-600'
-                  },
-                  orange: {
-                    border: 'border-orange-500', bg: 'bg-orange-50', iconBg: 'bg-orange-100', text: 'text-orange-700', iconText: 'text-orange-600'
-                  },
-                  slate: {
-                    border: 'border-slate-500', bg: 'bg-slate-50', iconBg: 'bg-slate-100', text: 'text-slate-700', iconText: 'text-slate-600'
-                  }
-                }[type.color];
 
                 return (
                   <button
                     key={type.id}
+                    type="button"
                     onClick={() => setSelectedIssueType(type.id)}
-                    className={`flex items-center !gap-3 !p-3 rounded-xl border-2 text-left transition-all ${
+                    className={`p-2.5 rounded-[10px] border text-left transition-colors cursor-pointer flex items-center gap-2 ${
                       isSelected 
-                        ? `${colorClasses.border} ${colorClasses.bg}` 
-                        : 'border-slate-100 hover:border-slate-200 hover:bg-slate-50'
+                        ? 'border-[#202223] bg-[#202223] text-[#FFFFFF] shadow-xs' 
+                        : 'border-[#EAEAEA] bg-[#FFFFFF] text-[#202223] hover:border-[#202223] hover:bg-[#FBFBFB]'
                     }`}
                   >
-                    <div className={`!p-2 rounded-lg shrink-0 ${isSelected ? `${colorClasses.iconBg} ${colorClasses.iconText}` : 'bg-slate-100 text-slate-500'}`}>
-                      <Icon className="w-4 h-4" />
+                    <div className={`w-7 h-7 rounded-md flex items-center justify-center shrink-0 ${
+                      isSelected ? 'bg-[#333333] text-[#FFFFFF]' : 'bg-[#F4F4F4] text-[#616161]'
+                    }`}>
+                      <Icon size={14} />
                     </div>
-                    <span className={`text-sm font-bold leading-tight ${isSelected ? colorClasses.text : 'text-slate-600'}`}>
+                    <span className="text-[12px] font-medium leading-tight">
                       {type.label}
                     </span>
                   </button>
@@ -141,62 +153,84 @@ const ReportConcernModal = ({ isOpen, onClose, prefilledIssueType = null, patien
 
           {/* Pain Level Slider (Conditional) */}
           {selectedIssueType && selectedIssueType !== 'general_concern' && (
-            <div>
-              <div className="flex justify-between items-center !mb-2">
-                <label className="block text-sm font-bold text-slate-700">Pain Level</label>
-                <span className={`text-sm font-black !px-2.5 !py-0.5 rounded-md ${
-                  painLevel <= 3 ? 'bg-green-100 text-green-700' :
-                  painLevel <= 6 ? 'bg-amber-100 text-amber-700' :
-                  'bg-red-100 text-red-700'
+            <div className="p-3.5 bg-[#FBFBFB] border border-[#EAEAEA] rounded-[10px] space-y-2.5">
+              <div className="flex justify-between items-center">
+                <label className="text-[12px] font-medium text-[#202223]">
+                  Reported Discomfort / Pain Level
+                </label>
+                <span className={`text-[11px] font-mono font-bold px-2 py-0.5 rounded-full ${
+                  painLevel <= 3 
+                    ? 'bg-[#D9F7C3] text-[#245B19]' 
+                    : painLevel <= 6 
+                    ? 'bg-[#FFF2CC] text-[#8A6116]' 
+                    : 'bg-[#FCE4E4] text-[#B81818]'
                 }`}>
                   {painLevel}/10
                 </span>
               </div>
+
               <input
                 type="range"
                 min="0"
                 max="10"
                 value={painLevel}
                 onChange={(e) => setPainLevel(parseInt(e.target.value))}
-                className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-purple-600"
+                className="w-full h-1.5 bg-[#EAEAEA] rounded-lg appearance-none cursor-pointer accent-[#202223]"
               />
-              <div className="flex justify-between text-xs font-medium text-slate-400 !mt-2">
-                <span>0 - No pain</span>
-                <span>10 - Unbearable</span>
+
+              <div className="flex justify-between text-[10px] font-mono text-[#8A8A8A]">
+                <span>0 - Minimal</span>
+                <span>5 - Moderate</span>
+                <span>10 - Severe</span>
               </div>
             </div>
           )}
 
-          {/* Description */}
-          <div>
-            <label className="block text-sm font-bold text-slate-700 !mb-2">Describe what you're experiencing</label>
+          {/* Description Textarea */}
+          <div className="space-y-1.5">
+            <div className="flex justify-between items-center">
+              <label className="text-[11px] font-semibold uppercase tracking-wider text-[#616161]">
+                Describe Concern
+              </label>
+              <span className={`text-[10px] font-mono ${comments.trim().length >= 10 ? 'text-[#008060]' : 'text-[#8A8A8A]'}`}>
+                {comments.trim().length}/10 min chars
+              </span>
+            </div>
             <textarea
               value={comments}
               onChange={(e) => setComments(e.target.value)}
               placeholder="Please provide details (minimum 10 characters)..."
-              rows={4}
-              className="w-full border-2 border-slate-200 rounded-xl !p-3 text-sm focus:border-purple-500 focus:ring-4 focus:ring-purple-500/10 outline-none transition-all resize-none"
+              rows={3}
+              className="w-full border border-[#EAEAEA] rounded-[10px] p-2.5 text-[13px] text-[#202223] placeholder-[#8A8A8A] bg-[#FFFFFF] focus:border-[#202223] outline-none transition-colors resize-none"
             />
           </div>
+
         </div>
 
-        {/* Footer */}
-        {/* Footer */}
-        <div className="!p-6 border-t border-slate-100 bg-slate-50 flex !gap-3 justify-end">
+        {/* ── 3. MODAL FOOTER ────────────────────────────────────────────── */}
+        <div className="px-4 py-3 sm:px-5 sm:py-3.5 border-t border-[#EAEAEA] bg-[#FBFBFB] flex items-center justify-end gap-2 shrink-0">
           <button
+            type="button"
             onClick={onClose}
-            className="!px-5 !py-2.5 text-sm font-bold text-slate-600 hover:bg-slate-200 rounded-xl transition-colors"
+            className="px-3.5 py-2 text-[12px] font-medium text-[#616161] hover:text-[#202223] hover:bg-[#EAEAEA] rounded-[8px] transition-colors cursor-pointer"
           >
             Cancel
           </button>
+          
           <button
+            type="button"
             onClick={handleSubmit}
             disabled={!isFormValid || isSubmitting}
-            className={`!px-5 !py-2.5 text-sm font-bold text-white rounded-xl transition-colors flex items-center !gap-2 ${(!isFormValid || isSubmitting) ? '!bg-slate-400 !cursor-not-allowed !opacity-60' : 'bg-purple-600 hover:bg-purple-700'}`}
+            className="px-4 py-2 text-[12px] font-semibold text-[#FFFFFF] bg-[#000000] hover:bg-[#202020] disabled:bg-[#F4F4F4] disabled:text-[#A3A3A3] disabled:cursor-not-allowed rounded-[8px] shadow-xs transition-colors cursor-pointer inline-flex items-center gap-1.5"
           >
             {isSubmitting ? (
-              <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"/> Submitting...</>
-            ) : 'Submit Concern'}
+              <>
+                <Loader2 size={13} className="animate-spin" />
+                <span>Submitting...</span>
+              </>
+            ) : (
+              <span>Submit Concern</span>
+            )}
           </button>
         </div>
 
