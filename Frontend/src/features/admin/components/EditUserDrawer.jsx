@@ -1,20 +1,27 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@clerk/clerk-react';
 import toast from 'react-hot-toast';
+import { 
+  X, 
+  Check, 
+  AlertTriangle, 
+  AlertCircle, 
+  Loader2, 
+  Stethoscope, 
+  Users, 
+  Headphones, 
+  Phone, 
+  Mail, 
+  Calendar 
+} from 'lucide-react';
 
 const API = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
 const ROLES = [
-  { value: 'patient',       label: 'Patient',       desc: 'Can book & log exercises' },
-  { value: 'doctor',        label: 'Doctor',         desc: 'Clinical dashboard access' },
-  { value: 'receptionist',  label: 'Receptionist',   desc: 'Booking & billing access' },
+  { value: 'patient', label: 'Patient', desc: 'Can book consultations & record daily exercise sessions', icon: Users },
+  { value: 'doctor', label: 'Doctor', desc: 'Clinical dashboard, prescriptions, and patient consultation notes', icon: Stethoscope },
+  { value: 'receptionist', label: 'Receptionist', desc: 'Front desk scheduling, billing records, and patient registry', icon: Headphones },
 ];
-
-const avatarColors = {
-  doctor:       { bg: '#EDE9FE', color: '#6D28D9' },
-  receptionist: { bg: '#CCFBF1', color: '#0F766E' },
-  patient:      { bg: '#DBEAFE', color: '#1D4ED8' },
-};
 
 const initials = (name) =>
   (name || '')
@@ -39,7 +46,7 @@ const EditUserDrawer = ({ user, isOpen, onClose, onUserUpdated }) => {
     }
   }, [user]);
 
-  if (!user) return null;
+  if (!isOpen || !user) return null;
 
   const isDirty =
     selectedRole !== user.role ||
@@ -60,7 +67,8 @@ const EditUserDrawer = ({ user, isOpen, onClose, onUserUpdated }) => {
 
       if (selectedRole !== user.role) {
         const res = await fetch(`${API}/api/admin/users/${user.id}/role`, {
-          method: 'PATCH', headers,
+          method: 'PATCH',
+          headers,
           body: JSON.stringify({ new_role: selectedRole }),
         });
         if (!res.ok) throw new Error();
@@ -68,7 +76,8 @@ const EditUserDrawer = ({ user, isOpen, onClose, onUserUpdated }) => {
 
       if (selectedRole === 'patient' && patientStatus !== user.patient_status) {
         const res = await fetch(`${API}/api/admin/users/${user.id}/patient-status`, {
-          method: 'PATCH', headers,
+          method: 'PATCH',
+          headers,
           body: JSON.stringify({ status: patientStatus }),
         });
         if (!res.ok) throw new Error();
@@ -76,7 +85,8 @@ const EditUserDrawer = ({ user, isOpen, onClose, onUserUpdated }) => {
 
       if (selectedRole !== 'patient' && isActive !== user.is_active) {
         const res = await fetch(`${API}/api/admin/users/${user.id}/active`, {
-          method: 'PATCH', headers,
+          method: 'PATCH',
+          headers,
           body: JSON.stringify({ is_active: isActive }),
         });
         if (!res.ok) throw new Error();
@@ -92,153 +102,215 @@ const EditUserDrawer = ({ user, isOpen, onClose, onUserUpdated }) => {
     }
   };
 
-  const avc = avatarColors[user.role] || avatarColors.patient;
-
   return (
-    <>
-      {/* Overlay */}
-      {isOpen && (
-        <div className="drawer-overlay" onClick={onClose} />
-      )}
+    <div className="fixed inset-0 z-50 overflow-hidden bg-black/50 backdrop-blur-xs flex justify-end">
+      {/* Click outside to close */}
+      <div className="flex-1" onClick={onClose} />
 
-      {/* Drawer panel */}
-      <div className={`drawer-panel ${isOpen ? 'open' : 'closed'}`}>
-        {/* Header */}
-        <div className="drawer-header">
-          <span style={{ fontFamily: "'Poppins',sans-serif", fontWeight: 700, fontSize: '1.1rem', color: '#0F172A' }}>
-            Edit User
-          </span>
+      {/* Drawer Container */}
+      <div 
+        className="w-full max-w-[440px] bg-[#FFFFFF] h-full shadow-2xl flex flex-col border-l border-[#EAEAEA] animate-slide-in-right"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Drawer Header */}
+        <div className="px-5 py-4 border-b border-[#EAEAEA] flex items-center justify-between bg-[#FFFFFF] shrink-0">
+          <div>
+            <h2 className="text-[15px] font-semibold text-[#202223]">
+              Edit User Account
+            </h2>
+            <p className="text-[11px] text-[#8A8A8A] mt-0.5">
+              Modify clinical permissions, role access, and account status.
+            </p>
+          </div>
           <button
             onClick={onClose}
-            style={{
-              width: 32, height: 32, borderRadius: '50%', display: 'flex', alignItems: 'center',
-              justifyContent: 'center', color: '#94A3B8', fontSize: '1.1rem',
-            }}
-            onMouseOver={(e) => { e.currentTarget.style.background = '#F1F5F9'; e.currentTarget.style.color = '#475569'; }}
-            onMouseOut={(e) => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = '#94A3B8'; }}
+            className="p-1.5 rounded-[8px] text-[#8A8A8A] hover:text-[#202223] hover:bg-[#F4F4F4] transition-colors cursor-pointer"
+            title="Close drawer"
           >
-            <i className="fa-solid fa-xmark" />
+            <X size={18} />
           </button>
         </div>
 
-        {/* Body */}
-        <div className="drawer-body">
+        {/* Drawer Body */}
+        <div className="p-5 flex-1 overflow-y-auto space-y-5 text-[#202223]">
+          
           {/* User Info Card */}
-          <div className="drawer-user-card">
-            <div
-              className="user-avatar-drawer"
-              style={{ background: avc.bg, color: avc.color }}
-            >
+          <div className="p-4 bg-[#FBFBFB] border border-[#EAEAEA] rounded-[12px] flex items-center gap-3">
+            <div className="w-11 h-11 rounded-full bg-[#202020] text-[#FFFFFF] flex items-center justify-center text-[14px] font-bold shrink-0">
               {initials(user.name)}
             </div>
-            <div>
-              <div className="drawer-user-name">{user.name}</div>
-              <div className="drawer-user-email">{user.email}</div>
-              {user.phone && <div className="drawer-user-phone">{user.phone}</div>}
-              <div className="drawer-user-joined">
-                Joined {new Date(user.created_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
+            <div className="min-w-0 flex-1">
+              <div className="text-[14px] font-semibold text-[#202223] truncate">
+                {user.name}
+              </div>
+              <div className="text-[12px] text-[#616161] truncate flex items-center gap-1.5 mt-0.5">
+                <Mail size={12} className="text-[#8A8A8A] shrink-0" />
+                <span className="truncate">{user.email}</span>
+              </div>
+              {user.phone && (
+                <div className="text-[11px] text-[#8A8A8A] flex items-center gap-1.5 mt-0.5 font-mono">
+                  <Phone size={11} className="shrink-0" />
+                  <span>{user.phone}</span>
+                </div>
+              )}
+              <div className="text-[10px] text-[#8A8A8A] mt-1 font-mono">
+                Member since {new Date(user.created_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
               </div>
             </div>
           </div>
 
-          {/* Role section */}
-          <span className="section-label">Role</span>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem', marginBottom: '0.75rem' }}>
-            {ROLES.map((r) => (
-              <label
-                key={r.value}
-                className={`radio-card ${selectedRole === r.value ? 'selected' : ''}`}
-                onClick={() => setSelectedRole(r.value)}
-              >
-                <input type="radio" className="sr-only" checked={selectedRole === r.value} onChange={() => setSelectedRole(r.value)} />
-                <div className={`radio-dot ${selectedRole === r.value ? 'selected' : ''}`}>
-                  {selectedRole === r.value && <div className="radio-dot-inner" />}
-                </div>
-                <div>
-                  <div className="radio-card-label">{r.label}</div>
-                  <div className="radio-card-desc">{r.desc}</div>
-                </div>
-              </label>
-            ))}
+          {/* Role Selection */}
+          <div className="space-y-2">
+            <label className="text-[11px] font-semibold uppercase tracking-wider text-[#616161]">
+              Assigned Role
+            </label>
+            <div className="space-y-2">
+              {ROLES.map((r) => {
+                const Icon = r.icon;
+                const isSelected = selectedRole === r.value;
+                return (
+                  <div
+                    key={r.value}
+                    onClick={() => setSelectedRole(r.value)}
+                    className={`p-3 rounded-[10px] border cursor-pointer transition-all flex items-start gap-3 ${
+                      isSelected 
+                        ? 'border-[#202223] bg-[#FBFBFB] shadow-xs' 
+                        : 'border-[#EAEAEA] bg-[#FFFFFF] hover:border-[#CCCCCC]'
+                    }`}
+                  >
+                    <div className={`w-7 h-7 rounded-[8px] flex items-center justify-center shrink-0 mt-0.5 ${
+                      isSelected ? 'bg-[#202020] text-[#FFFFFF]' : 'bg-[#F4F4F4] text-[#616161]'
+                    }`}>
+                      <Icon size={14} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[13px] font-semibold text-[#202223]">
+                          {r.label}
+                        </span>
+                        {isSelected && (
+                          <div className="w-4 h-4 rounded-full bg-[#000000] text-[#FFFFFF] flex items-center justify-center">
+                            <Check size={10} />
+                          </div>
+                        )}
+                      </div>
+                      <p className="text-[11px] text-[#616161] mt-0.5 leading-snug">
+                        {r.desc}
+                      </p>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
           </div>
 
+          {/* Role Warning */}
           {showRoleWarning && (
-            <div className="warn-box" style={{ marginBottom: '1.25rem' }}>
-              <i className="fa-solid fa-triangle-exclamation" style={{ marginRight: 6 }} />
-              Changing role will remove <strong>{user.name}</strong>'s access to their current {user.role} dashboard.
-              All past data is preserved.
+            <div className="p-3 bg-[#FFF9E6] border border-[#FFE8A3] rounded-[10px] flex items-start gap-2.5 text-[#856404]">
+              <AlertTriangle size={16} className="shrink-0 mt-0.5" />
+              <div className="text-[12px] leading-snug">
+                Changing role will revoke <strong>{user.name}</strong>'s current {user.role} portal access. Past appointments and records will remain safely linked.
+              </div>
             </div>
           )}
 
-          {/* Status section */}
-          <div style={{ borderTop: '1px solid #E2E8F0', paddingTop: '1.5rem', marginTop: '0.5rem' }}>
-            <span className="section-label">Status</span>
+          {/* Status Section */}
+          <div className="pt-4 border-t border-[#EAEAEA] space-y-3">
+            <label className="text-[11px] font-semibold uppercase tracking-wider text-[#616161]">
+              Account Status
+            </label>
 
             {selectedRole === 'patient' ? (
-              <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+              <div className="grid grid-cols-3 gap-2">
                 {[
-                  { v: 'active', label: 'Active', cls: 'active-sel' },
-                  { v: 'inactive', label: 'Inactive', cls: 'inactive-sel' },
-                  { v: 'discharged', label: 'Discharged', cls: 'discharged-sel' },
-                ].map(({ v, label, cls }) => (
-                  <button
-                    key={v}
-                    className={`status-btn ${patientStatus === v ? cls : ''}`}
-                    onClick={() => setPatientStatus(v)}
-                  >
-                    {label}
-                  </button>
-                ))}
+                  { v: 'active', label: 'Active', desc: 'Can book visits' },
+                  { v: 'inactive', label: 'Inactive', desc: 'Paused' },
+                  { v: 'discharged', label: 'Discharged', desc: 'Completed care' },
+                ].map(({ v, label }) => {
+                  const isSel = patientStatus === v;
+                  return (
+                    <button
+                      key={v}
+                      type="button"
+                      onClick={() => setPatientStatus(v)}
+                      className={`py-2 px-3 rounded-[8px] text-[12px] font-medium border text-center transition-colors cursor-pointer ${
+                        isSel
+                          ? 'border-[#202223] bg-[#202223] text-[#FFFFFF] font-semibold shadow-xs'
+                          : 'border-[#EAEAEA] bg-[#FFFFFF] text-[#616161] hover:border-[#202223]'
+                      }`}
+                    >
+                      {label}
+                    </button>
+                  );
+                })}
               </div>
             ) : (
-              <>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.875rem' }}>
+              <div className="space-y-3">
+                <div className="flex items-center justify-between p-3 rounded-[10px] border border-[#EAEAEA] bg-[#FBFBFB]">
+                  <div>
+                    <div className="text-[13px] font-medium text-[#202223]">
+                      Portal Login Access
+                    </div>
+                    <div className="text-[11px] text-[#616161]">
+                      {isActive ? 'Staff member can sign in and operate' : 'Staff member is blocked from signing in'}
+                    </div>
+                  </div>
+
                   <button
-                    className="toggle-track"
-                    style={{ background: isActive ? '#565acf' : '#CBD5E1' }}
+                    type="button"
                     onClick={() => setIsActive(!isActive)}
-                    aria-label="Toggle active status"
+                    className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                      isActive ? 'bg-[#000000]' : 'bg-[#D1D1D1]'
+                    }`}
                   >
                     <span
-                      className="toggle-thumb"
-                      style={{ transform: isActive ? 'translateX(20px)' : 'translateX(0)' }}
+                      className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-[#FFFFFF] shadow-md ring-0 transition duration-200 ease-in-out ${
+                        isActive ? 'translate-x-5' : 'translate-x-0'
+                      }`}
                     />
                   </button>
-                  <span style={{ fontSize: '0.875rem', fontWeight: 600, color: '#475569' }}>
-                    {isActive ? 'Active — can log in' : 'Inactive — cannot log in'}
-                  </span>
                 </div>
 
                 {showDeactivateWarning && (
-                  <div className="danger-box" style={{ marginTop: '0.75rem' }}>
-                    <i className="fa-solid fa-circle-exclamation" style={{ marginRight: 6 }} />
-                    <strong>{user.name}</strong> will be immediately locked out.
+                  <div className="p-3 bg-[#FCE4E4] border border-[#F5C2C2] text-[#B81818] rounded-[10px] flex items-start gap-2 text-[12px]">
+                    <AlertCircle size={15} className="shrink-0 mt-0.5" />
+                    <span><strong>{user.name}</strong> will be immediately locked out of clinical workflows.</span>
                   </div>
                 )}
-              </>
+              </div>
             )}
           </div>
+
         </div>
 
-        {/* Footer */}
-        <div className="drawer-footer">
-          <button className="btn-secondary" onClick={onClose} style={{ flex: 1, justifyContent: 'center' }}>
+        {/* Drawer Footer Actions */}
+        <div className="p-4 border-t border-[#EAEAEA] bg-[#FFFFFF] flex items-center gap-3 shrink-0">
+          <button
+            type="button"
+            onClick={onClose}
+            className="flex-1 py-2 text-[12px] font-medium text-[#202223] bg-[#FFFFFF] border border-[#EAEAEA] hover:bg-[#F4F4F4] rounded-[8px] transition-colors cursor-pointer"
+          >
             Cancel
           </button>
           <button
-            className="btn-primary"
+            type="button"
             onClick={handleSave}
             disabled={!isDirty || isSaving}
-            style={{ flex: 1, justifyContent: 'center' }}
+            className="flex-1 py-2 text-[12px] font-semibold text-[#FFFFFF] bg-[#000000] hover:bg-[#202020] disabled:bg-[#F4F4F4] disabled:text-[#A3A3A3] disabled:cursor-not-allowed rounded-[8px] transition-colors cursor-pointer inline-flex items-center justify-center gap-1.5 shadow-xs"
           >
-            {isSaving
-              ? <><i className="fa-solid fa-spinner fa-spin" /> Saving…</>
-              : 'Save Changes'
-            }
+            {isSaving ? (
+              <>
+                <Loader2 size={14} className="animate-spin" />
+                <span>Saving...</span>
+              </>
+            ) : (
+              <span>Save Changes</span>
+            )}
           </button>
         </div>
+
       </div>
-    </>
+    </div>
   );
 };
 
