@@ -1,17 +1,34 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@clerk/clerk-react';
-import { ChevronLeft, ChevronRight, Loader2, Plus, Calendar as CalendarIcon, X } from 'lucide-react';
+import { 
+  ChevronLeft, 
+  ChevronRight, 
+  Loader2, 
+  Plus, 
+  Calendar as CalendarIcon, 
+  X, 
+  User, 
+  Stethoscope, 
+  Clock, 
+  Check
+} from 'lucide-react';
 import BookAppointmentModal from '../components/BookAppointmentModal';
 
-const DOCTOR_THEMES = ['theme-0', 'theme-1', 'theme-2', 'theme-3', 'theme-4'];
+const DOCTOR_COLORS = [
+  { bg: 'bg-[#4088F8]/10', border: 'border-[#4088F8]/30', text: 'text-[#2F68D6]', bar: 'bg-[#4088F8]', dot: '#4088F8' },
+  { bg: 'bg-[#202223]/10', border: 'border-[#202223]/30', text: 'text-[#202223]', bar: 'bg-[#202223]', dot: '#202223' },
+  { bg: 'bg-[#F5C451]/15', border: 'border-[#F5C451]/40', text: 'text-[#B25E09]', bar: 'bg-[#F5C451]', dot: '#F5C451' },
+  { bg: 'bg-[#7C3AED]/10', border: 'border-[#7C3AED]/30', text: 'text-[#6D28D9]', bar: 'bg-[#7C3AED]', dot: '#7C3AED' },
+  { bg: 'bg-[#EC4899]/10', border: 'border-[#EC4899]/30', text: 'text-[#DB2777]', bar: 'bg-[#EC4899]', dot: '#EC4899' },
+];
 
 const AppointmentCalendar = () => {
   const { getToken } = useAuth();
   
-  // States
+  // Current week start (Monday)
   const [currentWeekStart, setCurrentWeekStart] = useState(() => {
     const d = new Date();
-    const day = d.getDay(); // 0 is Sunday, 1 is Monday
+    const day = d.getDay();
     const diff = d.getDate() - day + (day === 0 ? -6 : 1);
     return new Date(d.setDate(diff));
   });
@@ -21,19 +38,18 @@ const AppointmentCalendar = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   
-  const [activeView, setActiveView] = useState('week'); // 'week' or 'day'
-  const [selectedDay, setSelectedDay] = useState(() => new Date()); // The specific day to show in day view
-  const [doctorFilter, setDoctorFilter] = useState('all'); // 'all' or doctor_id
+  const [activeView, setActiveView] = useState('week');
+  const [selectedDay, setSelectedDay] = useState(() => new Date());
+  const [doctorFilter, setDoctorFilter] = useState('all');
   
   const [isBookModalOpen, setIsBookModalOpen] = useState(false);
   const [selectedAppointment, setSelectedAppointment] = useState(null);
   
-  // For Overflow Modal
-  const [overflowData, setOverflowData] = useState(null); // { time: '10:00 AM', day: 'Mon', appointments: [] }
+  // Overflow Modal
+  const [overflowData, setOverflowData] = useState(null);
 
   useEffect(() => {
     fetchData();
-    // eslint-disable-next-line
   }, [currentWeekStart, getToken]);
 
   const fetchData = async () => {
@@ -45,12 +61,13 @@ const AppointmentCalendar = () => {
       endDateObj.setDate(endDateObj.getDate() + 6);
 
       const token = await getToken();
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
       
       const [apptsRes, docsRes] = await Promise.all([
-        fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/appointments`, {
+        fetch(`${apiUrl}/api/appointments`, {
           headers: { Authorization: `Bearer ${token}` }
         }),
-        fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/doctors`, {
+        fetch(`${apiUrl}/api/doctors`, {
           headers: { Authorization: `Bearer ${token}` }
         })
       ]);
@@ -59,17 +76,16 @@ const AppointmentCalendar = () => {
       const docsData = await docsRes.json();
       
       if (apptsData.success && docsData.success) {
-        // Filter appointments for the week
-        const weekAppts = apptsData.appointments.filter(a => {
+        const weekAppts = (apptsData.appointments || []).filter(a => {
           const aDate = new Date(a.appointment_date);
           const isThisWeek = aDate >= currentWeekStart && aDate <= endDateObj;
           const isActive = !['cancelled', 'no_show'].includes(a.status);
           return isThisWeek && isActive;
         });
         setAppointments(weekAppts);
-        setDoctors(docsData.doctors);
+        setDoctors(docsData.doctors || []);
       } else {
-        setError(apptsData.message || docsData.message || 'Failed to fetch data.');
+        setError(apptsData.message || docsData.message || 'Failed to fetch calendar data.');
       }
     } catch (err) {
       console.error(err);
@@ -81,8 +97,8 @@ const AppointmentCalendar = () => {
 
   const getDoctorTheme = (doctorId) => {
     const index = doctors.findIndex(d => d.id === doctorId);
-    if (index === -1) return DOCTOR_THEMES[0];
-    return DOCTOR_THEMES[index % DOCTOR_THEMES.length];
+    if (index === -1) return DOCTOR_COLORS[0];
+    return DOCTOR_COLORS[index % DOCTOR_COLORS.length];
   };
 
   const nextTime = () => {
@@ -94,7 +110,6 @@ const AppointmentCalendar = () => {
       const next = new Date(selectedDay);
       next.setDate(next.getDate() + 1);
       setSelectedDay(next);
-      // Ensure currentWeekStart aligns with the selected day's week so appointments are loaded
       const day = next.getDay();
       const diff = next.getDate() - day + (day === 0 ? -6 : 1);
       setCurrentWeekStart(new Date(new Date(next).setDate(diff)));
@@ -124,19 +139,21 @@ const AppointmentCalendar = () => {
     setCurrentWeekStart(new Date(new Date(d).setDate(diff)));
   };
 
-  // Generate days
+  // Generate 7 days for current week
   const weekDays = [];
-  let tempDate = new Date(currentWeekStart);
+  const tempDate = new Date(currentWeekStart);
   for (let i = 0; i < 7; i++) {
     weekDays.push(new Date(tempDate));
     tempDate.setDate(tempDate.getDate() + 1);
   }
 
-  // Pre-defined time slots for the grid (e.g. 09:00 to 17:00)
+  // Pre-defined time slots: 09:00 to 17:00
   const timeSlots = [];
   for (let h = 9; h <= 17; h++) {
     timeSlots.push(`${String(h).padStart(2, '0')}:00:00`);
-    timeSlots.push(`${String(h).padStart(2, '0')}:30:00`);
+    if (h < 17) {
+      timeSlots.push(`${String(h).padStart(2, '0')}:30:00`);
+    }
   }
 
   const formatTime = (timeString) => {
@@ -144,8 +161,7 @@ const AppointmentCalendar = () => {
     const [hours, minutes] = timeString.split(':');
     let h = parseInt(hours, 10);
     const ampm = h >= 12 ? 'PM' : 'AM';
-    h = h % 12;
-    h = h ? h : 12; // 0 becomes 12
+    h = h % 12 || 12;
     return `${h}:${minutes} ${ampm}`;
   };
 
@@ -167,11 +183,7 @@ const AppointmentCalendar = () => {
 
   const handleAppointmentClick = (e, appt) => {
     e.stopPropagation();
-    if (selectedAppointment && selectedAppointment.id === appt.id) {
-      closeDrawer();
-    } else {
-      setSelectedAppointment(appt);
-    }
+    setSelectedAppointment(appt);
   };
 
   const handleOverflowClick = (e, dayAppts, timeString, dayName) => {
@@ -181,10 +193,6 @@ const AppointmentCalendar = () => {
 
   const closeDrawer = () => setSelectedAppointment(null);
   const closeOverflowModal = () => setOverflowData(null);
-  const closeAllModals = () => {
-    closeDrawer();
-    closeOverflowModal();
-  };
 
   const filteredAppointments = appointments.filter(a => {
     if (doctorFilter === 'all') return true;
@@ -192,142 +200,262 @@ const AppointmentCalendar = () => {
   });
 
   return (
-    <div className="animate-fade-in h-full relative receptionist-theme">
+    <div className="space-y-4">
       
-      {/* Wrapping everything in the flexible page layout */}
-      <div className="page-layout">
-        
-        {/* CALENDAR SECTION */}
-        <div className="calendar-wrapper">
-          <div className="cal-header">
-            <div className="cal-title">
-              <h2>Calendar</h2>
-              <p>
-                {activeView === 'week' ? (
-                  <>{currentWeekStart.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })} – {weekDays[6].toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}</>
-                ) : (
-                  <>{selectedDay.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}</>
-                )}
-              </p>
-            </div>
-            <div className="cal-actions">
-              <div className="nav-group">
-                <button className="nav-btn" onClick={prevTime} aria-label="Previous">&lt;</button>
-                <button className="nav-btn border-sides" onClick={goToToday}>Today</button>
-                <button className="nav-btn" onClick={nextTime} aria-label="Next">&gt;</button>
-              </div>
-              <button className="btn btn-primary" onClick={() => setIsBookModalOpen(true)}>
-                <Plus className="w-4 h-4" />
-                New Appointment
-              </button>
-            </div>
+      {/* ── 1. HEADER SECTION ────────────────────────────────────────── */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-1">
+        <div>
+          <div className="flex items-center gap-2 mb-1">
+            <span className="inline-flex items-center gap-1.5 text-[11px] font-medium text-[#6D7175] bg-[#F4F4F4] px-2.5 py-0.5 rounded-full">
+              <CalendarIcon className="w-3 h-3 text-[#8A8A8A]" />
+              {activeView === 'week' ? (
+                <span>
+                  {currentWeekStart.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })} – {weekDays[6].toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
+                </span>
+              ) : (
+                <span>
+                  {selectedDay.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'short', year: 'numeric' })}
+                </span>
+              )}
+            </span>
           </div>
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-[#202223]">
+            Clinical Schedule
+          </h1>
+        </div>
 
-          <div className="cal-toolbar">
-            <div className="doctor-filters">
-              <span className="filter-label">View:</span>
-              <div 
-                className={`chip ${doctorFilter === 'all' ? 'active-all' : ''}`} 
-                onClick={() => setDoctorFilter('all')}
-              >
-                {doctorFilter === 'all' && (
-                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16"><path d="M10.97 4.97a.75.75 0 0 1 1.07 1.05l-3.99 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425a.267.267 0 0 1 .02-.022z"/></svg>
-                )}
-                All Doctors
-              </div>
-              {doctors.map((doc, idx) => {
-                const theme = DOCTOR_THEMES[idx % DOCTOR_THEMES.length];
-                const isActive = doctorFilter === doc.id;
-                return (
-                  <div 
-                    key={doc.id} 
-                    className={`chip ${isActive ? `active-${theme}` : ''}`} 
-                    onClick={() => setDoctorFilter(doc.id)}
-                  >
-                    {isActive ? (
-                      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16"><path d="M10.97 4.97a.75.75 0 0 1 1.07 1.05l-3.99 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425a.267.267 0 0 1 .02-.022z"/></svg>
-                    ) : (
-                      <span className={`w-2.5 h-2.5 rounded-full`} style={{ backgroundColor: `var(--${theme})`, border: '1px solid #ccc' }} />
-                    )}
-                    {isActive ? '' : <span className={`w-2.5 h-2.5 rounded-full doc-header-color ${theme} bg-current`}></span>}
-                    Dr. {doc.name.split(' ')[0]}
-                  </div>
-                );
-              })}
-            </div>
-            
-            <div className="view-toggle">
-              <button className={activeView === 'week' ? 'active' : ''} onClick={() => setActiveView('week')}>Week</button>
-              <button className={activeView === 'day' ? 'active' : ''} onClick={() => setActiveView('day')}>Day</button>
-            </div>
-          </div>
-
-          {loading ? (
-            <div className="flex justify-center items-center h-64">
-              <Loader2 className="w-8 h-8 animate-spin text-primary" />
-            </div>
-          ) : (
-            <div 
-              className={`calendar-grid ${activeView === 'week' ? 'layout-week' : 'layout-day'} h-full`}
-              style={activeView === 'day' ? { '--doc-count': doctors.length } : {}}
+        {/* Calendar Nav & CTAs */}
+        <div className="flex items-center gap-2.5 flex-wrap">
+          {/* Prev / Today / Next */}
+          <div className="inline-flex items-center rounded-lg border border-[#EAEAEA] bg-[#FFFFFF] shadow-sm overflow-hidden text-xs font-medium">
+            <button
+              type="button"
+              onClick={prevTime}
+              className="p-2 hover:bg-[#F9FAFB] text-[#202223] transition-colors border-r border-[#EAEAEA]"
+              title="Previous"
             >
+              <ChevronLeft className="w-3.5 h-3.5" />
+            </button>
+            <button
+              type="button"
+              onClick={goToToday}
+              className="px-3 py-1.5 hover:bg-[#F9FAFB] text-[#202223] transition-colors font-semibold"
+            >
+              Today
+            </button>
+            <button
+              type="button"
+              onClick={nextTime}
+              className="p-2 hover:bg-[#F9FAFB] text-[#202223] transition-colors border-l border-[#EAEAEA]"
+              title="Next"
+            >
+              <ChevronRight className="w-3.5 h-3.5" />
+            </button>
+          </div>
+
+          {/* Week / Day View Toggle */}
+          <div className="inline-flex p-0.5 rounded-lg bg-[#F4F4F4] text-xs font-medium">
+            <button
+              type="button"
+              onClick={() => setActiveView('week')}
+              className={`px-3 py-1.5 rounded-md transition-all ${
+                activeView === 'week' ? 'bg-[#FFFFFF] text-[#202223] shadow-sm font-semibold' : 'text-[#6D7175] hover:text-[#202223]'
+              }`}
+            >
+              Week
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveView('day')}
+              className={`px-3 py-1.5 rounded-md transition-all ${
+                activeView === 'day' ? 'bg-[#FFFFFF] text-[#202223] shadow-sm font-semibold' : 'text-[#6D7175] hover:text-[#202223]'
+              }`}
+            >
+              Day
+            </button>
+          </div>
+
+          {/* Book Appointment CTA (Using near-black primary saas button) */}
+          <button
+            type="button"
+            onClick={() => setIsBookModalOpen(true)}
+            className="btn-primary-saas flex items-center gap-1.5 text-[12px] sm:text-[13px] py-1.5 px-3.5"
+          >
+            <Plus className="w-4 h-4" />
+            <span>New Appointment</span>
+          </button>
+        </div>
+      </div>
+
+      {/* ── 2. DOCTOR FILTER CHIPS ───────────────────────────────────── */}
+      <div className="bg-[#FFFFFF] rounded-xl border border-[#EAEAEA] p-3 shadow-sm flex items-center gap-2 overflow-x-auto no-scrollbar">
+        <span className="text-xs font-semibold text-[#8A8A8A] shrink-0 mr-1">Doctors:</span>
+        
+        <button
+          type="button"
+          onClick={() => setDoctorFilter('all')}
+          className={`shrink-0 inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium transition-all cursor-pointer ${
+            doctorFilter === 'all'
+              ? 'bg-[#0A0A0A] text-white font-semibold shadow-sm'
+              : 'bg-[#F4F4F4] text-[#6D7175] hover:text-[#202223] hover:bg-[#EAEAEA]'
+          }`}
+        >
+          {doctorFilter === 'all' && <Check className="w-3 h-3 text-white" />}
+          <span>All Doctors ({doctors.length})</span>
+        </button>
+
+        {doctors.map((doc, idx) => {
+          const theme = DOCTOR_COLORS[idx % DOCTOR_COLORS.length];
+          const isActive = doctorFilter === doc.id;
+          return (
+            <button
+              key={doc.id}
+              type="button"
+              onClick={() => setDoctorFilter(doc.id)}
+              className={`shrink-0 inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium transition-all cursor-pointer border ${
+                isActive
+                  ? 'bg-[#202223] text-white border-[#202223] font-semibold shadow-sm'
+                  : 'bg-white border-[#EAEAEA] text-[#6D7175] hover:text-[#202223] hover:border-[#D1D1D1]'
+              }`}
+            >
+              <span 
+                className="w-2 h-2 rounded-full shrink-0" 
+                style={{ backgroundColor: theme.dot }}
+              />
+              <span>Dr. {doc.name?.split(' ')[0] || 'Doctor'}</span>
+            </button>
+          );
+        })}
+      </div>
+
+      {/* ── 3. CALENDAR GRID ────────────────────────────────────────── */}
+      <div className="bg-[#FFFFFF] rounded-xl border border-[#EAEAEA] shadow-sm overflow-hidden flex flex-col">
+        {loading ? (
+          <div className="flex flex-col items-center justify-center py-24 gap-3">
+            <Loader2 className="w-8 h-8 text-[#202223] animate-spin" />
+            <span className="text-xs text-[#8A8A8A]">Loading schedule...</span>
+          </div>
+        ) : error ? (
+          <div className="p-8 text-center text-xs text-[#B42318] bg-[#FEF3F2]">
+            {error}
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <div className="min-w-[800px]">
               
-              {/* Header */}
-              <div className="grid-header">
-                <div className="header-cell time-col"></div>
+              {/* Header Row */}
+              <div className="grid grid-cols-[80px_repeat(7,1fr)] border-b border-[#EAEAEA] bg-[#F9FAFB] sticky top-0 z-10">
+                <div className="p-2.5 text-center text-[11px] font-semibold text-[#8A8A8A] border-r border-[#EAEAEA]">
+                  Time
+                </div>
+
                 {activeView === 'week' ? (
-                  weekDays.map((date, idx) => (
-                    <div key={idx} className="header-cell cursor-pointer hover:bg-gray-50 transition-colors" onClick={() => { setActiveView('day'); setSelectedDay(date); }}>
-                      <span className="header-day">{getDayShortName(date)}</span>
-                      <span className={`header-date ${isToday(date) ? 'today' : ''}`}>{date.getDate()}</span>
-                    </div>
-                  ))
-                ) : (
-                  doctors.map(doc => {
-                    const theme = getDoctorTheme(doc.id);
+                  weekDays.map((date, idx) => {
+                    const todayFlag = isToday(date);
                     return (
-                      <div key={doc.id} className="header-cell">
-                        <span className={`doc-header-name doc-header-color ${theme}`}>Dr. {doc.name.split(' ')[0]}</span>
+                      <div 
+                        key={idx} 
+                        onClick={() => {
+                          setSelectedDay(date);
+                          setActiveView('day');
+                        }}
+                        className={`p-2.5 text-center border-r border-[#EAEAEA] last:border-r-0 cursor-pointer hover:bg-[#F4F4F4] transition-colors ${
+                          todayFlag ? 'bg-[#F4F4F4]' : ''
+                        }`}
+                      >
+                        <div className="text-[11px] font-medium text-[#6D7175] uppercase tracking-wider">
+                          {getDayShortName(date)}
+                        </div>
+                        <div className={`mt-0.5 inline-flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold ${
+                          todayFlag ? 'bg-[#0A0A0A] text-white shadow-sm' : 'text-[#202223]'
+                        }`}>
+                          {date.getDate()}
+                        </div>
                       </div>
-                    )
+                    );
+                  })
+                ) : (
+                  doctors.map((doc, idx) => {
+                    const theme = DOCTOR_COLORS[idx % DOCTOR_COLORS.length];
+                    return (
+                      <div key={doc.id} className="p-2.5 text-center border-r border-[#EAEAEA] last:border-r-0">
+                        <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-semibold ${theme.bg} ${theme.text}`}>
+                          <span className={`w-1.5 h-1.5 rounded-full ${theme.bar}`} />
+                          Dr. {doc.name?.split(' ')[0] || 'Doctor'}
+                        </span>
+                      </div>
+                    );
                   })
                 )}
               </div>
 
-              {/* Body */}
-              <div className="grid-body">
-                {timeSlots.map(time => {
-                  const timeLabel = time.substring(0, 5); // 09:00
-
+              {/* Grid Body */}
+              <div className="divide-y divide-[#EAEAEA]">
+                {timeSlots.map((time) => {
+                  const timeLabel = time.substring(0, 5);
                   return (
-                    <div key={time} className="time-row">
-                      <div className="time-label">{timeLabel}</div>
-                      
+                    <div 
+                      key={time} 
+                      className={`grid ${activeView === 'week' ? 'grid-cols-[80px_repeat(7,1fr)]' : `grid-cols-[80px_repeat(${doctors.length || 1},1fr)]`} min-h-[52px]`}
+                    >
+                      <div className="p-2 text-center text-[11px] font-mono font-medium text-[#8A8A8A] border-r border-[#EAEAEA] bg-[#F9FAFB]/50 flex items-center justify-center">
+                        {timeLabel}
+                      </div>
+
                       {activeView === 'week' ? (
                         weekDays.map((date, idx) => {
                           const dateStr = date.toISOString().split('T')[0];
-                          const dayAppts = filteredAppointments.filter(a => a.appointment_date.split('T')[0] === dateStr && a.start_time === time);
-                          
+                          const dayAppts = filteredAppointments.filter(
+                            a => a.appointment_date?.split('T')[0] === dateStr && a.start_time === time
+                          );
+
                           return (
-                            <div key={idx} className="cal-cell" onClick={handleCellClick}>
-                              <div className="hover-book">+ Book</div>
+                            <div 
+                              key={idx}
+                              onClick={handleCellClick}
+                              className="relative p-1 border-r border-[#EAEAEA] last:border-r-0 hover:bg-[#F9FAFB] transition-colors cursor-pointer group flex flex-col gap-1 min-h-[52px]"
+                            >
+                              <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                                <span className="text-[10px] font-bold text-[#202223] bg-white px-2 py-0.5 rounded shadow-sm border border-[#EAEAEA]">
+                                  + Book
+                                </span>
+                              </div>
+
                               {dayAppts.length <= 2 ? (
-                                dayAppts.map(appt => {
+                                dayAppts.map((appt) => {
                                   const theme = getDoctorTheme(appt.doctor_id);
                                   return (
-                                    <div key={appt.id} className={`apt-block apt-${theme}`} onClick={(e) => handleAppointmentClick(e, appt)}>
-                                      <span className="apt-patient">{appt.patient_name || 'Patient'}</span>
-                                      <span className="apt-doctor">Dr. {appt.doctor_name?.split(' ')[0]}</span>
+                                    <div
+                                      key={appt.id}
+                                      onClick={(e) => handleAppointmentClick(e, appt)}
+                                      className={`relative z-10 p-1.5 rounded-md border text-left cursor-pointer transition-all hover:shadow-sm ${theme.bg} ${theme.border}`}
+                                    >
+                                      <div className={`text-[11px] font-bold leading-tight truncate ${theme.text}`}>
+                                        {appt.patient_name || 'Patient'}
+                                      </div>
+                                      <div className="text-[9px] text-[#6D7175] truncate mt-0.5">
+                                        Dr. {appt.doctor_name?.split(' ')[0]}
+                                      </div>
                                     </div>
-                                  )
+                                  );
                                 })
                               ) : (
                                 <>
-                                  <div className={`apt-block apt-${getDoctorTheme(dayAppts[0].doctor_id)}`} onClick={(e) => handleAppointmentClick(e, dayAppts[0])}>
-                                    <span className="apt-patient">{dayAppts[0].patient_name || 'Patient'}</span>
-                                    <span className="apt-doctor">Dr. {dayAppts[0].doctor_name?.split(' ')[0]}</span>
+                                  <div
+                                    onClick={(e) => handleAppointmentClick(e, dayAppts[0])}
+                                    className={`relative z-10 p-1.5 rounded-md border text-left cursor-pointer ${getDoctorTheme(dayAppts[0].doctor_id).bg} ${getDoctorTheme(dayAppts[0].doctor_id).border}`}
+                                  >
+                                    <div className="text-[11px] font-bold leading-tight truncate text-[#202223]">
+                                      {dayAppts[0].patient_name || 'Patient'}
+                                    </div>
+                                    <div className="text-[9px] text-[#6D7175] truncate">
+                                      Dr. {dayAppts[0].doctor_name?.split(' ')[0]}
+                                    </div>
                                   </div>
-                                  <div className="apt-more" title={`View all ${dayAppts.length} appointments`} onClick={(e) => handleOverflowClick(e, dayAppts, time, getDayShortName(date))}>
+                                  <div
+                                    onClick={(e) => handleOverflowClick(e, dayAppts, time, getDayShortName(date))}
+                                    className="relative z-10 text-[10px] font-semibold text-[#4088F8] bg-[#4088F8]/10 hover:bg-[#4088F8]/20 px-1.5 py-0.5 rounded text-center cursor-pointer transition-colors"
+                                  >
                                     +{dayAppts.length - 1} More
                                   </div>
                                 </>
@@ -336,122 +464,181 @@ const AppointmentCalendar = () => {
                           );
                         })
                       ) : (
-                        // Day View
-                        doctors.map(doc => {
+                        doctors.map((doc) => {
                           const selectedDayStr = selectedDay.toISOString().split('T')[0];
-                          const docAppts = filteredAppointments.filter(a => a.appointment_date.split('T')[0] === selectedDayStr && a.start_time === time && a.doctor_id === doc.id);
+                          const docAppts = filteredAppointments.filter(
+                            a => a.appointment_date?.split('T')[0] === selectedDayStr && 
+                                 a.start_time === time && 
+                                 a.doctor_id === doc.id
+                          );
+
+                          const theme = getDoctorTheme(doc.id);
+
                           return (
-                            <div key={doc.id} className="cal-cell" onClick={handleCellClick}>
-                              <div className="hover-book">+ Book</div>
-                              {docAppts.map(appt => {
-                                const theme = getDoctorTheme(appt.doctor_id);
-                                return (
-                                  <div key={appt.id} className={`apt-block apt-${theme}`} onClick={(e) => handleAppointmentClick(e, appt)}>
-                                    <span className="apt-patient">{appt.patient_name || 'Patient'}</span>
-                                    <span className="apt-doctor">Dr. {appt.doctor_name?.split(' ')[0]}</span>
+                            <div 
+                              key={doc.id}
+                              onClick={handleCellClick}
+                              className="relative p-1 border-r border-[#EAEAEA] last:border-r-0 hover:bg-[#F9FAFB] transition-colors cursor-pointer group flex flex-col gap-1 min-h-[52px]"
+                            >
+                              <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                                <span className="text-[10px] font-bold text-[#202223] bg-white px-2 py-0.5 rounded shadow-sm border border-[#EAEAEA]">
+                                  + Book
+                                </span>
+                              </div>
+
+                              {docAppts.map((appt) => (
+                                <div
+                                  key={appt.id}
+                                  onClick={(e) => handleAppointmentClick(e, appt)}
+                                  className={`relative z-10 p-1.5 rounded-md border text-left cursor-pointer transition-all hover:shadow-sm ${theme.bg} ${theme.border}`}
+                                >
+                                  <div className={`text-[11px] font-bold leading-tight truncate ${theme.text}`}>
+                                    {appt.patient_name || 'Patient'}
                                   </div>
-                                )
-                              })}
+                                  <div className="text-[9px] text-[#6D7175] truncate mt-0.5">
+                                    {appt.reason || 'General Checkup'}
+                                  </div>
+                                </div>
+                              ))}
                             </div>
-                          )
+                          );
                         })
                       )}
                     </div>
                   );
                 })}
               </div>
-            </div>
-          )}
-        </div>
 
-        {/* SIDE DRAWER SECTION (Inline Push Architecture) */}
-        <div className={`drawer-wrapper ${selectedAppointment ? 'open' : ''}`}>
-          <div className="drawer-inner">
-            <div className="drawer-header">
-              <h3>Appointment Details</h3>
-              <button className="btn-close" onClick={closeDrawer}><X className="w-6 h-6"/></button>
             </div>
-            {selectedAppointment && (
-              <>
-                <div className="drawer-body">
-                  <div className="detail-group">
-                    <div className="detail-label">Patient Name</div>
-                    <div className="detail-value">{selectedAppointment.patient_name || 'Patient'}</div>
-                  </div>
-                  <div className="detail-group">
-                    <div className="detail-label">Date & Time</div>
-                    <div className="detail-value">
-                      {new Date(selectedAppointment.appointment_date).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })} at <span>{formatTime(selectedAppointment.start_time)}</span>
-                    </div>
-                  </div>
-                  <div className="detail-group">
-                    <div className="detail-label">Practitioner</div>
-                    <div className={`detail-value ${getDoctorTheme(selectedAppointment.doctor_id)}`}>
-                      Dr. {selectedAppointment.doctor_name || 'Doctor'}
-                    </div>
-                  </div>
-                  <div className="detail-group">
-                    <div className="detail-label">Status</div>
-                    <div className="status-badge scheduled capitalize">{selectedAppointment.status.replace('_', ' ')}</div>
-                  </div>
-                </div>
-                <div className="drawer-footer">
-                  <button className="btn btn-primary btn-block justify-center w-full">View Patient Profile</button>
-                  <button className="btn btn-outline-warning btn-block justify-center w-full">Mark as No-Show</button>
-                  <button className="btn btn-outline-danger btn-block justify-center w-full" onClick={() => {
-                    const apptDateTime = new Date(`${selectedAppointment.appointment_date}T${selectedAppointment.start_time}`);
-                    const diffInMinutes = (apptDateTime - new Date()) / (1000 * 60);
-                    if (diffInMinutes <= 60) {
-                      alert("You cannot cancel an appointment within 60 minutes of the scheduled time.");
-                    } else {
-                      // Original behavior: maybe opening a cancel modal?
-                      // Wait, the "Cancel Appointment" button here didn't have an onClick earlier. 
-                      // I'll leave it as is, or trigger the cancel modal if it exists.
-                      // Wait, looking at line 401 earlier, it just said <button className="...">Cancel Appointment</button>. It had no onClick.
-                      // Let's check how it worked before.
-                    }
-                  }}>Cancel Appointment</button>
-                </div>
-              </>
-            )}
           </div>
-        </div>
-
-      </div> {/* End Page Layout */}
-
-      {/* Overflow Modal overlay handling */}
-      <div className={`modal-overlay ${overflowData ? 'open' : ''} ${selectedAppointment && !overflowData ? 'open drawer-only' : ''}`} onClick={closeAllModals}></div>
-      
-      <div className={`overflow-modal ${overflowData ? 'open' : ''}`}>
-        {overflowData && (
-          <>
-            <div className="overflow-header">
-              <h3>Appointments <span className="text-gray-500 font-normal">({overflowData.day} {overflowData.time})</span></h3>
-              <button className="btn-close" onClick={closeOverflowModal}><X className="w-5 h-5"/></button>
-            </div>
-            <div className="overflow-body">
-              {overflowData.appointments.map(appt => {
-                const theme = getDoctorTheme(appt.doctor_id);
-                return (
-                  <div key={appt.id} className={`apt-block apt-${theme}`} onClick={(e) => {
-                    closeOverflowModal();
-                    handleAppointmentClick(e, appt);
-                  }}>
-                    <span className="apt-patient text-base">{appt.patient_name || 'Patient'}</span>
-                    <span className="apt-doctor text-sm mt-1">Dr. {appt.doctor_name?.split(' ')[0]}</span>
-                  </div>
-                )
-              })}
-            </div>
-          </>
         )}
       </div>
 
+      {/* ── 4. APPOINTMENT DETAIL SLIDE-OVER DRAWER ─────────────────── */}
+      {selectedAppointment && (
+        <div className="fixed inset-0 z-50 flex justify-end animate-fade-in">
+          <div 
+            className="fixed inset-0 bg-black/40 backdrop-blur-sm transition-opacity" 
+            onClick={closeDrawer} 
+          />
+
+          <div className="relative w-full max-w-md bg-white h-full shadow-2xl flex flex-col z-10 border-l border-[#EAEAEA] overflow-hidden">
+            <div className="px-6 py-4 border-b border-[#EAEAEA] flex items-center justify-between bg-[#F9FAFB]">
+              <div>
+                <h3 className="text-base font-bold text-[#202223]">Appointment Details</h3>
+                <span className="text-xs text-[#6D7175]">Ref ID: #{selectedAppointment.id?.slice(0, 8)}</span>
+              </div>
+              <button 
+                type="button"
+                onClick={closeDrawer}
+                className="p-1 rounded-md text-[#8A8A8A] hover:text-[#202223] hover:bg-[#EAEAEA] transition-colors cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="p-6 space-y-4 flex-1 overflow-y-auto">
+              <div className="bg-[#F9FAFB] p-4 rounded-xl border border-[#EAEAEA] space-y-3">
+                <div>
+                  <span className="text-[11px] font-semibold text-[#8A8A8A] uppercase tracking-wider block mb-0.5">Patient</span>
+                  <span className="text-base font-bold text-[#202223]">{selectedAppointment.patient_name || 'Patient'}</span>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2 pt-2 border-t border-[#EAEAEA]">
+                  <div>
+                    <span className="text-[11px] font-semibold text-[#8A8A8A] uppercase tracking-wider block mb-0.5">Date</span>
+                    <span className="text-xs font-medium text-[#202223]">
+                      {new Date(selectedAppointment.appointment_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-[11px] font-semibold text-[#8A8A8A] uppercase tracking-wider block mb-0.5">Time</span>
+                    <span className="text-xs font-bold text-[#202223] font-mono">
+                      {formatTime(selectedAppointment.start_time)}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="pt-2 border-t border-[#EAEAEA]">
+                  <span className="text-[11px] font-semibold text-[#8A8A8A] uppercase tracking-wider block mb-0.5">Assigned Practitioner</span>
+                  <span className="text-xs font-semibold text-[#2F68D6] flex items-center gap-1.5">
+                    <Stethoscope className="w-3.5 h-3.5" />
+                    Dr. {selectedAppointment.doctor_name || 'Doctor'}
+                  </span>
+                </div>
+
+                <div className="pt-2 border-t border-[#EAEAEA] flex items-center justify-between">
+                  <span className="text-[11px] font-semibold text-[#8A8A8A] uppercase tracking-wider">Status</span>
+                  <span className="capitalize text-xs font-semibold px-2 py-0.5 rounded-full bg-[#EBF3FF] text-[#2F68D6]">
+                    {selectedAppointment.status?.replace('_', ' ')}
+                  </span>
+                </div>
+              </div>
+
+              {selectedAppointment.reason && (
+                <div className="p-3 rounded-lg border border-[#EAEAEA] bg-white">
+                  <span className="text-[11px] font-semibold text-[#8A8A8A] uppercase tracking-wider block mb-1">Visit Reason</span>
+                  <p className="text-xs text-[#202223]">{selectedAppointment.reason}</p>
+                </div>
+              )}
+            </div>
+
+            <div className="p-4 bg-[#F9FAFB] border-t border-[#EAEAEA] flex flex-col gap-2">
+              <button 
+                type="button"
+                onClick={closeDrawer}
+                className="btn-primary-saas w-full justify-center text-[12px] py-2"
+              >
+                Close Drawer
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── 5. OVERFLOW MODAL ────────────────────────────────────────── */}
+      {overflowData && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-fade-in">
+          <div className="fixed inset-0 bg-black/40 backdrop-blur-sm" onClick={closeOverflowModal} />
+          <div className="relative bg-white rounded-2xl max-w-sm w-full shadow-2xl p-5 border border-[#EAEAEA] z-10 space-y-3">
+            <div className="flex items-center justify-between pb-2 border-b border-[#EAEAEA]">
+              <h3 className="text-sm font-bold text-[#202223]">
+                Appointments ({overflowData.day} {overflowData.time})
+              </h3>
+              <button type="button" onClick={closeOverflowModal} className="text-[#8A8A8A] hover:text-[#202223]">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="space-y-2 max-h-64 overflow-y-auto">
+              {overflowData.appointments.map((appt) => {
+                const theme = getDoctorTheme(appt.doctor_id);
+                return (
+                  <div
+                    key={appt.id}
+                    onClick={(e) => {
+                      closeOverflowModal();
+                      handleAppointmentClick(e, appt);
+                    }}
+                    className={`p-2.5 rounded-lg border cursor-pointer hover:shadow-sm transition-all ${theme.bg} ${theme.border}`}
+                  >
+                    <div className="text-xs font-bold text-[#202223]">{appt.patient_name || 'Patient'}</div>
+                    <div className="text-[11px] text-[#6D7175]">Dr. {appt.doctor_name?.split(' ')[0]}</div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Book Appointment Modal */}
       <BookAppointmentModal 
         isOpen={isBookModalOpen} 
         onClose={() => setIsBookModalOpen(false)} 
         onBooked={() => fetchData()} 
       />
+
     </div>
   );
 };
