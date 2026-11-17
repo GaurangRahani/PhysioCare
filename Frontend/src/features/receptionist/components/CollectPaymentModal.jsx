@@ -1,15 +1,15 @@
 import React, { useState } from 'react';
 import { useAuth } from '@clerk/clerk-react';
-import { X, IndianRupee, Loader2, CheckCircle2 } from 'lucide-react';
+import { X, IndianRupee, Loader2, CheckCircle2, Send, CreditCard } from 'lucide-react';
 
 const CollectPaymentModal = ({ isOpen, onClose, appointment, onPaymentComplete }) => {
   const { getToken } = useAuth();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   
-    const [paymentMethod, setPaymentMethod] = useState('cash');
+  const [paymentMethod, setPaymentMethod] = useState('cash');
   const [transactionRef, setTransactionRef] = useState('');
-  const [amount, setAmount] = useState(500); // Default to 500
+  const [amount, setAmount] = useState(500);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -18,7 +18,8 @@ const CollectPaymentModal = ({ isOpen, onClose, appointment, onPaymentComplete }
 
     try {
       const token = await getToken();
-      const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/appointments/${appointment.id}/pay`, {
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      const res = await fetch(`${apiUrl}/api/appointments/${appointment.id}/pay`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -53,7 +54,8 @@ const CollectPaymentModal = ({ isOpen, onClose, appointment, onPaymentComplete }
     
     try {
       const token = await getToken();
-      const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/appointments/${appointment.id}/resend-payment-link`, {
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      const res = await fetch(`${apiUrl}/api/appointments/${appointment.id}/resend-payment-link`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`
@@ -64,7 +66,6 @@ const CollectPaymentModal = ({ isOpen, onClose, appointment, onPaymentComplete }
       
       if (res.ok && data.success) {
         alert("Payment link has been successfully resent to the patient!");
-        // We trigger onPaymentComplete just to force a refresh on the dashboard so the timer updates!
         onPaymentComplete(); 
         onClose();
       } else {
@@ -81,77 +82,90 @@ const CollectPaymentModal = ({ isOpen, onClose, appointment, onPaymentComplete }
   if (!isOpen || !appointment) return null;
 
   return (
-    <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 animate-fade-in">
-      <div className="absolute inset-0 bg-dark/40 backdrop-blur-md" onClick={onClose}></div>
-      <div className="relative bg-white rounded-[24px] shadow-[0_20px_50px_rgba(0,0,0,0.1)] w-full max-w-lg overflow-hidden flex flex-col max-h-[90vh] border border-white/20">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 animate-fade-in">
+      <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
+      
+      <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden flex flex-col max-h-[92vh] border border-[#EAEAEA] z-10">
         
         {/* Header */}
-        <div className="bg-gradient-to-r from-orange-50 to-transparent px-8 py-6 flex justify-between items-center border-b border-gray-100">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-orange-100 flex items-center justify-center text-orange-600 shadow-inner">
-              <IndianRupee className="w-5 h-5" />
+        <div className="px-6 py-4 border-b border-[#EAEAEA] bg-[#F9FAFB] flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-lg bg-[#F4F4F4] text-[#202223] flex items-center justify-center">
+              <CreditCard className="w-4 h-4" />
             </div>
-            <h2 className="text-2xl font-extrabold text-dark tracking-tight">
-              Collect Payment
-            </h2>
+            <div>
+              <h2 className="text-base font-bold text-[#202223]">Collect Payment</h2>
+              <span className="text-xs text-[#6D7175]">Settle desk payment or resend link</span>
+            </div>
           </div>
-          <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 text-gray-400 hover:text-danger transition-all">
+          <button 
+            type="button"
+            onClick={onClose} 
+            className="p-1 rounded-md text-[#8A8A8A] hover:text-[#202223] hover:bg-[#EAEAEA] transition-colors cursor-pointer"
+          >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Body */}
-        <div className="p-8 overflow-y-auto custom-scrollbar">
+        <div className="p-6 overflow-y-auto space-y-4">
           {error && (
-            <div className="mb-6 p-4 bg-red-50 text-danger text-sm font-medium rounded-xl border border-red-100 flex items-center gap-2 shadow-sm">
-              <X className="w-5 h-5"/> {error}
+            <div className="p-3 bg-[#FEF3F2] border border-[#FECDCA] text-xs text-[#B42318] rounded-lg flex items-center gap-2">
+              <X className="w-4 h-4 shrink-0" />
+              <span>{error}</span>
             </div>
           )}
 
-          <div className="mb-8 p-6 bg-gradient-to-r from-gray-50 to-white border border-gray-200 rounded-2xl shadow-sm relative overflow-hidden">
-            <div className="absolute -right-4 -top-4 w-24 h-24 bg-orange-50 rounded-full opacity-50 blur-2xl"></div>
-            <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-4">Appointment Details</p>
-            <div className="flex justify-between items-end relative z-10">
-              <div>
-                <p className="font-extrabold text-dark text-xl">{appointment.patient_name || 'Patient'}</p>
-                <p className="text-sm text-gray-500 font-medium mt-1">{appointment.appointment_date} at {appointment.start_time.substring(0, 5)}</p>
-              </div>
-              <div className="text-right">
-                <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1">Status</p>
-                <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-orange-100 text-orange-700">Pending</span>
-              </div>
+          {/* Appointment Snapshot */}
+          <div className="p-4 bg-[#F9FAFB] rounded-xl border border-[#EAEAEA] space-y-1">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] uppercase font-bold text-[#8A8A8A]">Patient</span>
+              <span className="text-[11px] font-semibold text-[#B25E09] bg-[#FEF3D6] px-2 py-0.5 rounded-full">
+                Pending Hold
+              </span>
             </div>
+            <h4 className="text-sm font-bold text-[#202223]">{appointment.patient_name || 'Patient'}</h4>
+            <p className="text-xs text-[#6D7175]">
+              {appointment.appointment_date} at {appointment.start_time?.slice(0, 5)} · Dr. {appointment.doctor_name || 'Doctor'}
+            </p>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-4">
             
-            <div className="grid grid-cols-2 gap-4">
-              <div className="group">
-                <label className="block text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2 group-focus-within:text-orange-600 transition-colors">Amount to Collect (₹)</label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400 group-focus-within:text-orange-600 transition-colors">
-                    <span className="font-bold">₹</span>
-                  </div>
-                  <input
-                    type="number"
-                    value={amount}
-                    onChange={(e) => setAmount(Number(e.target.value))}
-                    className="w-full pl-11 pr-4 py-3.5 bg-gray-50 hover:bg-gray-100/50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 text-dark font-extrabold text-lg transition-all shadow-sm"
-                    required
-                  />
-                </div>
+            {/* Amount */}
+            <div>
+              <label className="block text-xs font-semibold text-[#202223] mb-1">
+                Amount to Collect (₹) *
+              </label>
+              <div className="relative">
+                <IndianRupee className="w-4 h-4 text-[#8A8A8A] absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                <input
+                  type="number"
+                  min="1"
+                  value={amount}
+                  onChange={(e) => setAmount(Number(e.target.value))}
+                  className="w-full pl-9 pr-3 py-2 text-sm bg-white border border-[#EAEAEA] rounded-lg font-bold text-[#202223] focus:outline-none focus:border-[#202223]"
+                  required
+                />
               </div>
             </div>
 
+            {/* Payment Method */}
             <div>
-              <label className="block text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-3">Payment Method *</label>
-              <div className="grid grid-cols-3 gap-3">
+              <label className="block text-xs font-semibold text-[#202223] mb-1.5">
+                Channel *
+              </label>
+              <div className="grid grid-cols-3 gap-2">
                 {['cash', 'card', 'upi'].map(method => (
                   <button
                     key={method}
                     type="button"
                     onClick={() => setPaymentMethod(method)}
-                    className={`py-3.5 px-2 rounded-xl font-bold uppercase tracking-wide text-xs border-2 transition-all shadow-sm ${paymentMethod === method ? 'bg-orange-600 border-orange-600 text-white shadow-[0_8px_15px_rgba(234,88,12,0.25)] transform -translate-y-0.5' : 'bg-white border-gray-200 text-gray-500 hover:border-orange-200 hover:text-orange-600 hover:bg-orange-50'}`}
+                    className={`py-2 rounded-lg text-xs font-semibold uppercase tracking-wider border transition-all ${
+                      paymentMethod === method
+                        ? 'bg-[#0A0A0A] text-white border-[#0A0A0A] shadow-sm'
+                        : 'bg-white text-[#6D7175] border-[#EAEAEA] hover:border-[#D1D1D1]'
+                    }`}
                   >
                     {method}
                   </button>
@@ -159,55 +173,45 @@ const CollectPaymentModal = ({ isOpen, onClose, appointment, onPaymentComplete }
               </div>
             </div>
 
+            {/* Reference ID if not cash */}
             {paymentMethod !== 'cash' && (
-              <div className="animate-fade-in group">
-                <label className="block text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2 group-focus-within:text-orange-600 transition-colors">Reference / Receipt No.</label>
+              <div>
+                <label className="block text-xs font-semibold text-[#202223] mb-1">
+                  Reference / Receipt No.
+                </label>
                 <input
                   type="text"
+                  placeholder="e.g. UPI Ref Number or Last 4 digits"
                   value={transactionRef}
                   onChange={(e) => setTransactionRef(e.target.value)}
-                  placeholder="e.g. UPI Ref Number or Last 4 of Card"
-                  className="w-full px-5 py-3.5 bg-gray-50 hover:bg-gray-100/50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 text-dark font-medium transition-all shadow-sm"
+                  className="w-full px-3 py-2 text-xs sm:text-sm bg-white border border-[#EAEAEA] rounded-lg focus:outline-none focus:border-[#202223] text-[#202223]"
                 />
               </div>
             )}
 
-            <div className="pt-6 mt-4 border-t border-gray-100 flex gap-3">
-              <button
-                type="button"
-                onClick={onClose}
-                className="px-5 py-4 rounded-xl font-bold text-gray-500 hover:text-dark hover:bg-gray-100 transition-colors"
-              >
-                Cancel
-              </button>
-
+            {/* Action Buttons (Using saas primary and secondary buttons) */}
+            <div className="pt-3 border-t border-[#EAEAEA] flex items-center gap-2">
               <button
                 type="button"
                 onClick={handleResendLink}
                 disabled={loading}
-                className="flex-1 py-4 bg-orange-50 text-orange-600 border border-orange-200 hover:bg-orange-100 hover:border-orange-300 font-bold rounded-xl transition-all flex justify-center items-center gap-2 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                className="btn-secondary-saas flex-1 py-2 px-3 text-xs inline-flex items-center justify-center gap-1.5 disabled:opacity-50"
               >
-                {loading ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                ) : (
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
-                      <path d="M15.854.146a.5.5 0 0 1 .11.54l-5.819 14.547a.75.75 0 0 1-1.329.124l-3.178-4.995L.643 7.184a.75.75 0 0 1 .124-1.33L15.314.037a.5.5 0 0 1 .54.11ZM6.636 10.07l2.761 4.338L14.13 2.576zm6.787-8.201L1.591 6.602l4.339 2.76z"/>
-                  </svg>
-                )}
-                Resend Link
+                <Send className="w-3.5 h-3.5 text-[#4088F8]" />
+                <span>Resend Link</span>
               </button>
 
               <button
                 type="submit"
                 disabled={loading}
-                className="flex-1 py-4 bg-gradient-to-r from-orange-500 to-orange-600 text-white font-bold rounded-xl shadow-[0_8px_20px_rgba(234,88,12,0.25)] hover:shadow-[0_8px_25px_rgba(234,88,12,0.4)] hover:-translate-y-0.5 transition-all flex justify-center items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+                className="btn-primary-saas flex-1 py-2 px-3 text-xs inline-flex items-center justify-center gap-1.5 disabled:opacity-50"
               >
                 {loading ? (
-                  <Loader2 className="w-5 h-5 animate-spin" />
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
                 ) : (
                   <>
-                    <CheckCircle2 className="w-5 h-5" />
-                    Mark as Paid
+                    <CheckCircle2 className="w-3.5 h-3.5" />
+                    <span>Mark as Paid</span>
                   </>
                 )}
               </button>

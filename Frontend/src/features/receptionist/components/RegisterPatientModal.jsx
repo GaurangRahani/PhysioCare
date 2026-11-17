@@ -30,8 +30,9 @@ const RegisterPatientModal = ({ isOpen, onClose, onRegistered }) => {
 
     try {
       const token = await getToken();
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
       
-      const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/receptionists/patients/create`, {
+      const res = await fetch(`${apiUrl}/api/receptionists/patients/create`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -59,65 +60,76 @@ const RegisterPatientModal = ({ isOpen, onClose, onRegistered }) => {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 animate-fade-in">
-      <div className="absolute inset-0 bg-dark/40 backdrop-blur-md" onClick={onClose}></div>
-      <div className="relative bg-white rounded-[24px] shadow-[0_20px_50px_rgba(0,0,0,0.1)] w-full max-w-2xl overflow-hidden flex flex-col max-h-[90vh] border border-white/20">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 animate-fade-in">
+      <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
+      
+      <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden flex flex-col max-h-[92vh] border border-[#EAEAEA] z-10">
         
         {/* Header */}
-        <div className="bg-gradient-to-r from-primary/10 to-transparent px-8 py-6 flex justify-between items-center border-b border-gray-100">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center text-primary shadow-inner">
-              <UserPlus className="w-5 h-5" />
+        <div className="px-6 py-4 border-b border-[#EAEAEA] bg-[#F9FAFB] flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-lg bg-[#F4F4F4] text-[#202223] flex items-center justify-center">
+              <UserPlus className="w-4 h-4" />
             </div>
-            <h2 className="text-2xl font-extrabold text-dark tracking-tight">
-              Register Patient
-            </h2>
+            <div>
+              <h2 className="text-base font-bold text-[#202223]">Register New Patient</h2>
+              <span className="text-xs text-[#6D7175]">Create a permanent clinic record</span>
+            </div>
           </div>
-          <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 text-gray-400 hover:text-danger transition-all">
+          <button 
+            type="button"
+            onClick={onClose} 
+            className="p-1 rounded-md text-[#8A8A8A] hover:text-[#202223] hover:bg-[#EAEAEA] transition-colors cursor-pointer"
+          >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Body */}
-        <div className="p-8 overflow-y-auto custom-scrollbar">
+        <div className="p-6 overflow-y-auto space-y-4">
           {error && (
-            <div className="mb-6 p-4 bg-red-50 text-danger text-sm font-medium rounded-xl border border-red-100 flex items-center gap-2 shadow-sm">
-              <X className="w-5 h-5"/> {error}
+            <div className="p-3 bg-[#FEF3F2] border border-[#FECDCA] text-xs text-[#B42318] rounded-lg flex items-center gap-2">
+              <X className="w-4 h-4 shrink-0" />
+              <span>{error}</span>
             </div>
           )}
-          
-          <div className="mb-8 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100 rounded-xl text-blue-800 text-sm font-medium flex gap-3 items-start shadow-sm">
-            <Mail className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
-            <p>An account will be created automatically. The patient will receive their login credentials via email.</p>
+
+          <div className="p-3 bg-[#EBF3FF] border border-[#D0E2FF] rounded-lg text-xs text-[#2F68D6] flex items-start gap-2">
+            <Mail className="w-4 h-4 shrink-0 mt-0.5" />
+            <span>
+              A patient profile will be created. Login credentials and instructions will be sent automatically to their email.
+            </span>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-4">
             
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-5">
-              <div className="md:col-span-2 group">
-                <label className="block text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2 group-focus-within:text-primary transition-colors">Full Name *</label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400 group-focus-within:text-primary transition-colors">
-                    <UserRound className="w-4 h-4" />
-                  </div>
-                  <input
-                    type="text"
-                    name="name"
-                    value={formData.name}
-                    onChange={handleChange}
-                    required
-                    placeholder="e.g. Kishan Kumar"
-                    className="w-full pl-11 pr-4 py-3.5 bg-gray-50 hover:bg-gray-100/50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary text-dark font-medium transition-all shadow-sm"
-                  />
-                </div>
+            {/* Full Name */}
+            <div>
+              <label className="block text-xs font-semibold text-[#202223] mb-1">
+                Full Name *
+              </label>
+              <div className="relative">
+                <UserRound className="w-4 h-4 text-[#8A8A8A] absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                <input
+                  type="text"
+                  name="name"
+                  value={formData.name}
+                  onChange={handleChange}
+                  required
+                  placeholder="e.g. Ramesh Sharma"
+                  className="w-full pl-9 pr-3 py-2 text-xs sm:text-sm bg-white border border-[#EAEAEA] rounded-lg focus:outline-none focus:border-[#202223] text-[#202223]"
+                />
               </div>
+            </div>
 
-              <div className="group">
-                <label className="block text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2 group-focus-within:text-primary transition-colors">Phone Number *</label>
+            {/* Phone & Email */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-semibold text-[#202223] mb-1">
+                  Phone Number *
+                </label>
                 <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400 group-focus-within:text-primary transition-colors">
-                    <Phone className="w-4 h-4" />
-                  </div>
+                  <Phone className="w-4 h-4 text-[#8A8A8A] absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
                   <input
                     type="tel"
                     name="phone"
@@ -125,97 +137,100 @@ const RegisterPatientModal = ({ isOpen, onClose, onRegistered }) => {
                     onChange={handleChange}
                     required
                     placeholder="+91 9876543210"
-                    className="w-full pl-11 pr-4 py-3.5 bg-gray-50 hover:bg-gray-100/50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary text-dark font-medium transition-all shadow-sm"
+                    className="w-full pl-9 pr-3 py-2 text-xs sm:text-sm bg-white border border-[#EAEAEA] rounded-lg focus:outline-none focus:border-[#202223] text-[#202223]"
                   />
                 </div>
               </div>
 
-              <div className="group">
-                <label className="block text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2 group-focus-within:text-primary transition-colors">Email Address *</label>
+              <div>
+                <label className="block text-xs font-semibold text-[#202223] mb-1">
+                  Email Address *
+                </label>
                 <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400 group-focus-within:text-primary transition-colors">
-                    <Mail className="w-4 h-4" />
-                  </div>
+                  <Mail className="w-4 h-4 text-[#8A8A8A] absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
                   <input
                     type="email"
                     name="email"
                     value={formData.email}
                     onChange={handleChange}
                     required
-                    placeholder="patient@example.com"
-                    className="w-full pl-11 pr-4 py-3.5 bg-gray-50 hover:bg-gray-100/50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary text-dark font-medium transition-all shadow-sm"
+                    placeholder="patient@gmail.com"
+                    className="w-full pl-9 pr-3 py-2 text-xs sm:text-sm bg-white border border-[#EAEAEA] rounded-lg focus:outline-none focus:border-[#202223] text-[#202223]"
                   />
                 </div>
               </div>
+            </div>
 
-              <div className="group">
-                <label className="block text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2 group-focus-within:text-primary transition-colors">Date of Birth</label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400 group-focus-within:text-primary transition-colors">
-                    <Calendar className="w-4 h-4" />
-                  </div>
-                  <input
-                    type="date"
-                    name="date_of_birth"
-                    value={formData.date_of_birth}
-                    onChange={handleChange}
-                    className="w-full pl-11 pr-4 py-3.5 bg-gray-50 hover:bg-gray-100/50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary text-dark font-medium transition-all shadow-sm"
-                  />
-                </div>
+            {/* DOB & Gender */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-semibold text-[#202223] mb-1">
+                  Date of Birth
+                </label>
+                <input
+                  type="date"
+                  name="date_of_birth"
+                  value={formData.date_of_birth}
+                  onChange={handleChange}
+                  className="w-full px-3 py-2 text-xs sm:text-sm bg-white border border-[#EAEAEA] rounded-lg focus:outline-none focus:border-[#202223] text-[#202223]"
+                />
               </div>
 
-              <div className="group">
-                <label className="block text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2 group-focus-within:text-primary transition-colors">Gender</label>
+              <div>
+                <label className="block text-xs font-semibold text-[#202223] mb-1">
+                  Gender
+                </label>
                 <select
                   name="gender"
                   value={formData.gender}
                   onChange={handleChange}
-                  className="w-full px-4 py-3.5 bg-gray-50 hover:bg-gray-100/50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary text-dark font-medium transition-all shadow-sm appearance-none"
+                  className="w-full px-3 py-2 text-xs sm:text-sm bg-white border border-[#EAEAEA] rounded-lg focus:outline-none focus:border-[#202223] text-[#202223]"
                 >
                   <option value="male">Male</option>
                   <option value="female">Female</option>
                   <option value="other">Other</option>
                 </select>
               </div>
+            </div>
 
-              <div className="md:col-span-2 group">
-                <label className="block text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2 group-focus-within:text-primary transition-colors">Address</label>
-                <div className="relative">
-                  <div className="absolute top-4 left-0 pl-4 flex items-start pointer-events-none text-gray-400 group-focus-within:text-primary transition-colors">
-                    <MapPin className="w-4 h-4" />
-                  </div>
-                  <textarea
-                    name="address"
-                    value={formData.address}
-                    onChange={handleChange}
-                    rows={2}
-                    placeholder="Enter full address..."
-                    className="w-full pl-11 pr-4 py-3.5 bg-gray-50 hover:bg-gray-100/50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary text-dark font-medium transition-all shadow-sm resize-none"
-                  />
-                </div>
+            {/* Address */}
+            <div>
+              <label className="block text-xs font-semibold text-[#202223] mb-1">
+                Address
+              </label>
+              <div className="relative">
+                <MapPin className="w-4 h-4 text-[#8A8A8A] absolute left-3 top-3 pointer-events-none" />
+                <textarea
+                  name="address"
+                  value={formData.address}
+                  onChange={handleChange}
+                  rows={2}
+                  placeholder="Street, City, Postal Code..."
+                  className="w-full pl-9 pr-3 py-2 text-xs sm:text-sm bg-white border border-[#EAEAEA] rounded-lg focus:outline-none focus:border-[#202223] text-[#202223] resize-none"
+                />
               </div>
             </div>
 
-            {/* Footer */}
-            <div className="pt-6 mt-4 border-t border-gray-100 flex gap-4">
+            {/* Footer Buttons */}
+            <div className="pt-3 border-t border-[#EAEAEA] flex items-center justify-end gap-2.5">
               <button
                 type="button"
                 onClick={onClose}
-                className="px-6 py-4 rounded-xl font-bold text-gray-500 hover:text-dark hover:bg-gray-100 transition-colors"
+                className="btn-secondary-saas text-xs py-2 px-4"
               >
                 Cancel
               </button>
               <button
                 type="submit"
                 disabled={loading}
-                className="flex-1 py-4 bg-gradient-to-r from-primary to-[#7074e8] text-white font-bold rounded-xl shadow-[0_8px_20px_rgba(86,90,207,0.25)] hover:shadow-[0_8px_25px_rgba(86,90,207,0.4)] hover:-translate-y-0.5 transition-all flex justify-center items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+                className="btn-primary-saas inline-flex items-center gap-1.5 text-xs py-2 px-4 disabled:opacity-50"
               >
                 {loading ? (
-                  <Loader2 className="w-5 h-5 animate-spin" />
+                  <Loader2 className="w-4 h-4 animate-spin" />
                 ) : (
                   <>
-                    <UserPlus className="w-5 h-5" />
-                    Register & Send Setup Email
+                    <UserPlus className="w-4 h-4" />
+                    <span>Create & Register Patient</span>
                   </>
                 )}
               </button>
