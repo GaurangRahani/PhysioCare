@@ -1,7 +1,29 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@clerk/clerk-react';
-import { X, Calendar as CalendarIcon, ChevronLeft, ChevronRight, Clock, Stethoscope, Loader2, ArrowRight } from 'lucide-react';
-import { format, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, isBefore } from 'date-fns';
+import { 
+  X, 
+  Calendar as CalendarIcon, 
+  ChevronLeft, 
+  ChevronRight, 
+  Clock, 
+  Stethoscope, 
+  Loader2, 
+  ArrowRight,
+  ShieldCheck,
+  CheckCircle2,
+  AlertTriangle,
+  Lock
+} from 'lucide-react';
+import { 
+  format, 
+  addMonths, 
+  subMonths, 
+  startOfMonth, 
+  endOfMonth, 
+  eachDayOfInterval, 
+  isSameDay, 
+  isBefore 
+} from 'date-fns';
 
 const BookAppointmentModal = ({ isOpen, onClose, onBooked, onSuccess }) => {
   const { getToken } = useAuth();
@@ -50,8 +72,10 @@ const BookAppointmentModal = ({ isOpen, onClose, onBooked, onSuccess }) => {
       });
       const data = await res.json();
       if (res.ok) {
-        setDoctors(data.doctors);
-        if (data.doctors.length > 0) setSelectedDoctorId(data.doctors[0].id);
+        setDoctors(data.doctors || []);
+        if (data.doctors && data.doctors.length > 0) {
+          setSelectedDoctorId(data.doctors[0].id);
+        }
       }
     } catch (err) {
       console.error(err);
@@ -158,7 +182,7 @@ const BookAppointmentModal = ({ isOpen, onClose, onBooked, onSuccess }) => {
 
       setBookingData(data);
       setPaymentExpiry(data.expires_at);
-      setStep(3); // Go to payment step
+      setStep(3);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -166,10 +190,10 @@ const BookAppointmentModal = ({ isOpen, onClose, onBooked, onSuccess }) => {
     }
   };
 
-  // ── Helper: load Razorpay script on demand ────────────────────────────────
+  // Helper: load Razorpay script on demand
   const loadRazorpayScript = () =>
     new Promise((resolve) => {
-      if (window.Razorpay) return resolve(true); // already loaded
+      if (window.Razorpay) return resolve(true);
       const script = document.createElement('script');
       script.src = 'https://checkout.razorpay.com/v1/checkout.js';
       script.async = true;
@@ -185,7 +209,7 @@ const BookAppointmentModal = ({ isOpen, onClose, onBooked, onSuccess }) => {
     setError('');
     const loaded = await loadRazorpayScript();
     if (!loaded) {
-      setError('Payment gateway failed to load. Please check your internet connection and try again.');
+      setError('Payment gateway failed to load. Please check your internet connection.');
       return;
     }
 
@@ -196,7 +220,7 @@ const BookAppointmentModal = ({ isOpen, onClose, onBooked, onSuccess }) => {
       order_id: bookingData.razorpay_order.id,
       name: 'AlignCare',
       description: 'Consultation Booking',
-      theme: { color: '#9333ea' }, // purple-600
+      theme: { color: '#008060' }, // Shopify green
       handler: async function (response) {
         try {
           const token = await getToken();
@@ -234,46 +258,72 @@ const BookAppointmentModal = ({ isOpen, onClose, onBooked, onSuccess }) => {
     start: startOfMonth(currentMonth),
     end: endOfMonth(currentMonth)
   });
-  const firstDayOffset = startOfMonth(currentMonth).getDay(); // 0 = Sunday
+  const firstDayOffset = startOfMonth(currentMonth).getDay();
   const today = new Date();
-  today.setHours(0,0,0,0);
+  today.setHours(0, 0, 0, 0);
+
+  const selectedDoctor = doctors.find(d => d.id === selectedDoctorId);
 
   return (
-    <div className="admin-theme">
-      <div className="modal-overlay" style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 400, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
-        <div className="modal-panel" style={{ background: '#fff', borderRadius: '1rem', boxShadow: '0 20px 60px rgba(0,0,0,0.2)', width: '100%', maxWidth: '500px', padding: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column', maxHeight: '90vh' }}>
-          
-          {/* Header */}
-          <div style={{ padding: '1.5rem 2rem', borderBottom: '1px solid var(--gray-200)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'rgba(248, 250, 252, 0.5)' }}>
-            <h2 style={{ fontFamily: 'var(--font-heading)', fontSize: '1.25rem', fontWeight: 700, color: 'var(--heading-text-color)' }}>Book an Appointment</h2>
-            <button onClick={onClose} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--gray-500)' }}>
-              <X className="w-5 h-5" />
-            </button>
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs font-['Inter',system-ui,sans-serif] animate-fade-in select-none">
+      
+      {/* Modal Card */}
+      <div 
+        className="relative w-full max-w-[480px] bg-[#FFFFFF] rounded-[16px] border border-[#EAEAEA] shadow-2xl flex flex-col max-h-[90vh] overflow-hidden"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* ── 1. MODAL HEADER & STEP TRACKER ─────────────────────────────────── */}
+        <div className="px-5 py-4 border-b border-[#EAEAEA] bg-[#FFFFFF] flex items-center justify-between shrink-0">
+          <div className="flex flex-col">
+            <h2 className="text-[15px] font-semibold text-[#202223]">
+              Book an Appointment
+            </h2>
+            {/* Step Indicator */}
+            <div className="flex items-center gap-1.5 mt-1 text-[11px] text-[#8A8A8A]">
+              <span className={`font-medium ${step === 1 ? 'text-[#202223] font-semibold' : ''}`}>1. Date</span>
+              <span>·</span>
+              <span className={`font-medium ${step === 2 ? 'text-[#202223] font-semibold' : ''}`}>2. Time</span>
+              <span>·</span>
+              <span className={`font-medium ${step === 3 ? 'text-[#202223] font-semibold' : ''}`}>3. Confirmation</span>
+            </div>
           </div>
 
-          <div style={{ padding: '2rem', overflowY: 'auto', flex: 1 }}>
+          <button
+            onClick={onClose}
+            className="p-1.5 rounded-[8px] text-[#8A8A8A] hover:text-[#202223] hover:bg-[#F4F4F4] transition-colors cursor-pointer"
+            title="Close dialog"
+          >
+            <X size={18} />
+          </button>
+        </div>
+
+        {/* ── 2. MODAL BODY ─────────────────────────────────────────────────── */}
+        <div className="p-5 overflow-y-auto flex-1 text-[#202223] space-y-4">
+          
           {error && (
-            <div className="mb-4 p-3 text-sm text-red-600 bg-red-50 rounded-lg border border-red-100">
-              {error}
+            <div className="p-3 bg-[#FCE4E4] border border-[#F5C2C2] text-[#B81818] rounded-[10px] text-[12px] flex items-start gap-2">
+              <AlertTriangle size={15} className="shrink-0 mt-0.5" />
+              <span>{error}</span>
             </div>
           )}
 
-          {/* STEP 1: DATE SELECTION */}
+          {/* ═══════════════════════════════════════════════════════════════════ */}
+          {/* STEP 1: DATE SELECTION                                              */}
+          {/* ═══════════════════════════════════════════════════════════════════ */}
           {step === 1 && (
-            <div className="space-y-6">
+            <div className="space-y-4 animate-fade-in">
               
               {/* Doctor Selector */}
-              <div style={{ marginBottom: '1.5rem' }}>
-                <label className="section-label" style={{ marginBottom: '0.5rem' }}>Select Doctor</label>
-                <div style={{ position: 'relative' }}>
-                  <div style={{ position: 'absolute', top: '50%', transform: 'translateY(-50%)', left: '1rem', color: 'var(--gray-400)' }}>
-                    <Stethoscope className="w-5 h-5" />
-                  </div>
+              <div className="space-y-1.5">
+                <label className="text-[11px] font-semibold uppercase tracking-wider text-[#616161]">
+                  Select Clinical Specialist
+                </label>
+                <div className="relative">
+                  <Stethoscope size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#8A8A8A]" />
                   <select
                     value={selectedDoctorId}
                     onChange={(e) => setSelectedDoctorId(e.target.value)}
-                    className="modal-input"
-                    style={{ paddingLeft: '3rem', cursor: 'pointer', appearance: 'auto' }}
+                    className="w-full pl-9 pr-3 py-2 text-[13px] font-medium bg-[#FBFBFB] border border-[#EAEAEA] rounded-[10px] text-[#202223] outline-none focus:border-[#202223] focus:bg-[#FFFFFF] transition-colors cursor-pointer"
                   >
                     {doctors.map(d => (
                       <option key={d.id} value={d.id}>Dr. {d.name}</option>
@@ -282,58 +332,65 @@ const BookAppointmentModal = ({ isOpen, onClose, onBooked, onSuccess }) => {
                 </div>
               </div>
 
-              {/* Calendar Grid */}
-              <div style={{ border: '1px solid var(--gray-200)', borderRadius: '1rem', padding: '1.5rem', background: '#fff', boxShadow: '0 4px 15px rgba(0,0,0,0.02)' }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.5rem' }}>
-                  <button onClick={() => setCurrentMonth(subMonths(currentMonth, 1))} style={{ background: 'var(--gray-100)', border: 'none', borderRadius: '0.5rem', padding: '0.5rem', cursor: 'pointer', color: 'var(--gray-600)' }}>
-                    <ChevronLeft className="w-5 h-5" />
+              {/* Month Navigator & Calendar Grid */}
+              <div className="border border-[#EAEAEA] rounded-[12px] p-3.5 bg-[#FFFFFF] shadow-xs space-y-3">
+                {/* Month Navigator */}
+                <div className="flex items-center justify-between pb-1">
+                  <button
+                    type="button"
+                    onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}
+                    className="p-1 rounded-[6px] text-[#616161] hover:text-[#202223] hover:bg-[#F4F4F4] transition-colors cursor-pointer"
+                  >
+                    <ChevronLeft size={16} />
                   </button>
-                  <span style={{ fontWeight: 700, color: 'var(--heading-text-color)', fontSize: '1.1rem', fontFamily: 'var(--font-heading)' }}>
+                  <span className="text-[13px] font-semibold text-[#202223] font-mono">
                     {format(currentMonth, 'MMMM yyyy')}
                   </span>
-                  <button onClick={() => setCurrentMonth(addMonths(currentMonth, 1))} style={{ background: 'var(--gray-100)', border: 'none', borderRadius: '0.5rem', padding: '0.5rem', cursor: 'pointer', color: 'var(--gray-600)' }}>
-                    <ChevronRight className="w-5 h-5" />
+                  <button
+                    type="button"
+                    onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}
+                    className="p-1 rounded-[6px] text-[#616161] hover:text-[#202223] hover:bg-[#F4F4F4] transition-colors cursor-pointer"
+                  >
+                    <ChevronRight size={16} />
                   </button>
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 2.25rem)', gap: '0.25rem', justifyContent: 'center', textAlign: 'center', marginBottom: '0.75rem', fontSize: '0.75rem', fontWeight: 700, color: 'var(--gray-500)', textTransform: 'uppercase' }}>
-                  {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map(d => <div key={d}>{d}</div>)}
+                {/* Day of Week Headers */}
+                <div className="grid grid-cols-7 gap-1 text-center text-[10px] font-semibold text-[#8A8A8A] uppercase">
+                  {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map(d => (
+                    <div key={d} className="py-1">{d}</div>
+                  ))}
                 </div>
 
+                {/* Day Grid */}
                 {loading && !selectedDate ? (
-                  <div style={{ display: 'flex', justifyContent: 'center', padding: '2rem 0' }}><Loader2 className="w-6 h-6 animate-spin" style={{ color: 'var(--primary-color)' }} /></div>
+                  <div className="py-10 flex flex-col items-center justify-center gap-2">
+                    <Loader2 size={20} className="text-[#202223] animate-spin" />
+                    <span className="text-[11px] text-[#8A8A8A]">Checking available dates...</span>
+                  </div>
                 ) : (
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 2.25rem)', gap: '0.25rem', justifyContent: 'center' }}>
-                    {Array.from({ length: firstDayOffset }).map((_, i) => <div key={`empty-${i}`} />)}
+                  <div className="grid grid-cols-7 gap-1">
+                    {Array.from({ length: firstDayOffset }).map((_, i) => (
+                      <div key={`empty-${i}`} className="aspect-square" />
+                    ))}
                     {daysInMonth.map((date) => {
                       const dateStr = format(date, 'yyyy-MM-dd');
                       const isPast = isBefore(date, today);
                       const isAvailable = availableDates.includes(dateStr);
                       const isSelected = selectedDate && isSameDay(date, selectedDate);
 
-                      let btnStyle = {
-                        aspectRatio: '1', borderRadius: '0.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        fontSize: '0.9rem', fontWeight: 600, transition: 'all 0.15s', cursor: 'pointer', border: '2px solid transparent'
-                      };
-
-                      if (isPast) {
-                        btnStyle = { ...btnStyle, color: 'var(--gray-300)', cursor: 'not-allowed' };
-                      } else if (!isAvailable) {
-                        btnStyle = { ...btnStyle, background: 'var(--gray-100)', color: 'var(--gray-400)', cursor: 'not-allowed' };
-                      } else if (isSelected) {
-                        btnStyle = { ...btnStyle, background: 'var(--primary-color)', color: '#fff', borderColor: 'var(--primary-color)', boxShadow: '0 4px 10px rgba(86,90,207,0.3)', transform: 'scale(1.05)' };
-                      } else {
-                        btnStyle = { ...btnStyle, background: '#fff', color: 'var(--heading-text-color)', border: '2px solid var(--gray-200)' };
-                      }
-
                       return (
                         <button
                           key={dateStr}
                           disabled={isPast || !isAvailable}
                           onClick={() => { setSelectedDate(date); fetchSlots(); }}
-                          style={btnStyle}
-                          onMouseOver={(e) => { if (!isPast && !isAvailable) return; if (!isSelected) e.currentTarget.style.borderColor = 'var(--primary-color)'; }}
-                          onMouseOut={(e) => { if (!isPast && !isAvailable) return; if (!isSelected) e.currentTarget.style.borderColor = 'var(--gray-200)'; }}
+                          className={`aspect-square rounded-[8px] flex items-center justify-center text-[12px] font-medium transition-colors ${
+                            isSelected
+                              ? 'bg-[#202223] text-[#FFFFFF] font-bold shadow-xs'
+                              : isPast || !isAvailable
+                              ? 'text-[#CCCCCC] bg-[#FDFDFD] cursor-not-allowed'
+                              : 'text-[#202223] border border-[#EAEAEA] bg-[#FFFFFF] hover:border-[#202223] hover:bg-[#F4F4F4] cursor-pointer'
+                          }`}
                         >
                           {format(date, 'd')}
                         </button>
@@ -341,72 +398,106 @@ const BookAppointmentModal = ({ isOpen, onClose, onBooked, onSuccess }) => {
                     })}
                   </div>
                 )}
+
+                <div className="pt-2 border-t border-[#F0F0F0] flex items-center justify-between text-[11px] text-[#8A8A8A]">
+                  <span className="flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-xs border border-[#202223]" /> Available
+                  </span>
+                  <span className="flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-xs bg-[#202223]" /> Selected
+                  </span>
+                  <span className="flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-xs bg-[#F4F4F4]" /> Unavailable
+                  </span>
+                </div>
               </div>
 
-              {/* NEXT BUTTON FOR STEP 1 */}
-              <div style={{ marginTop: '2rem', display: 'flex', justifyContent: 'flex-end', paddingTop: '1.5rem', borderTop: '1px solid var(--gray-200)' }}>
+              {/* Step 1 Actions */}
+              <div className="pt-3 border-t border-[#EAEAEA] flex items-center justify-end">
                 <button
                   disabled={!selectedDate}
                   onClick={() => setStep(2)}
-                  className="btn-primary"
+                  className="px-4 py-2 text-[12px] font-semibold text-[#FFFFFF] bg-[#000000] hover:bg-[#202020] disabled:bg-[#F4F4F4] disabled:text-[#A3A3A3] disabled:cursor-not-allowed rounded-[8px] transition-colors cursor-pointer inline-flex items-center gap-1.5"
                 >
-                  Select Time <ArrowRight className="w-4 h-4" />
+                  <span>Select Time</span>
+                  <ArrowRight size={14} />
                 </button>
               </div>
             </div>
           )}
 
-          {/* STEP 2: TIME & REASON */}
+          {/* ═══════════════════════════════════════════════════════════════════ */}
+          {/* STEP 2: TIME & CLINICAL REASON                                     */}
+          {/* ═══════════════════════════════════════════════════════════════════ */}
           {step === 2 && (
-            <div style={{ animation: 'fade-in 0.2s ease-out' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', background: 'rgba(86,90,207,0.05)', padding: '1rem', borderRadius: '1rem', color: 'var(--primary-color)', marginBottom: '1.5rem' }}>
-                <CalendarIcon className="w-5 h-5" />
-                <span style={{ fontWeight: 700 }}>{format(selectedDate, 'EEEE, MMMM do, yyyy')}</span>
-                <button onClick={() => setStep(1)} style={{ marginLeft: 'auto', fontSize: '0.75rem', fontWeight: 700, textDecoration: 'underline', color: 'var(--primary-color)', background: 'transparent', border: 'none', cursor: 'pointer' }}>Change</button>
+            <div className="space-y-4 animate-fade-in">
+              {/* Selected Date Banner */}
+              <div className="p-3 bg-[#FBFBFB] border border-[#EAEAEA] rounded-[10px] flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <CalendarIcon size={15} className="text-[#008060]" />
+                  <span className="text-[13px] font-medium text-[#202223]">
+                    {format(selectedDate, 'EEEE, MMMM d, yyyy')}
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setStep(1)}
+                  className="text-[12px] font-medium text-[#008060] hover:underline cursor-pointer"
+                >
+                  Change Date
+                </button>
               </div>
 
-              <div style={{ marginBottom: '1.5rem' }}>
-                <label className="section-label" style={{ marginBottom: '0.75rem' }}>Available Times</label>
+              {/* Available Slots */}
+              <div className="space-y-2">
+                <label className="text-[11px] font-semibold uppercase tracking-wider text-[#616161]">
+                  Available Consultation Slots
+                </label>
+
                 {(() => {
                   if (loading) {
-                    return <div style={{ display: 'flex', justifyContent: 'center', padding: '2rem 0' }}><Loader2 className="w-6 h-6 animate-spin" style={{ color: 'var(--primary-color)' }} /></div>;
+                    return (
+                      <div className="py-8 flex flex-col items-center justify-center gap-2">
+                        <Loader2 size={20} className="text-[#202223] animate-spin" />
+                        <span className="text-[11px] text-[#8A8A8A]">Fetching available slots...</span>
+                      </div>
+                    );
                   }
-                  
+
                   const availableSlots = slots.filter(slot => {
                     if (slot.status !== 'available') return false;
                     if (selectedDate && isSameDay(selectedDate, new Date())) {
-                       const [hours, minutes] = slot.time.split(':').map(Number);
-                       const now = new Date();
-                       const slotTime = new Date();
-                       slotTime.setHours(hours, minutes, 0, 0);
-                       if (slotTime < now) return false;
+                      const [hours, minutes] = slot.time.split(':').map(Number);
+                      const now = new Date();
+                      const slotTime = new Date();
+                      slotTime.setHours(hours, minutes, 0, 0);
+                      if (slotTime < now) return false;
                     }
                     return true;
                   });
 
                   if (availableSlots.length === 0) {
                     return (
-                      <div style={{ padding: '1.5rem', background: 'var(--gray-50)', color: 'var(--gray-500)', borderRadius: '1rem', textAlign: 'center', fontSize: '0.9rem', fontWeight: 500, border: '1px solid var(--gray-200)' }}>
-                        No available slots remaining for this date.
+                      <div className="p-6 text-center text-[#8A8A8A] text-[12px] bg-[#FBFBFB] rounded-[10px] border border-dashed border-[#EAEAEA]">
+                        No available slots remaining for this date. Please choose another day.
                       </div>
                     );
                   }
 
                   return (
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+                    <div className="grid grid-cols-4 sm:grid-cols-5 gap-2 max-h-[180px] overflow-y-auto pr-1">
                       {availableSlots.map(slot => {
                         const isSelected = selectedTime === slot.time;
                         return (
                           <button
                             key={slot.time}
+                            type="button"
                             onClick={() => setSelectedTime(slot.time)}
-                            style={{
-                              padding: '0.5rem 1rem', borderRadius: '0.75rem', border: '2px solid', fontSize: '0.9rem', fontWeight: 600, transition: 'all 0.15s', cursor: 'pointer',
-                              background: isSelected ? 'var(--primary-color)' : '#fff',
-                              color: isSelected ? '#fff' : 'var(--heading-text-color)',
-                              borderColor: isSelected ? 'var(--primary-color)' : 'var(--gray-200)',
-                              boxShadow: isSelected ? '0 4px 10px rgba(86,90,207,0.2)' : 'none'
-                            }}
+                            className={`py-2 px-1 text-center rounded-[8px] text-[12px] font-medium font-mono transition-colors ${
+                              isSelected
+                                ? 'bg-[#202223] text-[#FFFFFF] font-bold shadow-xs'
+                                : 'bg-[#FFFFFF] border border-[#EAEAEA] text-[#202223] hover:border-[#202223] hover:bg-[#F4F4F4] cursor-pointer'
+                            }`}
                           >
                             {slot.time}
                           </button>
@@ -417,91 +508,130 @@ const BookAppointmentModal = ({ isOpen, onClose, onBooked, onSuccess }) => {
                 })()}
               </div>
 
-              <div style={{ marginBottom: '2rem' }}>
-                <label className="section-label" style={{ marginBottom: '0.5rem' }}>Visit Reason (Optional)</label>
+              {/* Visit Reason Input */}
+              <div className="space-y-1.5">
+                <label className="text-[11px] font-semibold uppercase tracking-wider text-[#616161]">
+                  Clinical Reason / Chief Complaint (Optional)
+                </label>
                 <input
                   type="text"
-                  placeholder="e.g. Follow-up check, Knee pain"
+                  placeholder="e.g. Cervical pain, post-op evaluation, stiffness"
                   value={visitReason}
                   onChange={(e) => setVisitReason(e.target.value)}
-                  className="modal-input"
+                  className="w-full px-3.5 py-2 text-[13px] bg-[#FFFFFF] border border-[#EAEAEA] rounded-[8px] text-[#202223] placeholder-[#8A8A8A] outline-none focus:border-[#202223] transition-colors"
                 />
               </div>
 
-              <div style={{ paddingTop: '1.5rem', borderTop: '1px solid var(--gray-200)', display: 'flex', gap: '1rem', flexWrap: 'wrap-reverse', justifyContent: 'space-between', alignItems: 'center' }}>
-                <button onClick={() => setStep(1)} style={{ color: 'var(--gray-500)', fontSize: '0.95rem', fontWeight: 700, background: 'transparent', border: 'none', cursor: 'pointer', padding: '0.5rem 0' }}>
-                  &larr; Back
+              {/* Step 2 Actions */}
+              <div className="pt-3 border-t border-[#EAEAEA] flex items-center justify-between">
+                <button
+                  type="button"
+                  onClick={() => setStep(1)}
+                  className="text-[12px] font-medium text-[#616161] hover:text-[#202223] transition-colors cursor-pointer"
+                >
+                  ← Back
                 </button>
                 <button
+                  type="button"
                   disabled={!selectedTime || loading}
                   onClick={handleBookSlot}
-                  className="btn-primary"
-                  style={{ minWidth: '140px', justifyContent: 'center' }}
+                  className="px-4 py-2 text-[12px] font-semibold text-[#FFFFFF] bg-[#000000] hover:bg-[#202020] disabled:bg-[#F4F4F4] disabled:text-[#A3A3A3] disabled:cursor-not-allowed rounded-[8px] transition-colors cursor-pointer inline-flex items-center gap-1.5"
                 >
-                  {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Continue'}
+                  {loading ? <Loader2 size={13} className="animate-spin" /> : <span>Continue to Payment</span>}
                 </button>
               </div>
             </div>
           )}
 
-          {/* STEP 3: PAYMENT */}
+          {/* ═══════════════════════════════════════════════════════════════════ */}
+          {/* STEP 3: PAYMENT & CONFIRMATION                                      */}
+          {/* ═══════════════════════════════════════════════════════════════════ */}
           {step === 3 && bookingData && (
-            <div style={{ animation: 'zoom-in 0.3s ease-out' }}>
-              <div style={{ background: '#fff', border: '2px solid rgba(86,90,207,0.1)', borderRadius: '1rem', overflow: 'hidden', boxShadow: '0 4px 15px rgba(0,0,0,0.02)', marginBottom: '1.5rem' }}>
-                <div style={{ background: 'rgba(86,90,207,0.05)', padding: '1rem 1.5rem', borderBottom: '1px solid rgba(86,90,207,0.1)' }}>
-                  <h3 style={{ fontWeight: 700, color: 'var(--primary-color)', display: 'flex', alignItems: 'center', gap: '0.5rem', margin: 0 }}>
-                    <Clock className="w-5 h-5" /> Booking Summary
-                  </h3>
+            <div className="space-y-4 animate-fade-in">
+              
+              {/* Booking Summary Box */}
+              <div className="bg-[#FFFFFF] border border-[#EAEAEA] rounded-[12px] overflow-hidden shadow-xs">
+                <div className="px-4 py-2.5 bg-[#FBFBFB] border-b border-[#EAEAEA] flex items-center justify-between text-[11px] font-semibold uppercase tracking-wider text-[#616161]">
+                  <span className="flex items-center gap-1.5">
+                    <Clock size={13} /> Summary
+                  </span>
+                  <span className="text-[#008060] font-mono">Slot Reserved</span>
                 </div>
-                <div style={{ padding: '1.5rem' }}>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', fontSize: '0.9rem', marginBottom: '1.5rem' }}>
+
+                <div className="p-4 space-y-3 text-[13px]">
+                  <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <span style={{ color: 'var(--gray-500)', display: 'block', marginBottom: '0.25rem' }}>Date & Time</span>
-                      <strong style={{ color: 'var(--heading-text-color)', display: 'block' }}>{format(selectedDate, 'MMM do, yyyy')}</strong>
-                      <strong style={{ color: 'var(--heading-text-color)' }}>{selectedTime}</strong>
+                      <span className="text-[11px] text-[#8A8A8A] block">Date & Time</span>
+                      <strong className="text-[#202223] block mt-0.5">
+                        {format(selectedDate, 'MMM d, yyyy')}
+                      </strong>
+                      <span className="text-[#616161] font-mono text-[12px]">{selectedTime}</span>
                     </div>
+
                     <div>
-                      <span style={{ color: 'var(--gray-500)', display: 'block', marginBottom: '0.25rem' }}>Doctor</span>
-                      <strong style={{ color: 'var(--heading-text-color)', display: 'block' }}>Dr. {doctors.find(d => d.id === selectedDoctorId)?.name}</strong>
+                      <span className="text-[11px] text-[#8A8A8A] block">Physiotherapist</span>
+                      <strong className="text-[#202223] block mt-0.5">
+                        Dr. {selectedDoctor?.name || 'Assigned'}
+                      </strong>
+                      <span className="text-[#616161] text-[12px]">Orthopedic Care</span>
                     </div>
                   </div>
-                  <div style={{ paddingTop: '1rem', borderTop: '1px solid var(--gray-100)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ fontWeight: 700, color: 'var(--heading-text-color)' }}>Consultation Fee</span>
-                    <span style={{ fontSize: '1.25rem', fontWeight: 900, color: 'var(--heading-text-color)' }}>₹{amount}</span>
+
+                  <div className="pt-2.5 border-t border-[#F0F0F0] flex items-center justify-between">
+                    <span className="text-[#616161]">Consultation Fee</span>
+                    <span className="text-base font-bold font-mono text-[#202223]">₹{amount}</span>
                   </div>
                 </div>
               </div>
 
+              {/* Countdown / Hold Timer */}
               {countdown === '00:00' ? (
-                <div style={{ padding: '1rem', background: 'var(--danger)', color: '#fff', borderRadius: '1rem', textAlign: 'center' }}>
-                  <p style={{ fontWeight: 700, marginBottom: '0.75rem' }}>Your hold expired.</p>
-                  <button onClick={() => setStep(1)} style={{ background: '#fff', color: 'var(--danger)', padding: '0.5rem 1rem', borderRadius: '0.5rem', fontSize: '0.9rem', fontWeight: 700, border: 'none', cursor: 'pointer' }}>
+                <div className="p-4 bg-[#FCE4E4] border border-[#F5C2C2] text-[#B81818] rounded-[10px] text-center space-y-2">
+                  <p className="text-[12px] font-semibold">Your reservation hold has expired.</p>
+                  <button
+                    onClick={() => setStep(1)}
+                    className="px-3 py-1.5 bg-[#FFFFFF] border border-[#B81818] text-[#B81818] rounded-[6px] text-[11px] font-medium hover:bg-[#FCE4E4] cursor-pointer"
+                  >
                     Select New Slot
                   </button>
                 </div>
               ) : (
-                <>
-                  <div style={{ padding: '1rem', background: 'rgba(241,119,50,0.1)', border: '1px solid rgba(241,119,50,0.2)', borderRadius: '1rem', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.25rem', marginBottom: '1.5rem' }}>
-                    <span style={{ fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1px', color: 'var(--secondary-color)' }}>Slot Reserved</span>
-                    <span style={{ fontSize: '2rem', fontWeight: 900, color: 'var(--secondary-color)' }}>{countdown}</span>
-                    <span style={{ fontSize: '0.75rem', color: 'var(--gray-600)', marginTop: '0.25rem' }}>Complete payment to confirm appointment</span>
+                <div className="p-4 bg-[#FFF9E6] border border-[#FDE8A5] rounded-[10px] text-center space-y-1">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-[#8A6116]">
+                    Slot Reserved
+                  </span>
+                  <div className="text-2xl font-bold font-mono text-[#8A6116] tracking-tight">
+                    {countdown}
                   </div>
-
-                  <button
-                    onClick={handlePayment}
-                    className="btn-primary"
-                    style={{ width: '100%', padding: '1rem', fontSize: '1rem', display: 'flex', justifyContent: 'center' }}
-                  >
-                    Pay ₹{amount} with Razorpay
-                  </button>
-                </>
+                  <p className="text-[11px] text-[#8A6116]">
+                    Complete payment to confirm appointment before the timer expires.
+                  </p>
+                </div>
               )}
+
+              {/* Pay with Razorpay Button */}
+              {countdown !== '00:00' && (
+                <button
+                  type="button"
+                  onClick={handlePayment}
+                  className="w-full py-3 px-4 rounded-[8px] text-[13px] font-semibold text-[#FFFFFF] bg-[#008060] hover:bg-[#006e52] shadow-xs flex items-center justify-center gap-2 transition-colors cursor-pointer"
+                >
+                  <Lock size={14} />
+                  <span>Pay ₹{amount} with Razorpay</span>
+                </button>
+              )}
+
+              <p className="text-center text-[10px] text-[#8A8A8A] flex items-center justify-center gap-1">
+                <ShieldCheck size={12} className="text-[#008060]" />
+                100% Encrypted & Secure Payment Gateway
+              </p>
+
             </div>
           )}
 
-          </div>
         </div>
       </div>
+
     </div>
   );
 };
