@@ -1,147 +1,109 @@
 import React, { useState } from 'react';
-
-const ChevronDown = (props) => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" {...props}>
-    <path d="m6 9 6 6 6-6" />
-  </svg>
-);
-
-const ChevronUp = (props) => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" {...props}>
-    <path d="m18 15-6-6-6 6" />
-  </svg>
-);
-
-const FAQItem = ({ question, answer, isOpen, onClick }) => {
-  return (
-    <div className="mb-4 overflow-hidden rounded-xl">
-      <button
-        onClick={onClick}
-        className={`w-full flex items-center justify-between py-4 px-6 text-left font-bold transition-all duration-300 focus:outline-none ${
-          isOpen 
-            ? 'bg-secondary text-white rounded-t-xl' 
-            : 'bg-primary text-white rounded-xl hover:bg-dark-brand'
-        }`}
-      >
-        <span className="text-sm md:text-base tracking-wide pr-4">{question}</span>
-        <span className="flex-shrink-0">
-          {isOpen 
-            ? <ChevronUp className="w-5 h-5 text-white" /> 
-            : <ChevronDown className="w-5 h-5 text-white" />
-          }
-        </span>
-      </button>
-      
-      <div 
-        className={`overflow-hidden transition-all duration-300 ease-in-out bg-primary/5 ${
-          isOpen ? 'max-h-[500px] opacity-100 border-x border-b border-primary/10 rounded-b-xl' : 'max-h-0 opacity-0'
-        }`}
-      >
-        <p className="text-sm text-slate-600 p-6 leading-relaxed">
-          {answer}
-        </p>
-      </div>
-    </div>
-  );
-};
+import { ChevronDown, HelpCircle, MessageSquare } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 const FAQ = () => {
-  const [openIndex, setOpenIndex] = useState(null);
+  const [openIndex, setOpenIndex] = useState(0); // Open first by default
 
   const faqs = [
     {
       q: "How does a patient book an appointment?",
-      a: "Patients can self-book online through the portal — select an available slot, confirm, and pay instantly via Razorpay. Alternatively, the clinic receptionist can book on a patient's behalf and send a payment link directly to the patient's phone."
+      a: "Patients can self-book online through the portal — select an available specialist, choose an open date & slot, and confirm instantly via Razorpay. Alternatively, clinic front-desk staff can book on a patient's behalf directly at the reception desk."
     },
     {
       q: "What happens if I miss my exercise for a day?",
-      a: "Missed sessions are tracked automatically. Your doctor will see your compliance percentage and any missed days at your next visit, so you can discuss what got in the way and adjust the plan if needed."
+      a: "Missed sessions are recorded automatically in your recovery timeline. Your physical therapist monitors compliance percentages and symptom curves before your next visit to adjust your rehabilitation program accordingly."
     },
     {
-      q: "Is my medical data secure?",
-      a: "All data is stored in a secured PostgreSQL database. Authentication is handled by Clerk, a production-grade identity provider. Payments are processed via Razorpay — AlignCare never stores any card or payment information."
+      q: "Can the receptionist accept cash or offline payments?",
+      a: "Yes. Front-desk receptionists can register walk-in patients, reserve appointments on the spot, and record payments as paid-at-desk with official tax receipt numbers generated automatically."
     },
     {
-      q: "Can the doctor change my exercise plan mid-recovery?",
-      a: "Yes. The doctor can modify your plan at any visit — change frequency, discontinue exercises, or add new ones. Your past compliance history is always preserved, so changes never erase what you've already done."
-    },
-    {
-      q: "What devices can I use this on?",
-      a: "AlignCare is a web app that works on any modern browser on desktop, tablet, or mobile. A dedicated mobile app may be available in a future version."
-    },
-    {
-      q: "How does the receptionist handle payments?",
-      a: "For patients present at the clinic, the receptionist marks payment as collected (cash, card terminal, or UPI). For phone bookings, a Razorpay payment link is sent — the slot is held for 30 minutes while the patient pays."
-    },
-    {
-      q: "How Doctor Can Ease Your Pain?",
-      a: "Our clinical staff designs targeted plans containing stretching, loading, and mobilization routines to build strength and safely reduce mechanical pain over time."
-    },
-    {
-      q: "Understand Doctor Before You Regret?",
-      a: "Communication is key. Our platform logs your pain scores daily, allowing doctors to proactively adjust limits if any movement is causing adverse irritation."
+      q: "How does the doctor know when a patient experiences acute pain?",
+      a: "Patients log pain ratings on a 0 to 10 scale along with voluntary notes and flags during every workout. When pain exceeds clinical thresholds or a new symptom is flagged, an instant Clinical Alert is dispatched to the clinician."
     }
   ];
 
-  const handleToggle = (index) => {
-    setOpenIndex(openIndex === index ? null : index);
-  };
-
-  // Split FAQs into two columns
-  const col1 = faqs.filter((_, idx) => idx % 2 === 0);
-  const col2 = faqs.filter((_, idx) => idx % 2 !== 0);
-
   return (
-    <section id="faq" className="py-24 bg-white relative overflow-hidden">
-      {/* Background Shapes */}
-      <img className="absolute top-[20%] left-[5%] animate-rotation hidden lg:block opacity-35" src="/images/shap/plus-orange.png" alt="" />
-      <img className="absolute bottom-[20%] right-[5%] animate-up-down hidden lg:block opacity-30" src="/images/shap/circle-dots.png" alt="" />
-
-      <div className="container mx-auto px-4 md:px-6 max-w-6xl relative z-10">
+    <section id="faq" className="py-16 md:py-24 bg-[#FFFFFF] font-['Inter',system-ui,sans-serif] border-b border-[#EAEAEA]">
+      <div className="w-full mx-auto px-4 sm:px-6 md:px-8 lg:px-10 xl:px-12 max-w-5xl">
         
         {/* Section Header */}
-        <div className="text-center mb-16">
-          <h6 className="text-secondary font-bold text-sm tracking-wider uppercase mb-3">FAQ</h6>
-          <h2 className="text-4xl md:text-5xl font-extrabold text-dark-brand mb-4">
+        <div className="text-center max-w-2xl mx-auto mb-12 md:mb-16">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#EBF7F2] text-[#008060] text-xs font-semibold uppercase tracking-wider mb-3">
             Common Questions
+          </div>
+          <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-[#111111] tracking-tight mb-4">
+            Frequently Asked Questions
           </h2>
+          <p className="text-sm sm:text-base text-[#616161]">
+            Everything you need to know about AlignCare's clinic management and tele-rehabilitation platform.
+          </p>
         </div>
 
-        {/* Two-Column Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-8 gap-y-0">
-          
-          {/* Column 1 */}
-          <div>
-            {col1.map((faq, index) => {
-              const actualIndex = index * 2;
-              return (
-                <FAQItem
-                  key={actualIndex}
-                  question={faq.q}
-                  answer={faq.a}
-                  isOpen={openIndex === actualIndex}
-                  onClick={() => handleToggle(actualIndex)}
-                />
-              );
-            })}
+        {/* Accordions */}
+        <div className="space-y-3.5">
+          {faqs.map((faq, index) => {
+            const isOpen = openIndex === index;
+
+            return (
+              <div 
+                key={faq.q}
+                className={`rounded-[14px] border transition-all duration-200 overflow-hidden ${
+                  isOpen 
+                    ? 'border-[#202223] bg-[#FAFAFA] shadow-sm' 
+                    : 'border-[#EAEAEA] bg-[#FFFFFF] hover:border-[#D0D0D0]'
+                }`}
+              >
+                <button
+                  type="button"
+                  onClick={() => setOpenIndex(isOpen ? null : index)}
+                  className="w-full py-4 sm:py-5 px-5 sm:px-6 flex items-center justify-between text-left transition-colors cursor-pointer select-none gap-4"
+                >
+                  <div className="flex items-center gap-3 min-w-0">
+                    <span className={`w-2 h-2 rounded-full shrink-0 ${
+                      isOpen ? 'bg-[#008060]' : 'bg-[#D0D0D0]'
+                    }`} />
+                    <span className="text-sm sm:text-base font-semibold text-[#111111]">
+                      {faq.q}
+                    </span>
+                  </div>
+
+                  <div className={`p-1 rounded-full text-[#8A8A8A] transition-transform duration-200 shrink-0 ${
+                    isOpen ? 'rotate-180 text-[#111111]' : ''
+                  }`}>
+                    <ChevronDown size={18} />
+                  </div>
+                </button>
+
+                {isOpen && (
+                  <div className="px-5 sm:px-6 pb-5 pt-1 text-xs sm:text-[13px] text-[#616161] leading-relaxed border-t border-[#F0F0F0] animate-fade-in">
+                    <p className="pt-2">{faq.a}</p>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Bottom Support Banner */}
+        <div className="mt-12 p-6 rounded-[16px] bg-[#F7F7F7] border border-[#EAEAEA] flex flex-col sm:flex-row items-center justify-between gap-4 text-center sm:text-left">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-[#EBF7F2] text-[#008060] flex items-center justify-center shrink-0">
+              <MessageSquare size={20} />
+            </div>
+            <div>
+              <h4 className="text-sm font-bold text-[#111111]">Have additional clinical questions?</h4>
+              <p className="text-xs text-[#616161] mt-0.5">Our medical support team is available Monday through Saturday.</p>
+            </div>
           </div>
 
-          {/* Column 2 */}
-          <div>
-            {col2.map((faq, index) => {
-              const actualIndex = index * 2 + 1;
-              return (
-                <FAQItem
-                  key={actualIndex}
-                  question={faq.q}
-                  answer={faq.a}
-                  isOpen={openIndex === actualIndex}
-                  onClick={() => handleToggle(actualIndex)}
-                />
-              );
-            })}
-          </div>
-
+          <Link
+            to="/book"
+            className="px-4 py-2 bg-[#111111] hover:bg-[#202020] text-white text-xs font-semibold rounded-[8px] transition-colors shrink-0"
+          >
+            Contact Clinic
+          </Link>
         </div>
 
       </div>

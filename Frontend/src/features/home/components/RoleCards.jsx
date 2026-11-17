@@ -1,116 +1,209 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { UserCircle, Stethoscope, Briefcase } from 'lucide-react';
+import { User, Stethoscope, Briefcase, Check, ArrowRight } from 'lucide-react';
 
 const RoleCards = () => {
   return (
-    <section id="roles" className="py-20 bg-primary/5">
-      <div className="container mx-auto px-4 md:px-6">
+    <section id="roles" className="py-16 md:py-24 bg-[#FAFAFA] font-['Inter',system-ui,sans-serif] border-b border-[#EAEAEA]">
+      <div className="w-full mx-auto px-4 sm:px-6 md:px-8 lg:px-10 xl:px-12 max-w-[1480px]">
         
         {/* Section Header */}
-        <div className="text-center max-w-2xl mx-auto mb-12">
-          <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mb-4">
+        <div className="text-center max-w-2xl mx-auto mb-14 md:mb-18">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#EBF7F2] text-[#008060] text-xs font-semibold uppercase tracking-wider mb-3">
+            Ecosystem
+          </div>
+          <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-[#111111] tracking-tight mb-4">
             One Platform, Three Roles
           </h2>
-          <p className="text-lg text-slate-500">
-            Every person in the clinic's ecosystem has a purpose-built experience.
+          <p className="text-sm sm:text-base text-[#616161]">
+            Every person in the clinic's ecosystem has a dedicated, purpose-built experience.
           </p>
         </div>
 
-        {/* 3 Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        {/* 3 Role Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8 items-stretch">
           
-          {/* PATIENT CARD */}
-          <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-8 hover:shadow-xl hover:-translate-y-2 transition-all duration-300 relative overflow-hidden group cursor-pointer flex flex-col">
-            <div className="absolute top-0 left-0 w-full h-1 bg-green-500"></div>
-            <div className="w-12 h-12 rounded-xl bg-green-50 flex items-center justify-center mb-6">
-              <UserCircle className="w-6 h-6 text-green-600" />
+          {/* ── CARD 1: PATIENT (Green Accent) ────────────────────────────── */}
+          <div className="bg-[#FFFFFF] rounded-[20px] p-6 sm:p-8 border border-[#EAEAEA] hover:border-[#008060] hover:shadow-xl transition-all duration-300 flex flex-col justify-between group">
+            <div>
+              {/* Icon */}
+              <div className="w-12 h-12 rounded-2xl bg-[#EBF7F2] text-[#008060] border border-[#BDEBD3] flex items-center justify-center mb-6 group-hover:scale-105 transition-transform">
+                <User size={24} />
+              </div>
+
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-xl sm:text-2xl font-bold text-[#111111]">
+                  Patient
+                </h3>
+                <span className="text-[11px] font-mono text-[#008060] bg-[#EBF7F2] px-2.5 py-0.5 rounded-full font-semibold">
+                  Personal Care
+                </span>
+              </div>
+
+              <p className="text-xs sm:text-[13px] text-[#616161] leading-relaxed mb-6">
+                Log daily exercises, track your pain levels, view your appointment history, and download official invoices — all from one simple dashboard.
+              </p>
+
+              {/* Feature Checklist */}
+              <ul className="space-y-2.5 mb-8 text-xs sm:text-sm text-[#404040]">
+                <li className="flex items-center gap-2.5">
+                  <span className="w-4 h-4 rounded-full bg-[#D9F7C3] text-[#245B19] flex items-center justify-center shrink-0">
+                    <Check size={10} strokeWidth={3} />
+                  </span>
+                  <span>Daily exercise program with video drills</span>
+                </li>
+                <li className="flex items-center gap-2.5">
+                  <span className="w-4 h-4 rounded-full bg-[#D9F7C3] text-[#245B19] flex items-center justify-center shrink-0">
+                    <Check size={10} strokeWidth={3} />
+                  </span>
+                  <span>Pain level (0–10) logging</span>
+                </li>
+                <li className="flex items-center gap-2.5">
+                  <span className="w-4 h-4 rounded-full bg-[#D9F7C3] text-[#245B19] flex items-center justify-center shrink-0">
+                    <Check size={10} strokeWidth={3} />
+                  </span>
+                  <span>Appointment booking & scheduling</span>
+                </li>
+                <li className="flex items-center gap-2.5">
+                  <span className="w-4 h-4 rounded-full bg-[#D9F7C3] text-[#245B19] flex items-center justify-center shrink-0">
+                    <Check size={10} strokeWidth={3} />
+                  </span>
+                  <span>Direct invoice & receipt history</span>
+                </li>
+              </ul>
             </div>
-            <h3 className="text-2xl font-bold text-slate-900 mb-3">Patient</h3>
-            <p className="text-sm text-slate-500 mb-6 leading-relaxed flex-1">
-              Log daily exercises, track your pain levels, view your appointment history, and download invoices — all from one simple dashboard.
-            </p>
-            <ul className="space-y-2 mb-8">
-              <li className="flex items-center gap-2 text-sm text-slate-600">
-                <span className="w-1.5 h-1.5 rounded-full bg-green-500"></span> Daily exercise program
-              </li>
-              <li className="flex items-center gap-2 text-sm text-slate-600">
-                <span className="w-1.5 h-1.5 rounded-full bg-green-500"></span> Pain level tracking
-              </li>
-              <li className="flex items-center gap-2 text-sm text-slate-600">
-                <span className="w-1.5 h-1.5 rounded-full bg-green-500"></span> Appointment booking
-              </li>
-              <li className="flex items-center gap-2 text-sm text-slate-600">
-                <span className="w-1.5 h-1.5 rounded-full bg-green-500"></span> Invoice history
-              </li>
-            </ul>
+
             <Link 
               to="/book" 
-              className="inline-flex items-center justify-center px-4 py-2.5 text-sm font-semibold text-white bg-green-500 rounded-full hover:bg-green-600 transition-colors w-max"
+              className="w-full inline-flex items-center justify-center gap-2 py-3 px-4 text-xs sm:text-sm font-semibold text-[#FFFFFF] bg-[#008060] hover:bg-[#006e52] rounded-[10px] transition-all shadow-xs"
             >
-              Book Appointment →
+              <span>Book Appointment</span>
+              <ArrowRight size={14} />
             </Link>
           </div>
 
-          {/* DOCTOR CARD */}
-          <div className="bg-white rounded-2xl shadow-md border border-slate-100 p-8 hover:shadow-xl hover:-translate-y-2 transition-all duration-300 relative overflow-hidden group cursor-pointer lg:-translate-y-4 flex flex-col">
-            <div className="absolute top-0 left-0 w-full h-1 bg-primary"></div>
-            <div className="absolute top-0 right-4 bg-primary text-white text-[10px] font-bold uppercase tracking-wider px-3 py-1.5 rounded-b-lg">
-              Most Used
+          {/* ── CARD 2: DOCTOR (Blue Accent - Highlighted) ────────────────── */}
+          <div className="bg-[#FFFFFF] rounded-[20px] p-6 sm:p-8 border-2 border-[#4088F8] shadow-lg hover:shadow-2xl transition-all duration-300 flex flex-col justify-between relative group lg:-translate-y-2">
+            
+            {/* Top Highlight Badge */}
+            <div className="absolute -top-3 right-6 bg-[#4088F8] text-[#FFFFFF] text-[10px] font-bold uppercase tracking-wider px-3 py-1 rounded-full shadow-xs font-mono">
+              Clinical Core
             </div>
-            <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mb-6">
-              <Stethoscope className="w-6 h-6 text-primary" />
+
+            <div>
+              {/* Icon */}
+              <div className="w-12 h-12 rounded-2xl bg-[#EFF6FF] text-[#4088F8] border border-[#BFDBFE] flex items-center justify-center mb-6 group-hover:scale-105 transition-transform">
+                <Stethoscope size={24} />
+              </div>
+
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-xl sm:text-2xl font-bold text-[#111111]">
+                  Physiotherapist
+                </h3>
+                <span className="text-[11px] font-mono text-[#1D4ED8] bg-[#EFF6FF] px-2.5 py-0.5 rounded-full font-semibold">
+                  Doctor Suite
+                </span>
+              </div>
+
+              <p className="text-xs sm:text-[13px] text-[#616161] leading-relaxed mb-6">
+                Prescribe exercises with custom videos, review real-time patient compliance, track pain trends, and conduct video consultations.
+              </p>
+
+              {/* Feature Checklist */}
+              <ul className="space-y-2.5 mb-8 text-xs sm:text-sm text-[#404040]">
+                <li className="flex items-center gap-2.5">
+                  <span className="w-4 h-4 rounded-full bg-[#DBEAFE] text-[#1E40AF] flex items-center justify-center shrink-0">
+                    <Check size={10} strokeWidth={3} />
+                  </span>
+                  <span>Treatment plan & protocol builder</span>
+                </li>
+                <li className="flex items-center gap-2.5">
+                  <span className="w-4 h-4 rounded-full bg-[#DBEAFE] text-[#1E40AF] flex items-center justify-center shrink-0">
+                    <Check size={10} strokeWidth={3} />
+                  </span>
+                  <span>Live compliance charts & analytics</span>
+                </li>
+                <li className="flex items-center gap-2.5">
+                  <span className="w-4 h-4 rounded-full bg-[#DBEAFE] text-[#1E40AF] flex items-center justify-center shrink-0">
+                    <Check size={10} strokeWidth={3} />
+                  </span>
+                  <span>Automated clinical red alerts</span>
+                </li>
+                <li className="flex items-center gap-2.5">
+                  <span className="w-4 h-4 rounded-full bg-[#DBEAFE] text-[#1E40AF] flex items-center justify-center shrink-0">
+                    <Check size={10} strokeWidth={3} />
+                  </span>
+                  <span>Availability & schedule management</span>
+                </li>
+              </ul>
             </div>
-            <h3 className="text-2xl font-bold text-slate-900 mb-3">Doctor</h3>
-            <p className="text-sm text-slate-500 mb-6 leading-relaxed flex-1">
-              Run consultations, build treatment plans, prescribe exercises with specific frequency rules, and review patient compliance between visits.
-            </p>
-            <ul className="space-y-2 mb-8">
-              <li className="flex items-center gap-2 text-sm text-slate-600">
-                <span className="w-1.5 h-1.5 rounded-full bg-primary"></span> Consultation recording
-              </li>
-              <li className="flex items-center gap-2 text-sm text-slate-600">
-                <span className="w-1.5 h-1.5 rounded-full bg-primary"></span> Exercise library management
-              </li>
-              <li className="flex items-center gap-2 text-sm text-slate-600">
-                <span className="w-1.5 h-1.5 rounded-full bg-primary"></span> Treatment plan builder
-              </li>
-              <li className="flex items-center gap-2 text-sm text-slate-600">
-                <span className="w-1.5 h-1.5 rounded-full bg-primary"></span> Compliance dashboard
-              </li>
-            </ul>
-            <p className="text-sm text-slate-400 font-medium italic mt-auto">
-              Access via your clinic's dashboard
-            </p>
+
+            <Link 
+              to="/doctor-dashboard" 
+              className="w-full inline-flex items-center justify-center gap-2 py-3 px-4 text-xs sm:text-sm font-semibold text-[#FFFFFF] bg-[#111111] hover:bg-[#202020] rounded-[10px] transition-all shadow-xs"
+            >
+              <span>Doctor Portal</span>
+              <ArrowRight size={14} />
+            </Link>
           </div>
 
-          {/* RECEPTIONIST CARD */}
-          <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-8 hover:shadow-xl hover:-translate-y-2 transition-all duration-300 relative overflow-hidden group cursor-pointer flex flex-col md:col-span-2 lg:col-span-1">
-            <div className="absolute top-0 left-0 w-full h-1 bg-secondary"></div>
-            <div className="w-12 h-12 rounded-xl bg-secondary/10 flex items-center justify-center mb-6">
-              <Briefcase className="w-6 h-6 text-secondary" />
+          {/* ── CARD 3: RECEPTIONIST (Amber Accent) ───────────────────────── */}
+          <div className="bg-[#FFFFFF] rounded-[20px] p-6 sm:p-8 border border-[#EAEAEA] hover:border-[#F5C451] hover:shadow-xl transition-all duration-300 flex flex-col justify-between group">
+            <div>
+              {/* Icon */}
+              <div className="w-12 h-12 rounded-2xl bg-[#FFFBEB] text-[#B98900] border border-[#FDE68A] flex items-center justify-center mb-6 group-hover:scale-105 transition-transform">
+                <Briefcase size={24} />
+              </div>
+
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-xl sm:text-2xl font-bold text-[#111111]">
+                  Receptionist
+                </h3>
+                <span className="text-[11px] font-mono text-[#8A6116] bg-[#FFF2CC] px-2.5 py-0.5 rounded-full font-semibold">
+                  Front Desk
+                </span>
+              </div>
+
+              <p className="text-xs sm:text-[13px] text-[#616161] leading-relaxed mb-6">
+                Manage front-desk bookings, handle walk-in patients, take offline payments, and track clinic revenue seamlessly.
+              </p>
+
+              {/* Feature Checklist */}
+              <ul className="space-y-2.5 mb-8 text-xs sm:text-sm text-[#404040]">
+                <li className="flex items-center gap-2.5">
+                  <span className="w-4 h-4 rounded-full bg-[#FFF2CC] text-[#8A6116] flex items-center justify-center shrink-0">
+                    <Check size={10} strokeWidth={3} />
+                  </span>
+                  <span>Unified clinic appointment calendar</span>
+                </li>
+                <li className="flex items-center gap-2.5">
+                  <span className="w-4 h-4 rounded-full bg-[#FFF2CC] text-[#8A6116] flex items-center justify-center shrink-0">
+                    <Check size={10} strokeWidth={3} />
+                  </span>
+                  <span>Desk booking & offline cash collection</span>
+                </li>
+                <li className="flex items-center gap-2.5">
+                  <span className="w-4 h-4 rounded-full bg-[#FFF2CC] text-[#8A6116] flex items-center justify-center shrink-0">
+                    <Check size={10} strokeWidth={3} />
+                  </span>
+                  <span>Patient intake & demographic registration</span>
+                </li>
+                <li className="flex items-center gap-2.5">
+                  <span className="w-4 h-4 rounded-full bg-[#FFF2CC] text-[#8A6116] flex items-center justify-center shrink-0">
+                    <Check size={10} strokeWidth={3} />
+                  </span>
+                  <span>SMS/Email payment link dispatch</span>
+                </li>
+              </ul>
             </div>
-            <h3 className="text-2xl font-bold text-slate-900 mb-3">Receptionist</h3>
-            <p className="text-sm text-slate-500 mb-6 leading-relaxed flex-1">
-              Register new patients, manage the appointment calendar, collect payments, and generate invoices — all from one streamlined workflow.
-            </p>
-            <ul className="space-y-2 mb-8">
-              <li className="flex items-center gap-2 text-sm text-slate-600">
-                <span className="w-1.5 h-1.5 rounded-full bg-secondary"></span> New patient registration
-              </li>
-              <li className="flex items-center gap-2 text-sm text-slate-600">
-                <span className="w-1.5 h-1.5 rounded-full bg-secondary"></span> Appointment calendar
-              </li>
-              <li className="flex items-center gap-2 text-sm text-slate-600">
-                <span className="w-1.5 h-1.5 rounded-full bg-secondary"></span> Payment collection
-              </li>
-              <li className="flex items-center gap-2 text-sm text-slate-600">
-                <span className="w-1.5 h-1.5 rounded-full bg-secondary"></span> Invoice generation
-              </li>
-            </ul>
-            <p className="text-sm text-slate-400 font-medium italic mt-auto">
-              Access via your clinic's dashboard
-            </p>
+
+            <Link 
+              to="/receptionist" 
+              className="w-full inline-flex items-center justify-center gap-2 py-3 px-4 text-xs sm:text-sm font-semibold text-[#202223] bg-[#F4F4F4] hover:bg-[#EAEAEA] rounded-[10px] transition-all"
+            >
+              <span>Reception Desk</span>
+              <ArrowRight size={14} />
+            </Link>
           </div>
 
         </div>
